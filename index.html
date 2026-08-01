@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozycs Farm - Manajemen Melon Hidroponik</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="img/favicon.png">
+
+    <!-- CSS Styling (Pastikan file style.css sudah ada di folder css/) -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js (Opsional untuk grafik) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- App Wrapper -->
+    <div class="app-wrapper">
+        
+        <!-- Header / Top Navigation -->
+        <header class="app-header">
+            <div class="header-brand">
+                <img src="img/logo-cozycs.png" alt="Logo Cozycs Farm" class="brand-logo" style="width: 36px; height: 36px; object-fit: contain;">
+                <div>
+                    <div class="brand-title">Cozycs Farm</div>
+                    <div class="brand-subtitle">Melon Hidroponik Premium</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Toast Notification Container -->
+                <div id="toastContainer" class="toast-container"></div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main" id="mainContent">
+            <!-- Konten modul akan dimuat secara dinamis di sini -->
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-page="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dasbor</span>
+            </button>
+            <button class="nav-item" data-page="tanaman">
+                <i class="fas fa-seedling"></i>
+                <span>Tanaman</span>
+            </button>
+            <button class="nav-item" data-page="nutrisi">
+                <i class="fas fa-flask"></i>
+                <span>Nutrisi</span>
+            </button>
+            <button class="nav-item" data-page="panen">
+                <i class="fas fa-box"></i>
+                <span>Panen</span>
+            </button>
+            <button class="nav-item" data-page="keuangan">
+                <i class="fas fa-wallet"></i>
+                <span>Keuangan</span>
+            </button>
+            <button class="nav-item" data-page="setting">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- JavaScript Modules (Urutan pemuatan sangat penting) -->
+    <script src="js/helper.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/greenhouse.js"></script>
+    <script src="js/tanaman.js"></script>
+    <script src="js/polinasi.js"></script>
+    <script src="js/buah.js"></script>
+    <script src="js/nutrisi.js"></script>
+    <script src="js/pruning.js"></script>
+    <script src="js/hama.js"></script>
+    <script src="js/spray.js"></script>
+    <script src="js/jadwal.js"></script>
+    <script src="js/panen.js"></script>
+    <script src="js/laporan.js"></script>
+    <script src="js/gudang.js"></script>
+    <script src="js/keuangan.js"></script>
+    <script src="js/setting.js"></script>
+
+    <!-- App Router / Core Script Utama -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi LocalStorage jika belum ada
+            if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
+                Storage.init();
+            }
+
+            // Pemetaan halaman (Router sederhana)
+            var pages = {
+                'dashboard': dashboard,
+                'greenhouse': greenhouse,
+                'tanaman': tanaman,
+                'polinasi': polinasi,
+                'buah': buah,
+                'nutrisi': nutrisi,
+                'pruning': pruning,
+                'hama': hama,
+                'spray': spray,
+                'jadwal': jadwal,
+                'panen': panen,
+                'laporan': laporan,
+                'gudang': gudang,
+                'keuangan': keuangan,
+                'setting': setting
+            };
+
+            function navigateTo(pageName) {
+                var targetModule = pages[pageName];
+                var mainContent = document.getElementById('mainContent');
+
+                if (targetModule && mainContent) {
+                    // Render HTML modul ke main content
+                    mainContent.innerHTML = targetModule.render();
+                    
+                    // Jalankan fungsi inisialisasi modul jika ada
+                    if (typeof targetModule.init === 'function') {
+                        targetModule.init();
+                    }
+
+                    // Perbarui kelas aktif pada navigasi bawah
+                    var navItems = document.querySelectorAll('.bottom-nav .nav-item');
+                    navItems.forEach(function(item) {
+                        if (item.getAttribute('data-page') === pageName) {
+                            item.classList.add('active');
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+
+                    // Scroll kembali ke atas
+                    window.scrollTo(0, 0);
+                } else {
+                    console.warn('[Router] Modul tidak ditemukan:', pageName);
+                }
+            }
+
+            // Event listener untuk tombol navigasi bawah
+            var navButtons = document.querySelectorAll('.bottom-nav .nav-item');
+            navButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var page = this.getAttribute('data-page');
+                    if (page) {
+                        navigateTo(page);
+                    }
+                });
+            });
+
+            // Event listener global untuk tombol aksi cepat (data-page di dalam elemen lain)
+            document.addEventListener('click', function(e) {
+                var targetBtn = e.target.closest('[data-page]');
+                if (targetBtn && !targetBtn.classList.contains('nav-item')) {
+                    var page = targetBtn.getAttribute('data-page');
+                    if (page) {
+                        navigateTo(page);
+                    }
+                }
+            });
+
+            // Muat halaman awal (Dasbor)
+            navigateTo('dashboard');
+        });
+    </script>
+</body>
+</html>
