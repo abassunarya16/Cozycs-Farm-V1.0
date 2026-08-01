@@ -15,22 +15,20 @@ var nutrisi = (function() {
                     <form id="formNutrisi">
                         <input type="hidden" id="nutrisiId">
                         
-                        <!-- 1. Tanggal Pelaksanaan di Paling Atas -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pengecekan</label>
-                            <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pengecekan</label>
+                                <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Cek</label>
+                                <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Pagi">Pagi</option>
+                                    <option value="Sore">Sore</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- 2. Waktu Cek (Pagi / Sore) -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Cek</label>
-                            <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                <option value="Pagi">Pagi</option>
-                                <option value="Sore">Sore</option>
-                            </select>
-                        </div>
-
-                        <!-- 3. HST & Fase Tanaman Terpisah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">HST (Hari Setelah Tanam)</label>
@@ -48,7 +46,6 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. PPM Aktual & Target PPM -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">PPM Aktual (Tercatat)</label>
@@ -60,7 +57,6 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 5. pH Aktual & Aksi Koreksi pH -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">pH Aktual</label>
@@ -76,19 +72,17 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 6. Suhu Air Tandon & Suhu Ruangan -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Air Tandon (°C) [Opsional]</label>
                                 <input type="text" id="nutrisiWaterTemp" placeholder="Contoh: 26°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Ruangan (°C) [Opsional]</label>
-                                <input type="text" id="nutrisiRoomTemp" placeholder="Contoh: 30°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Greenhouse (°C) [Opsional]</label>
+                                <input type="text" id="nutrisiGhTemp" placeholder="Contoh: 32°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 7. Catatan Tambahan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Jumlah Nutrisi Ditambahkan, dll.)</label>
                             <textarea id="nutrisiDesc" rows="2" placeholder="Contoh: Tambah nutrisi A&B mix 200ml..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
@@ -101,7 +95,7 @@ var nutrisi = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data / Card List Grid 2x2 Presisi -->
+                <!-- Rekap Data / Card List Menyamping -->
                 <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
                 <div id="containerNutrisiCards">
                     <!-- Diisi dinamis oleh JavaScript -->
@@ -130,20 +124,20 @@ var nutrisi = (function() {
                 var ph = document.getElementById('nutrisiPh').value;
                 var phAction = document.getElementById('nutrisiPhAction').value;
                 var waterTemp = document.getElementById('nutrisiWaterTemp').value;
-                var roomTemp = document.getElementById('nutrisiRoomTemp').value;
+                var ghTemp = document.getElementById('nutrisiGhTemp').value;
                 var desc = document.getElementById('nutrisiDesc').value;
 
                 var payload = {
                     date: date,
                     timeSlot: timeSlot,
-                    hst: hst || '-',
-                    fase: fase || '-',
-                    ppm: ppm || '-',
-                    targetPpm: targetPpm || '-',
-                    ph: ph || '-',
-                    phAction: phAction || 'Aman / Tanpa Koreksi',
-                    waterTemp: waterTemp || '-',
-                    roomTemp: roomTemp || '-',
+                    hst: hst,
+                    fase: fase,
+                    ppm: ppm,
+                    targetPpm: targetPpm,
+                    ph: ph,
+                    phAction: phAction,
+                    waterTemp: waterTemp,
+                    ghTemp: ghTemp,
                     desc: desc,
                     title: `PPM: ${ppm} (Target: ${targetPpm}) | pH: ${ph}`
                 };
@@ -201,55 +195,43 @@ var nutrisi = (function() {
         data.forEach(function(item) {
             html += `
                 <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Card: Tanggal & Waktu -->
+                    <!-- Header Card: Tanggal, Waktu, & HST -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: #222;">${item.date}</strong>
-                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot || ''}</span>
+                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #555; font-weight: 600;">
+                            HST ${item.hst || '-'} <span style="font-weight: normal; color: #777;">(${item.fase || '-'})</span>
                         </div>
                     </div>
 
-                    <!-- Grid 2x2 Rekap Kartu Presisi (4 Kotak Sama Ukuran) -->
+                    <!-- Isi Card: Layout Menyamping (Grid Kolom) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        <!-- Kiri Atas: PPM (Tanpa kata 'air') -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 52px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">PPM</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.3;">
-                                <div><i class="fas fa-water" style="color: #0277BD; width: 14px;"></i> Aktual: <strong>${item.ppm}</strong></div>
-                                <div style="margin-top: 2px;"><i class="fas fa-bullseye" style="color: #388E3C; width: 14px;"></i> Target: <strong>${item.targetPpm}</strong></div>
+                        <!-- Kolom Kiri: PPM -->
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">PPM Air</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #0277BD; margin-top: 2px;">
+                                ${item.ppm} <span style="font-size: 11px; color: #555; font-weight: normal;">(Target: ${item.targetPpm})</span>
                             </div>
                         </div>
 
-                        <!-- Kanan Atas: pH & Koreksi -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 52px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">pH & Koreksi</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.3;">
-                                <div><i class="fas fa-vial" style="color: #E65100; width: 14px;"></i> pH: <strong>${item.ph}</strong></div>
-                                <div style="margin-top: 2px;"><i class="fas fa-tools" style="color: #C62828; width: 14px;"></i> <strong>${item.phAction}</strong></div>
-                            </div>
-                        </div>
-
-                        <!-- Kiri Bawah: HST & Fase Tanaman -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 52px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">HST & Fase</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.3;">
-                                <div><i class="fas fa-calendar-day" style="color: #6A1B9A; width: 14px;"></i> HST: <strong>${item.hst}</strong></div>
-                                <div style="margin-top: 2px;"><i class="fas fa-leaf" style="color: #2E7D32; width: 14px;"></i> <strong>${item.fase}</strong></div>
-                            </div>
-                        </div>
-
-                        <!-- Kanan Bawah: Suhu Air & Suhu Ruangan -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 52px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 3px;">Suhu Air & Ruangan</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.3;">
-                                <div><i class="fas fa-thermometer-half" style="color: #0288D1; width: 14px;"></i> Tandon: <strong>${item.waterTemp}</strong></div>
-                                <div style="margin-top: 2px;"><i class="fas fa-home" style="color: #F57F17; width: 14px;"></i> Ruangan: <strong>${item.roomTemp}</strong></div>
+                        <!-- Kolom Kanan: pH & Aksi -->
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">pH & Koreksi</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #222; margin-top: 2px;">
+                                ${item.ph} <span style="font-size: 11px; color: #C62828; font-weight: 600; margin-left: 4px;">[${item.phAction || '-'}]</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Catatan Tambahan -->
-                    ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
+                    <!-- Informasi Tambahan / Suhu & Catatan -->
+                    ${(item.waterTemp || item.ghTemp || item.desc) ? `
+                        <div style="font-size: 11px; color: #555; background: #fafafa; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                            ${(item.waterTemp || item.ghTemp) ? `<div><i class="fas fa-thermometer-half" style="color: #FF8F00;"></i> Suhu Air: <strong>${item.waterTemp || '-'}</strong> | Suhu GH: <strong>${item.ghTemp || '-'}</strong></div>` : ''}
+                            ${item.desc ? `<div style="margin-top: 2px; font-style: italic; color: #666;">Catatan: ${item.desc}</div>` : ''}
+                        </div>
+                    ` : ''}
 
                     <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
@@ -270,14 +252,14 @@ var nutrisi = (function() {
         document.getElementById('nutrisiId').value = item.id;
         document.getElementById('nutrisiDate').value = item.date;
         document.getElementById('nutrisiTimeSlot').value = item.timeSlot || 'Pagi';
-        document.getElementById('nutrisiHst').value = (item.hst && item.hst !== '-') ? item.hst : '';
-        document.getElementById('nutrisiFase').value = (item.fase && item.fase !== '-') ? item.fase : 'Vegetatif Pertumbuhan';
-        document.getElementById('nutrisiPpm').value = (item.ppm && item.ppm !== '-') ? item.ppm : '';
-        document.getElementById('nutrisiTargetPpm').value = (item.targetPpm && item.targetPpm !== '-') ? item.targetPpm : '';
-        document.getElementById('nutrisiPh').value = (item.ph && item.ph !== '-') ? item.ph : '';
-        document.getElementById('nutrisiPhAction').value = (item.phAction && item.phAction !== '-') ? item.phAction : 'Aman / Tanpa Koreksi';
-        document.getElementById('nutrisiWaterTemp').value = (item.waterTemp && item.waterTemp !== '-') ? item.waterTemp : '';
-        document.getElementById('nutrisiRoomTemp').value = (item.roomTemp && item.roomTemp !== '-') ? item.roomTemp : '';
+        document.getElementById('nutrisiHst').value = item.hst || '';
+        document.getElementById('nutrisiFase').value = item.fase || 'Vegetatif Pertumbuhan';
+        document.getElementById('nutrisiPpm').value = item.ppm || '';
+        document.getElementById('nutrisiTargetPpm').value = item.targetPpm || '';
+        document.getElementById('nutrisiPh').value = item.ph || '';
+        document.getElementById('nutrisiPhAction').value = item.phAction || 'Aman / Tanpa Koreksi';
+        document.getElementById('nutrisiWaterTemp').value = item.waterTemp || '';
+        document.getElementById('nutrisiGhTemp').value = item.ghTemp || '';
         document.getElementById('nutrisiDesc').value = item.desc || '';
         document.getElementById('formTitleNutrisi').innerText = 'Edit Data Nutrisi';
         
@@ -301,4 +283,7 @@ var nutrisi = (function() {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteI
+        deleteItem: deleteItem
+    };
+
+})();
