@@ -32,9 +32,9 @@ var laporan = (function() {
                     </div>
                 </div>
 
-                <!-- Tombol Aksi Laporan / Ekspor -->
+                <!-- Tombol Aksi Laporan / Ekspor Spreadsheet -->
                 <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-                    <button id="btnExportData" class="btn btn-primary" style="flex: 1; background: #00695C;"><i class="fas fa-download"></i> Unduh Rekap Data (JSON)</button>
+                    <button id="btnExportData" class="btn btn-primary" style="flex: 1; background: #00695C;"><i class="fas fa-file-excel"></i> Unduh Rekap (Excel / CSV)</button>
                     <button id="btnClearAllData" style="background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;"><i class="fas fa-trash-alt"></i> Reset Data</button>
                 </div>
 
@@ -64,7 +64,7 @@ var laporan = (function() {
         var btnExport = document.getElementById('btnExportData');
         if (btnExport) {
             btnExport.addEventListener('click', function() {
-                exportDataJSON();
+                exportDataCSV();
             });
         }
 
@@ -165,25 +165,39 @@ var laporan = (function() {
         tbody.innerHTML = html;
     }
 
-    function exportDataJSON() {
-        var exportObj = {};
-        for (var key in Storage.KEYS) {
-            if (Storage.KEYS.hasOwnProperty(key)) {
-                var storageKey = Storage.KEYS[key];
-                exportObj[storageKey] = Storage.getAll(storageKey);
-            }
-        }
+    function exportDataCSV() {
+        var sprayData = Storage.getAll(Storage.KEYS.SPRAY);
+        var jadwalData = Storage.getAll(Storage.KEYS.JADWAL);
+        var panenData = Storage.getAll(Storage.KEYS.PANEN);
 
-        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+        var csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Kategori,Tanggal,Detail Kegiatan / Produk,Dosis / Keterangan\r\n";
+
+        sprayData.forEach(function(item) {
+            var row = ["Spray", item.date || "", `"${item.title || ''}"`, `"${item.dose || ''} (Sasaran: ${item.target || ''})"`];
+            csvContent += row.join(",") + "\r\n";
+        });
+
+        jadwalData.forEach(function(item) {
+            var row = ["Jadwal", item.date || "", `"${item.title || ''}"`, `"${item.desc || ''}"`];
+            csvContent += row.join(",") + "\r\n";
+        });
+
+        panenData.forEach(function(item) {
+            var row = ["Panen", item.date || item.tanggal || "", "Panen Melon", `"${item.berat || item.jumlah || ''} kg"`];
+            csvContent += row.join(",") + "\r\n";
+        });
+
+        var encodedUri = encodeURI(csvContent);
         var downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "cozycs_farm_backup_" + new Date().toISOString().slice(0,10) + ".json");
+        downloadAnchor.setAttribute("href", encodedUri);
+        downloadAnchor.setAttribute("download", "cozycs_farm_rekap_" + new Date().toISOString().slice(0,10) + ".csv");
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
 
         if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-            Helper.showToast('Data berhasil diunduh sebagai file backup!', 'success');
+            Helper.showToast('Rekap spreadsheet Excel berhasil diunduh!', 'success');
         }
     }
 
