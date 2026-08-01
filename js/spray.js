@@ -58,7 +58,7 @@ var spray = (function() {
                             <input type="text" id="sprayDose" required placeholder="Contoh: 2 gram Fungisida + 1 ml Insektisida / liter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 6. Sasaran Hama & Penyakit (Tanpa tulisan opsional) -->
+                        <!-- 6. Sasaran Hama & Penyakit -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Hama</label>
@@ -200,9 +200,8 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Isi Card: Layout Menyamping (Grid Kolom Produk & Dosis) -->
+                    <!-- Baris 1 Card: Nama Produk (Kiri) & Dosis Aplikasi (Kanan) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        <!-- Kolom Kiri: Produk -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Nama Produk</div>
                             <div style="font-size: 15px; font-weight: 700; color: #6A1B9A; margin-top: 2px;">
@@ -210,7 +209,6 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- Kolom Kanan: Dosis -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Dosis Aplikasi</div>
                             <div style="font-size: 14px; font-weight: 700; color: #222; margin-top: 2px;">
@@ -219,20 +217,20 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Bagian Bawah: Jenis Spray di Kiri, Hama & Penyakit di Kanan -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
-                        <!-- Kolom Kiri Bawah: Jenis Spray -->
-                        <div>
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Jenis Penyemprotan</div>
-                            <span style="background: #F3E5F5; color: #6A1B9A; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block;">${item.sprayType || 'Umum'}</span>
+                    <!-- Baris 2 Card: Jenis Penyemprotan (Kiri) & Sasaran Hama & Penyakit (Kanan) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Jenis Penyemprotan</div>
+                            <div style="font-size: 13px; font-weight: 700; color: #6A1B9A; margin-top: 2px;">
+                                ${item.sprayType || 'Umum'}
+                            </div>
                         </div>
 
-                        <!-- Kolom Kanan Bawah: Hama & Penyakit -->
-                        <div>
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Sasaran Hama & Penyakit</div>
-                            <div style="font-size: 11px; color: #444; line-height: 1.4;">
-                                <div><i class="fas fa-bug" style="color: #D32F2F;"></i> Hama: <strong>${item.targetHama}</strong></div>
-                                <div style="margin-top: 2px;"><i class="fas fa-shield-virus" style="color: #7B1FA2;"></i> Penyakit: <strong>${item.targetPenyakit}</strong></div>
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Sasaran Hama & Penyakit</div>
+                            <div style="font-size: 11px; color: #444; margin-top: 2px; line-height: 1.4;">
+                                <div><i class="fas fa-bug" style="color: #D32F2F;"></i> ${item.targetHama}</div>
+                                <div style="margin-top: 2px;"><i class="fas fa-shield-virus" style="color: #7B1FA2;"></i> ${item.targetPenyakit}</div>
                             </div>
                         </div>
                     </div>
@@ -322,3 +320,4 @@ var spray = (function() {
     };
 
 })();
+            
