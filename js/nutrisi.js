@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - NUTRISI & PPM MODULE
+// COZYCS FARM - MODUL NUTRISI & PPM (CRUD)
 // ==========================================
 
 var nutrisi = (function() {
@@ -7,29 +7,108 @@ var nutrisi = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-flask"></i> Pemantauan Nutrisi, PPM & pH</div>
+                <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> Cek & Kontrol Nutrisi (PPM & pH)</div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div style="font-size: 13px; color: #666;">Catat kepekatan nutrisi harian untuk menjaga kesehatan tanaman melon.</div>
-                    <button class="btn btn-primary" id="btnTambahNutrisi" style="font-size: 13px; padding: 10px 16px; width: auto;">
-                        <i class="fas fa-plus"></i> Catat Nutrisi
-                    </button>
+                <!-- Form Input / Edit Data Nutrisi -->
+                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="font-size: 14px; font-weight: 700; color: #0277BD; margin-bottom: 12px;" id="formTitleNutrisi">Catat Cek Nutrisi Harian</div>
+                    <form id="formNutrisi">
+                        <input type="hidden" id="nutrisiId">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pengecekan</label>
+                                <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Cek</label>
+                                <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Pagi">Pagi</option>
+                                    <option value="Sore">Sore</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">HST (Hari Setelah Tanam)</label>
+                                <input type="number" id="nutrisiHst" placeholder="Contoh: 15" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fase Tanaman</label>
+                                <select id="nutrisiFase" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Vegetatif Awal (Bibit/Pindahan)">Vegetatif Awal</option>
+                                    <option value="Vegetatif Pertumbuhan">Vegetatif Pertumbuhan</option>
+                                    <option value="Pembungaan / Polinasi">Pembungaan / Polinasi</option>
+                                    <option value="Pembesaran Buah">Pembesaran Buah</option>
+                                    <option value="Pematangan Buah / Ripening">Pematangan Buah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">PPM Aktual (Tercatat)</label>
+                                <input type="number" id="nutrisiPpm" required placeholder="Contoh: 1000" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Target PPM</label>
+                                <input type="number" id="nutrisiTargetPpm" required placeholder="Contoh: 1200" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">pH Aktual</label>
+                                <input type="text" id="nutrisiPh" required placeholder="Contoh: 6.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Aksi Koreksi pH</label>
+                                <select id="nutrisiPhAction" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Aman / Tanpa Koreksi">Aman / Tanpa Koreksi</option>
+                                    <option value="Tambah pH Up">Tambah pH Up</option>
+                                    <option value="Tambah pH Down">Tambah pH Down</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Air Tandon (°C) [Opsional]</label>
+                                <input type="text" id="nutrisiWaterTemp" placeholder="Contoh: 26°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Greenhouse (°C) [Opsional]</label>
+                                <input type="text" id="nutrisiGhTemp" placeholder="Contoh: 32°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Jumlah Nutrisi Ditambahkan, dll.)</label>
+                            <textarea id="nutrisiDesc" rows="2" placeholder="Contoh: Tambah nutrisi A&B mix 200ml, tambah pH up sedikit..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 8px;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #0277BD;"><i class="fas fa-save"></i> Simpan Catatan Nutrisi</button>
+                            <button type="button" id="btnCancelNutrisiEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
+                        </div>
+                    </form>
                 </div>
 
+                <!-- Rekap Data / Tabel Daftar Nutrisi -->
+                <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Tanggal</th>
-                                <th>Zona / Tandon</th>
-                                <th>PPM</th>
-                                <th>pH</th>
-                                <th>Keterangan</th>
+                                <th>Waktu & HST</th>
+                                <th>PPM & pH</th>
+                                <th>Aksi & Catatan</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="nutrisiTableBody">
-                            <!-- Data akan dimuat otomatis -->
+                        <tbody id="tableNutrisiBody">
+                            <!-- Diisi dinamis oleh JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -38,55 +117,163 @@ var nutrisi = (function() {
     }
 
     function init() {
-        loadNutrisiData();
+        loadTable();
 
-        var btnTambah = document.getElementById('btnTambahNutrisi');
-        if (btnTambah) {
-            btnTambah.addEventListener('click', function() {
-                Helper.showToast('Fitur catat nutrisi segera hadir!', 'success');
+        var form = document.getElementById('formNutrisi');
+        var btnCancel = document.getElementById('btnCancelNutrisiEdit');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var id = document.getElementById('nutrisiId').value;
+                var date = document.getElementById('nutrisiDate').value;
+                var timeSlot = document.getElementById('nutrisiTimeSlot').value;
+                var hst = document.getElementById('nutrisiHst').value;
+                var fase = document.getElementById('nutrisiFase').value;
+                var ppm = document.getElementById('nutrisiPpm').value;
+                var targetPpm = document.getElementById('nutrisiTargetPpm').value;
+                var ph = document.getElementById('nutrisiPh').value;
+                var phAction = document.getElementById('nutrisiPhAction').value;
+                var waterTemp = document.getElementById('nutrisiWaterTemp').value;
+                var ghTemp = document.getElementById('nutrisiGhTemp').value;
+                var desc = document.getElementById('nutrisiDesc').value;
+
+                var payload = {
+                    date: date,
+                    timeSlot: timeSlot,
+                    hst: hst,
+                    fase: fase,
+                    ppm: ppm,
+                    targetPpm: targetPpm,
+                    ph: ph,
+                    phAction: phAction,
+                    waterTemp: waterTemp,
+                    ghTemp: ghTemp,
+                    desc: desc,
+                    title: `PPM: ${ppm} (Target: ${targetPpm}) | pH: ${ph}`
+                };
+
+                if (id) {
+                    payload.id = id;
+                    Storage.update(Storage.KEYS.NUTRISI, payload);
+
+                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                        Helper.showToast('Data nutrisi berhasil diperbarui!', 'success');
+                    }
+                } else {
+                    Storage.add(Storage.KEYS.NUTRISI, payload);
+
+                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                        Helper.showToast('Data nutrisi berhasil ditambahkan!', 'success');
+                    }
+                }
+
+                form.reset();
+                document.getElementById('nutrisiId').value = '';
+                document.getElementById('formTitleNutrisi').innerText = 'Catat Cek Nutrisi Harian';
+                if (btnCancel) btnCancel.style.display = 'none';
+
+                loadTable();
+            });
+        }
+
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function() {
+                form.reset();
+                document.getElementById('nutrisiId').value = '';
+                document.getElementById('formTitleNutrisi').innerText = 'Catat Cek Nutrisi Harian';
+                btnCancel.style.display = 'none';
             });
         }
     }
 
-    function loadNutrisiData() {
-        var tbody = document.getElementById('nutrisiTableBody');
+    function loadTable() {
+        var tbody = document.getElementById('tableNutrisiBody');
         if (!tbody) return;
 
-        var list = typeof Storage !== 'undefined' ? Storage.getAll(Storage.KEYS.NUTRISI) : [];
-
-        // Data dummy awal jika masih kosong
-        if (list.length === 0) {
-            list = [
-                { id: 'n_1', tanggal: '2026-08-01', zona: 'Zona Utama A', ppm: '1200', ph: '6.2', keterangan: 'Kondisi stabil' },
-                { id: 'n_2', tanggal: '2026-07-31', zona: 'Zona Utama A', ppm: '1150', ph: '6.1', keterangan: 'Tambah stok AB Mix' }
-            ];
-            if (typeof Storage !== 'undefined') {
-                Storage.saveAll(Storage.KEYS.NUTRISI, list);
-            }
+        var data = Storage.getAll(Storage.KEYS.NUTRISI);
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #777; padding: 20px;">Belum ada catatan nutrisi tercatat.</td></tr>`;
+            return;
         }
 
-        tbody.innerHTML = list.map(function(item) {
-            return `
+        // Urutkan dari tanggal terbaru
+        data.sort(function(a, b) {
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        var html = '';
+        data.forEach(function(item) {
+            html += `
                 <tr>
-                    <td>${Helper.formatDate(item.tanggal)}</td>
-                    <td><strong>${item.zona}</strong></td>
-                    <td><strong>${item.ppm} PPM</strong></td>
-                    <td>${item.ph} pH</td>
-                    <td>${item.keterangan}</td>
+                    <td>
+                        <strong>${item.date}</strong>
+                        <div style="font-size: 11px; color: #0277BD; font-weight: 600; margin-top: 2px;">${item.timeSlot}</div>
+                        <div style="font-size: 11px; color: #555; margin-top: 1px;">HST ${item.hst || '-'} (${item.fase || '-'})</div>
+                    </td>
+                    <td>
+                        <div style="font-size: 12px; font-weight: 700; color: #222;">PPM: ${item.ppm} <span style="font-size: 10px; color: #777; font-weight: normal;">(Target: ${item.targetPpm})</span></div>
+                        <div style="font-size: 12px; color: #444; margin-top: 1px;">pH: <strong>${item.ph}</strong></div>
+                    </td>
+                    <td>
+                        <div style="font-size: 11px; color: #C62828; font-weight: 600;">${item.phAction || '-'}</div>
+                        ${item.waterTemp || item.ghTemp ? '<div style="font-size: 10px; color: #555; margin-top: 1px;">Suhu Air: ' + (item.waterTemp||'-') + ' | GH: ' + (item.ghTemp||'-') + '</div>' : ''}
+                        ${item.desc ? '<div style="font-size: 11px; color: #666; margin-top: 2px; font-style: italic;">' + item.desc + '</div>' : ''}
+                    </td>
                     <td>
                         <div class="table-actions">
-                            <button class="btn-action btn-edit" title="Edit"><i class="fas fa-edit"></i></button>
-                            <button class="btn-action btn-delete" title="Hapus"><i class="fas fa-trash"></i></button>
+                            <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+                            <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `;
-        }).join('');
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    function editItem(id) {
+        var item = Storage.getById(Storage.KEYS.NUTRISI, id);
+        if (!item) return;
+
+        document.getElementById('nutrisiId').value = item.id;
+        document.getElementById('nutrisiDate').value = item.date;
+        document.getElementById('nutrisiTimeSlot').value = item.timeSlot || 'Pagi';
+        document.getElementById('nutrisiHst').value = item.hst || '';
+        document.getElementById('nutrisiFase').value = item.fase || 'Vegetatif Pertumbuhan';
+        document.getElementById('nutrisiPpm').value = item.ppm || '';
+        document.getElementById('nutrisiTargetPpm').value = item.targetPpm || '';
+        document.getElementById('nutrisiPh').value = item.ph || '';
+        document.getElementById('nutrisiPhAction').value = item.phAction || 'Aman / Tanpa Koreksi';
+        document.getElementById('nutrisiWaterTemp').value = item.waterTemp || '';
+        document.getElementById('nutrisiGhTemp').value = item.ghTemp || '';
+        document.getElementById('nutrisiDesc').value = item.desc || '';
+        document.getElementById('formTitleNutrisi').innerText = 'Edit Data Nutrisi';
+        
+        var btnCancel = document.getElementById('btnCancelNutrisiEdit');
+        if (btnCancel) btnCancel.style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+        if (confirm('Apakah kamu yakin ingin menghapus data nutrisi ini?')) {
+            Storage.remove(Storage.KEYS.NUTRISI, id);
+            loadTable();
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast('Data nutrisi berhasil dihapus', 'error');
+            }
+        }
     }
 
     return {
         render: render,
-        init: init
+        init: init,
+        editItem: editItem,
+        deleteItem: deleteItem
     };
 
 })();
+                                                                                                           
