@@ -101,7 +101,7 @@ var nutrisi = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data / Card List Grid 2x2 -->
+                <!-- Rekap Data / Card List Grid 2x2 Presisi -->
                 <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
                 <div id="containerNutrisiCards">
                     <!-- Diisi dinamis oleh JavaScript -->
@@ -301,5 +301,4 @@ var nutrisi = (function() {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteItem
-    
+        deleteItem: deleteI
