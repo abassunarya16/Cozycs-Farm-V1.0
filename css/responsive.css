@@ -1,0 +1,60 @@
+/* ========================================== */
+/* COZYCS FARM - RESPONSIVE STYLES */
+/* ========================================== */
+
+/* ------------------------------------------ */
+/* UNTUK LAYAR SEDANG (TABLET / HP LANDSCAPE) */
+/* ------------------------------------------ */
+@media (min-width: 600px) {
+    /* Kartu statistik di Dasbor jadi 3 kolom agar tidak terlalu lebar */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ------------------------------------------ */
+/* UNTUK LAYAR BESAR (LAPTOP / DESKTOP)       */
+/* ------------------------------------------ */
+@media (min-width: 992px) {
+    /* Batasi lebar konten utama agar tidak melar jelek ke ujung layar */
+    .main-content {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-top: 24px;
+    }
+
+    /* Kartu statistik Dasbor jadi 4 kolom */
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Penyesuaian Modal (Pop-up) untuk Laptop */
+    .modal-container {
+        align-items: center; /* Posisikan modal di tengah layar, bukan di bawah */
+    }
+
+    .modal-content {
+        border-radius: 16px; /* Melengkung di semua sudut */
+        max-width: 500px;
+        /* Ubah animasi dari slide-up menjadi zoom-in yang lebih elegan di desktop */
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    }
+
+    .modal-container.show .modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    /* Batasi form input agar tidak terlalu panjang */
+    .form-group {
+        max-width: 100%;
+    }
+    
+    /* Tombol-tombol di dalam tabel dibuat sedikit lebih lega */
+    .btn-action {
+        width: 36px;
+        height: 36px;
+    }
+}
