@@ -25,7 +25,7 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">2. ID GH</label>
-                                <input type="text" id="tanamanGhId" placeholder="Contoh: GH-01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="tanamanBlok" placeholder="Contoh: GH-01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">5. Varietas</label>
@@ -37,11 +37,11 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">3. Talang</label>
-                                <input type="number" id="tanamanTalang" placeholder="Contoh: 1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="tanamanHidup" placeholder="Contoh: 1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">4. Lubang</label>
-                                <input type="number" id="tanamanLubang" placeholder="Contoh: 12" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="tanamanMati" placeholder="Contoh: 12" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
@@ -49,11 +49,11 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">6. Tanggal Semai</label>
-                                <input type="date" id="tanamanTglSemai" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="tanamanTinggi" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">7. Tanggal Tanam</label>
-                                <input type="date" id="tanamanTglTanam" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="tanamanDaun" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
@@ -61,7 +61,7 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">8. HST</label>
-                                <input type="number" id="tanamanHst" placeholder="Contoh: 25" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="tanamanBuah" placeholder="Contoh: 25" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">9. HSP</label>
@@ -73,7 +73,7 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">10. Status Tanaman</label>
-                                <select id="tanamanStatus" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                <select id="tanamanVigor" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Hidup">Hidup</option>
                                     <option value="Sakit">Sakit</option>
                                     <option value="Mati">Mati</option>
@@ -81,7 +81,7 @@ var tanaman = (function() {
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">11. Status Polinasi</label>
-                                <select id="tanamanStatusPolinasi" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                <select id="tanamanPolinasi" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Belum Polinasi">Belum Polinasi</option>
                                     <option value="Proses Polinasi">Proses Polinasi</option>
                                     <option value="Sudah Polinasi">Sudah Polinasi</option>
@@ -93,7 +93,7 @@ var tanaman = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">12. Status Panen</label>
-                                <select id="tanamanStatusPanen" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                <select id="tanamanPanen" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Belum Panen">Belum Panen</option>
                                     <option value="Siap Panen">Siap Panen</option>
                                     <option value="Panen">Panen</option>
@@ -145,33 +145,33 @@ var tanaman = (function() {
 
                 var id = document.getElementById('tanamanId').value;
                 var date = document.getElementById('tanamanDate').value;
-                var ghId = document.getElementById('tanamanGhId').value;
-                var talang = document.getElementById('tanamanTalang').value;
-                var lubang = document.getElementById('tanamanLubang').value;
                 var varietas = document.getElementById('tanamanVarietas').value;
-                var tglSemai = document.getElementById('tanamanTglSemai').value;
-                var tglTanam = document.getElementById('tanamanTglTanam').value;
-                var hst = document.getElementById('tanamanHst').value;
-                var hsp = document.getElementById('tanamanHsp').value;
-                var statusTanaman = document.getElementById('tanamanStatus').value;
-                var statusPolinasi = document.getElementById('tanamanStatusPolinasi').value;
-                var statusPanen = document.getElementById('tanamanStatusPanen').value;
-                var statusBuah = document.getElementById('tanamanStatusBuah').value;
+                var blok = document.getElementById('tanamanBlok').value;
+                var hidup = document.getElementById('tanamanHidup').value;
+                var mati = document.getElementById('tanamanMati').value;
+                var tinggi = document.getElementById('tanamanTinggi').value;
+                var daun = document.getElementById('tanamanDaun').value;
+                var buah = document.getElementById('tanamanBuah').value;
+                var hsp = document.getElementById('tanamanHsp') ? document.getElementById('tanamanHsp').value : '';
+                var vigor = document.getElementById('tanamanVigor').value;
+                var polinasi = document.getElementById('tanamanPolinasi') ? document.getElementById('tanamanPolinasi').value : '';
+                var panen = document.getElementById('tanamanPanen') ? document.getElementById('tanamanPanen').value : '';
+                var statusBuah = document.getElementById('tanamanStatusBuah') ? document.getElementById('tanamanStatusBuah').value : '';
                 var desc = document.getElementById('tanamanDesc').value;
 
                 var payload = {
                     date: date,
-                    ghId: ghId || '-',
-                    talang: talang || '-',
-                    lubang: lubang || '-',
                     varietas: varietas || '-',
-                    tglSemai: tglSemai || '-',
-                    tglTanam: tglTanam || '-',
-                    hst: hst || '0',
-                    hsp: hsp || '0',
-                    statusTanaman: statusTanaman || 'Hidup',
-                    statusPolinasi: statusPolinasi || 'Belum Polinasi',
-                    statusPanen: statusPanen || 'Belum Panen',
+                    blok: blok || '-',
+                    hidup: hidup || '-',
+                    mati: mati || '-',
+                    tinggi: tinggi || '-',
+                    daun: daun || '-',
+                    buah: buah || '-',
+                    hsp: hsp || '-',
+                    vigor: vigor || 'Hidup',
+                    polinasi: polinasi || 'Belum Polinasi',
+                    panen: panen || 'Belum Panen',
                     statusBuah: statusBuah || 'Belum Ada',
                     desc: desc
                 };
@@ -229,50 +229,50 @@ var tanaman = (function() {
         data.forEach(function(item) {
             html += `
                 <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Card: Tanggal Penginputan & Varietas -->
+                    <!-- Header Card: Tanggal Monitoring -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: #222;">${item.date}</strong>
-                            <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.varietas || '-'}</span>
+                            <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">Monitoring Tanaman</span>
                         </div>
                     </div>
 
                     <!-- Grid 4 Kotak (2x2) Ukuran Sama Rata -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         
-                        <!-- 1. Kiri Atas: ID GH, Talang & Lubang -->
+                        <!-- 1. Kiri Atas: Varietas & GH -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Lokasi & Penempatan</div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Varietas & GH</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-warehouse" style="color: #2E7D32; width: 14px;"></i> <strong>GH: ${item.ghId || '-'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-th" style="color: #E65100; width: 14px;"></i> <strong>Talang ${item.talang || '-'} / Lubang ${item.lubang || '-'}</strong></div>
+                                <div><i class="fas fa-seedling" style="color: #2E7D32; width: 14px;"></i> <strong>${item.varietas}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-warehouse" style="color: #E65100; width: 14px;"></i> <strong>GH: ${item.blok}</strong></div>
                             </div>
                         </div>
 
-                        <!-- 2. Kanan Atas: Tanggal Semai, Tanam, HST & HSP -->
+                        <!-- 2. Kanan Atas: Talang & Lubang -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Umur & Tanggal</div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Talang & Lubang</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-clock" style="color: #0277BD; width: 14px;"></i> <strong>HST: ${item.hst || '0'} | HSP: ${item.hsp || '0'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-calendar-alt" style="color: #6A1B9A; width: 14px;"></i> <strong>Tanam: ${item.tglTanam || '-'}</strong></div>
+                                <div><i class="fas fa-th" style="color: #0277BD; width: 14px;"></i> <strong>Talang: ${item.hidup}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-circle" style="color: #C62828; width: 14px;"></i> <strong>Lubang: ${item.mati}</strong></div>
                             </div>
                         </div>
 
-                        <!-- 3. Kiri Bawah: Status Tanaman & Polinasi -->
+                        <!-- 3. Kiri Bawah: Umur (HST & HSP) -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Kondisi & Polinasi</div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Umur Tanaman</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-heartbeat" style="color: #388E3C; width: 14px;"></i> <strong>Tanaman: ${item.statusTanaman || 'Hidup'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-microscope" style="color: #C2185B; width: 14px;"></i> <strong>Polinasi: ${item.statusPolinasi || 'Belum'}</strong></div>
+                                <div><i class="fas fa-clock" style="color: #0288D1; width: 14px;"></i> <strong>HST: ${item.buah}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-history" style="color: #4CAF50; width: 14px;"></i> <strong>HSP: ${item.hsp || '-'}</strong></div>
                             </div>
                         </div>
 
-                        <!-- 4. Kanan Bawah: Status Buah & Panen -->
+                        <!-- 4. Kanan Bawah: Kondisi & Status -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Buah & Panen</div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Kondisi & Status</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-apple-alt" style="color: #F57F17; width: 14px;"></i> <strong>Buah: ${item.statusBuah || '-'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-shopping-basket" style="color: #1976D2; width: 14px;"></i> <strong>Panen: ${item.statusPanen || '-'}</strong></div>
+                                <div><i class="fas fa-heartbeat" style="color: #F57F17; width: 14px;"></i> <strong>${item.vigor}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-apple-alt" style="color: #D32F2F; width: 14px;"></i> <strong>${item.statusBuah || '-'}</strong></div>
                             </div>
                         </div>
 
@@ -285,4 +285,13 @@ var tanaman = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
                         <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
-  
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function editItem(id) {
+        var item = S
