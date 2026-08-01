@@ -1,0 +1,112 @@
+/* ========================================== */
+/* COZYCS FARM - FORM STYLES */
+/* ========================================== */
+
+/* Wadah setiap input */
+.form-group {
+    margin-bottom: 16px;
+}
+
+/* Label teks di atas input */
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+/* Kolom input, select, dan textarea */
+.form-control {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Efek saat kolom input sedang diketik/diklik */
+.form-control:focus {
+    outline: none;
+    border-color: #2E7D32;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+/* Khusus text area biar bisa ditarik memanjang ke bawah */
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ========================================== */
+/* GAYA TOMBOL (BUTTONS) */
+/* ========================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    width: 100%;
+}
+
+/* Efek membal saat tombol ditekan */
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Tombol Utama (Hijau) */
+.btn-primary {
+    background-color: #2E7D32;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #1B5E20;
+}
+
+/* Tombol Bahaya / Hapus (Merah) */
+.btn-danger {
+    background-color: #D32F2F;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background-color: #B71C1C;
+}
+
+/* Tombol Sekunder / Batal (Abu-abu) */
+.btn-secondary {
+    background-color: #f5f5f5;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+    background-color: #e0e0e0;
+}
+
+/* Wadah jika ada dua tombol bersebelahan (Simpan & Batal) */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-actions .btn {
+    flex: 1;
+}
