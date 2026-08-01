@@ -25,13 +25,14 @@
     top: 0;
     left: -280px;
     width: 280px;
-    height: 100%;
+    height: 100vh; /* Memastikan tinggi pas penuh satu layar HP */
     background: #ffffff;
     z-index: 1000;
     box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-    transition: left 0.3s ease;
+    transition: transform 0.3s ease, left 0.3s ease;
     display: flex;
     flex-direction: column;
+    will-change: left; /* Optimasi hardware acceleration GPU HP */
 }
 
 .app-sidebar.active {
@@ -45,7 +46,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-shrink: 0; /* Agar header tidak ikut menyusut */
+    flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -65,8 +66,8 @@
     padding: 12px;
     overflow-y: auto;
     flex: 1;
-    -webkit-overflow-scrolling: touch; /* Mengaktifkan momentum scroll yang halus di HP (iOS/Android) */
-    overscroll-behavior: contain;    /* Mencegah efek kaku/bouncing tembus ke latar belakang */
+    -webkit-overflow-scrolling: touch; /* Mengaktifkan momentum geser super halus */
+    overscroll-behavior-y: contain;   /* Mencegah layar ikut tertarik ke bawah/atas */
 }
 
 .sidebar-group-title {
@@ -96,9 +97,8 @@
     text-align: left;
 }
 
-.sidebar-item:hover {
-    background: #E8F5E9;
-    color: #1B5E20;
+.sidebar-item:active {
+    background: #E8F5E9; /* Respons sentuh instan saat ditekan di layar HP */
 }
 
 .sidebar-item i {
