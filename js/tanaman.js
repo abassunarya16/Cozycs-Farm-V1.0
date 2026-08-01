@@ -4,6 +4,36 @@
 
 var tanaman = (function() {
 
+    // Fungsi untuk mengisi opsi dropdown ID GH dari data Greenhouse
+    function populateGhDropdown() {
+        var selectEl = document.getElementById('tanamanGh');
+        if (!selectEl) return;
+
+        var keyGh = (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GREENHOUSE) ? Storage.KEYS.GREENHOUSE : 'cozycs_greenhouse';
+        var dataGh = [];
+
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                dataGh = Storage.getAll(keyGh) || [];
+            }
+        } catch(e) {
+            dataGh = [];
+        }
+
+        var optionsHtml = '<option value="">-- Pilih Greenhouse --</option>';
+        if (Array.isArray(dataGh) && dataGh.length > 0) {
+            dataGh.forEach(function(gh) {
+                if (gh && gh.kode) {
+                    optionsHtml += `<option value="${gh.kode}">${gh.kode} - ${gh.nama || 'GH'}</option>`;
+                }
+            });
+        } else {
+            optionsHtml += '<option value="GH-01">GH-01 (Default)</option>';
+        }
+
+        selectEl.innerHTML = optionsHtml;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
@@ -21,11 +51,13 @@ var tanaman = (function() {
                             <input type="date" id="tanamanDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- ID GH & Varietas -->
+                        <!-- ID GH (Dropdown Konek ke Modul Greenhouse) & Varietas -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
-                                <input type="text" id="tanamanGh" placeholder="Contoh: GH-01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <select id="tanamanGh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="">-- Pilih Greenhouse --</option>
+                                </select>
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas</label>
@@ -134,6 +166,7 @@ var tanaman = (function() {
     }
 
     function init() {
+        populateGhDropdown();
         loadTable();
 
         var form = document.getElementById('formTanaman');
@@ -215,7 +248,7 @@ var tanaman = (function() {
         if (!container) return;
 
         var data = Storage.getAll(Storage.KEYS.TANAMAN);
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada data tanaman tercatat.</div>`;
             return;
         }
@@ -296,6 +329,8 @@ var tanaman = (function() {
     function editItem(id) {
         var item = Storage.getById(Storage.KEYS.TANAMAN, id);
         if (!item) return;
+
+        populateGhDropdown();
 
         document.getElementById('tanamanId').value = item.id;
         document.getElementById('tanamanDate').value = item.date;
