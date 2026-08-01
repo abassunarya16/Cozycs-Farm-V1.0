@@ -40,6 +40,11 @@
                 </div>
             </div>
             <div class="header-actions">
+                <!-- Tombol Ikon Notifikasi / Alarm -->
+                <button class="header-notif-btn" id="btnHeaderNotif" title="Notifikasi & Alarm">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge"></span>
+                </button>
                 <!-- Toast Notification Container -->
                 <div id="toastContainer" class="toast-container"></div>
             </div>
@@ -188,6 +193,18 @@
             };
 
             navigateTo('dashboard');
+
+            // Inisialisasi Event Listener untuk Ikon Notifikasi di Header
+            var btnNotif = document.getElementById('btnHeaderNotif');
+            if (btnNotif) {
+                btnNotif.addEventListener('click', function() {
+                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                        Helper.showToast('Alarm: Jadwal penyemprotan pestisida berikutnya dalam 2 hari!', 'error');
+                    } else {
+                        alert('Alarm: Jadwal penyemprotan pestisida berikutnya dalam 2 hari!');
+                    }
+                });
+            }
         });
 
         // Event listener global untuk navigasi bawah & elemen aksi cepat
@@ -262,4 +279,5 @@
         }
     </script>
 </body>
-</html>
+                    </html>
+                    
