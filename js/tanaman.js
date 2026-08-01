@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL DATABASE TANAMAN (CRUD)
+// COZYCS FARM - MODUL MANAJEMEN TANAMAN (CRUD)
 // ==========================================
 
 var tanaman = (function() {
@@ -7,11 +7,11 @@ var tanaman = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Database & Data Tanaman</div>
+                <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Monitoring & Data Tanaman</div>
                 
                 <!-- Form Input / Edit Data Tanaman -->
                 <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">Tambah Data Tanaman</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">Catat Perkembangan Tanaman</div>
                     <form id="formTanaman">
                         <input type="hidden" id="tanamanId">
                         
@@ -21,19 +21,19 @@ var tanaman = (function() {
                             <input type="date" id="tanamanDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 2. ID GH & Varietas -->
+                        <!-- 2. ID GH & 5. Varietas -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID Greenhouse (GH)</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
                                 <input type="text" id="tanamanGhId" placeholder="Contoh: GH-01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas Melon</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas</label>
                                 <input type="text" id="tanamanVarietas" required placeholder="Contoh: Intanon" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 3. Talang & Lubang -->
+                        <!-- 3. Talang & 4. Lubang -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Talang</label>
@@ -45,7 +45,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Tanggal Semai & Tanggal Tanam -->
+                        <!-- 6. Tanggal Semai & 7. Tanggal Tanam -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Semai</label>
@@ -57,7 +57,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 5. HST & HSP -->
+                        <!-- 8. HST & 9. HSP -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">HST (Hari Setelah Tanam)</label>
@@ -69,7 +69,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 6. Status Tanaman & Status Polinasi -->
+                        <!-- 10. Status Tanaman & 11. Status Polinasi -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Status Tanaman</label>
@@ -89,7 +89,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 7. Status Buah & Status Panen -->
+                        <!-- 12. Status Panen & 13. Status Buah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Status Buah</label>
@@ -111,10 +111,10 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 8. Catatan -->
+                        <!-- 14. Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan</label>
-                            <textarea id="tanamanDesc" rows="2" placeholder="Catatan khusus kondisi tanaman..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <textarea id="tanamanDesc" rows="2" placeholder="Catatan perkembangan tanaman..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -125,7 +125,7 @@ var tanaman = (function() {
                 </div>
 
                 <!-- Rekap Data / Card List Grid 2x2 -->
-                <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> Rekap Database Tanaman</div>
+                <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> Rekap Data & Perkembangan Tanaman</div>
                 <div id="containerTanamanCards">
                     <!-- Diisi dinamis oleh JavaScript -->
                 </div>
@@ -193,7 +193,7 @@ var tanaman = (function() {
 
                 form.reset();
                 document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Tambah Data Tanaman';
+                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
@@ -204,7 +204,7 @@ var tanaman = (function() {
             btnCancel.addEventListener('click', function() {
                 form.reset();
                 document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Tambah Data Tanaman';
+                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
                 btnCancel.style.display = 'none';
             });
         }
@@ -285,5 +285,4 @@ var tanaman = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
                         <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
-                    </div>
-              
+    
