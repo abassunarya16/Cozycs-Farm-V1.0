@@ -233,10 +233,10 @@ var nutrisi = (function() {
                         </div>
                     ` : ''}
 
-                    <!-- Tombol Aksi Card (Edit di Kiri, Hapus di Kanan) -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px;">
-                        <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit" style="padding: 4px 12px; font-size: 11px; border-radius: 6px; background: #FFF8E1; color: #F57F17; border: 1px solid #ffe082; cursor: pointer; font-weight: 600;"><i class="fas fa-pen"></i> Edit</button>
-                        <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="padding: 4px 12px; font-size: 11px; border-radius: 6px; background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; cursor: pointer; font-weight: 600;"><i class="fas fa-trash"></i> Hapus</button>
+                    <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
+                        <span onclick="nutrisi.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
+                        <span onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
                     </div>
                 </div>
             `;
@@ -287,3 +287,4 @@ var nutrisi = (function() {
     };
 
 })();
+            
