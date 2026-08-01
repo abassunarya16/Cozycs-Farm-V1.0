@@ -133,16 +133,43 @@
     <script src="js/keuangan.js"></script>
     <script src="js/setting.js"></script>
 
-    <!-- App Router / Core Script Utama -->
+    <!-- App Router & Global Navigation Script -->
     <script>
+        var pages = {};
+
+        function navigateTo(pageName) {
+            var targetModule = pages[pageName];
+            var mainContent = document.getElementById('mainContent');
+
+            if (targetModule && mainContent) {
+                mainContent.innerHTML = targetModule.render();
+                
+                if (typeof targetModule.init === 'function') {
+                    targetModule.init();
+                }
+
+                // Perbarui kelas aktif pada navigasi bawah
+                var navItems = document.querySelectorAll('.bottom-nav .nav-item');
+                navItems.forEach(function(item) {
+                    if (item.getAttribute('data-page') === pageName) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+
+                window.scrollTo(0, 0);
+            } else {
+                console.warn('[Router] Modul tidak ditemukan:', pageName);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Inisialisasi LocalStorage jika belum ada
             if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
                 Storage.init();
             }
 
-            // Pemetaan halaman (Router sederhana)
-            var pages = {
+            pages = {
                 'dashboard': dashboard,
                 'greenhouse': greenhouse,
                 'tanaman': tanaman,
@@ -160,60 +187,26 @@
                 'setting': setting
             };
 
-            function navigateTo(pageName) {
-                var targetModule = pages[pageName];
-                var mainContent = document.getElementById('mainContent');
+            navigateTo('dashboard');
+        });
 
-                if (targetModule && mainContent) {
-                    // Render HTML modul ke main content
-                    mainContent.innerHTML = targetModule.render();
-                    
-                    // Jalankan fungsi inisialisasi modul jika ada
-                    if (typeof targetModule.init === 'function') {
-                        targetModule.init();
-                    }
-
-                    // Perbarui kelas aktif pada navigasi bawah
-                    var navItems = document.querySelectorAll('.bottom-nav .nav-item');
-                    navItems.forEach(function(item) {
-                        if (item.getAttribute('data-page') === pageName) {
-                            item.classList.add('active');
-                        } else {
-                            item.classList.remove('active');
-                        }
-                    });
-
-                    // Scroll kembali ke atas
-                    window.scrollTo(0, 0);
-                } else {
-                    console.warn('[Router] Modul tidak ditemukan:', pageName);
+        // Event listener global untuk navigasi bawah & elemen aksi cepat
+        document.addEventListener('click', function(e) {
+            var navBtn = e.target.closest('.bottom-nav .nav-item');
+            if (navBtn) {
+                var page = navBtn.getAttribute('data-page');
+                if (page) {
+                    navigateTo(page);
                 }
             }
 
-            // Event listener untuk tombol navigasi bawah
-            var navButtons = document.querySelectorAll('.bottom-nav .nav-item');
-            navButtons.forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var page = this.getAttribute('data-page');
-                    if (page) {
-                        navigateTo(page);
-                    }
-                });
-            });
-
-            // Event listener global untuk tombol aksi cepat (data-page di dalam elemen lain)
-            document.addEventListener('click', function(e) {
-                var targetBtn = e.target.closest('[data-page]');
-                if (targetBtn && !targetBtn.classList.contains('nav-item') && !targetBtn.classList.contains('sidebar-item')) {
-                    var page = targetBtn.getAttribute('data-page');
-                    if (page) {
-                        navigateTo(page);
-                    }
+            var targetBtn = e.target.closest('[data-page]');
+            if (targetBtn && !targetBtn.classList.contains('nav-item') && !targetBtn.classList.contains('sidebar-item')) {
+                var page = targetBtn.getAttribute('data-page');
+                if (page) {
+                    navigateTo(page);
                 }
-            });
-
-            // Muat halaman awal (Dasbor)
-            navigateTo('dashboard');
+            }
         });
     </script>
 
@@ -236,21 +229,12 @@
             if (btnClose) btnClose.addEventListener('click', toggleSidebar);
             if (overlay) overlay.addEventListener('click', toggleSidebar);
 
-            // Navigasi dari Sidebar
+            // Navigasi fungsional dari item Sidebar
             document.querySelectorAll('.sidebar-item').forEach(function(item) {
                 item.addEventListener('click', function() {
                     var page = this.getAttribute('data-page');
                     if (page) {
-                        var targetModule = pages[page]; // Menggunakan router map yang ada
-                        // Memicu navigasi modul
-                        var mainContent = document.getElementById('mainContent');
-                        if (targetModule && mainContent) {
-                            mainContent.innerHTML = targetModule.render();
-                            if (typeof targetModule.init === 'function') {
-                                targetModule.init();
-                            }
-                            window.scrollTo(0, 0);
-                        }
+                        navigateTo(page);
                     }
                     if (sidebar && overlay) {
                         sidebar.classList.remove('active');
