@@ -9,70 +9,70 @@ var tanaman = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Monitoring & Data Tanaman</div>
                 
-                <!-- Form Input / Edit Data Tanaman (14 Poin Lengkap) -->
+                <!-- Form Input / Edit Data Tanaman -->
                 <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">Catat Perkembangan Tanaman</div>
                     <form id="formTanaman">
                         <input type="hidden" id="tanamanId">
                         
-                        <!-- 1. Tanggal Penginputan -->
+                        <!-- Tanggal Penginputan -->
                         <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">1. Tanggal Penginputan</label>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Penginputan</label>
                             <input type="date" id="tanamanDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 2. ID GH & 5. Varietas -->
+                        <!-- ID GH & Varietas -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">2. ID GH</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
                                 <input type="text" id="tanamanGh" placeholder="Contoh: GH-01" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">5. Varietas</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas</label>
                                 <input type="text" id="tanamanVarietas" required placeholder="Contoh: Intanon" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 3. Talang & 4. Lubang -->
+                        <!-- Talang & Lubang -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">3. Talang</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Talang</label>
                                 <input type="number" id="tanamanTalang" placeholder="Contoh: 1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">4. Lubang</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Lubang</label>
                                 <input type="number" id="tanamanLubang" placeholder="Contoh: 12" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 6. Tanggal Semai & 7. Tanggal Tanam -->
+                        <!-- Tanggal Semai & Tanggal Tanam -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">6. Tanggal Semai</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Semai</label>
                                 <input type="date" id="tanamanTglSemai" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">7. Tanggal Tanam</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Tanam</label>
                                 <input type="date" id="tanamanTglTanam" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 8. HST & 9. HSP -->
+                        <!-- HST & HSP -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">8. HST (Hari Stl Tanam)</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">HST</label>
                                 <input type="number" id="tanamanHst" placeholder="Contoh: 25" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">9. HSP (Hari Stl Polinasi)</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">HSP</label>
                                 <input type="number" id="tanamanHsp" placeholder="Contoh: 10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- 10. Status Tanaman & 11. Status Polinasi -->
+                        <!-- Status Tanaman & Status Polinasi -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">10. Status Tanaman</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Status Tanaman</label>
                                 <select id="tanamanStatus" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Hidup">Hidup</option>
                                     <option value="Sakit">Sakit</option>
@@ -80,7 +80,7 @@ var tanaman = (function() {
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">11. Status Polinasi</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Status Polinasi</label>
                                 <select id="tanamanPolinasi" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Belum Polinasi">Belum Polinasi</option>
                                     <option value="Proses Polinasi">Proses Polinasi</option>
@@ -89,10 +89,10 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 12. Status Panen & 13. Status Buah -->
+                        <!-- Status Panen & Status Buah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">12. Status Panen</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Status Panen</label>
                                 <select id="tanamanPanen" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Belum Panen">Belum Panen</option>
                                     <option value="Siap Panen">Siap Panen</option>
@@ -100,7 +100,7 @@ var tanaman = (function() {
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">13. Status Buah</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Status Buah</label>
                                 <select id="tanamanBuah" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
                                     <option value="Belum Ada">Belum Ada</option>
                                     <option value="Pentil / Seleksi">Pentil / Seleksi</option>
@@ -111,9 +111,9 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 14. Catatan -->
+                        <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">14. Catatan</label>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan</label>
                             <textarea id="tanamanDesc" rows="2" placeholder="Catatan perkembangan tanaman..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
@@ -299,43 +299,4 @@ var tanaman = (function() {
 
         document.getElementById('tanamanId').value = item.id;
         document.getElementById('tanamanDate').value = item.date;
-        document.getElementById('tanamanGh').value = item.gh === '-' ? '' : item.gh;
-        document.getElementById('tanamanVarietas').value = item.varietas === '-' ? '' : item.varietas;
-        document.getElementById('tanamanTalang').value = item.talang === '-' ? '' : item.talang;
-        document.getElementById('tanamanLubang').value = item.lubang === '-' ? '' : item.lubang;
-        document.getElementById('tanamanTglSemai').value = item.tglSemai === '-' ? '' : item.tglSemai;
-        document.getElementById('tanamanTglTanam').value = item.tglTanam === '-' ? '' : item.tglTanam;
-        document.getElementById('tanamanHst').value = item.hst === '-' ? '' : item.hst;
-        document.getElementById('tanamanHsp').value = item.hsp === '-' ? '' : item.hsp;
-        document.getElementById('tanamanStatus').value = item.status || 'Hidup';
-        document.getElementById('tanamanPolinasi').value = item.polinasi || 'Belum Polinasi';
-        document.getElementById('tanamanPanen').value = item.panen || 'Belum Panen';
-        document.getElementById('tanamanBuah').value = item.buah || 'Belum Ada';
-        document.getElementById('tanamanDesc').value = item.desc || '';
-
-        document.getElementById('formTitleTanaman').innerText = 'Edit Data Tanaman';
-        
-        var btnCancel = document.getElementById('btnCancelTanamanEdit');
-        if (btnCancel) btnCancel.style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus data tanaman ini?')) {
-            Storage.remove(Storage.KEYS.TANAMAN, id);
-            loadTable();
-            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast('Data tanaman berhasil dihapus', 'error');
-            }
-        }
-    }
-
-    return {
-        render: render,
-        init: init,
-        editItem: editItem,
-        deleteItem: deleteItem
-    };
-
-})();
+        document.getElementById('tanamanGh').value = item.gh === '-'
