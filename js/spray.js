@@ -298,8 +298,9 @@ var spray = (function() {
 
     function syncToSchedules(item) {
         var schedules = Storage.getAll('cozycs_schedules');
+        var prodText = (item.productBubuk !== '-' ? item.productBubuk : '') + ' ' + (item.productCairan !== '-' ? item.productCairan : '');
         var schedulePayload = Object.assign({}, item, {
-            title: 'Spray: ' + (item.productBubuk !== '-' ? item.productBubuk : '') + ' ' + (item.productCairan !== '-' ? item.productCairan : '')
+            title: 'Spray: ' + (prodText.trim() ? prodText : 'Aktivitas Spray')
         });
         
         var index = schedules.findIndex(function(s) { return s.id === item.id; });
@@ -307,8 +308,4 @@ var spray = (function() {
             schedules[index] = schedulePayload;
         } else {
             schedules.unshift(schedulePayload);
-        }
-        Storage.saveAll('cozycs_schedules', schedules);
-    }
-
   
