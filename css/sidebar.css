@@ -1,6 +1,5 @@
 /* ========================================== */
 /* COZYCS FARM - SIDEBAR DRAWER STYLES        */
-/* (Diadaptasi langsung dari project pertama)  */
 /* ========================================== */
 
 .app-sidebar {
@@ -15,7 +14,7 @@
     display: flex;
     flex-direction: column;
     box-shadow: 4px 0 15px rgba(0,0,0,0.15);
-    overflow-y: auto; /* Kunci utama agar seluruh isi sidebar bisa digulir dengan sempurna */
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -106,4 +105,12 @@
 
 .sidebar-overlay.active {
     display: block;
+}
+
+/* Pengunci layar agar background tidak ikut terseret */
+body.sidebar-open {
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
