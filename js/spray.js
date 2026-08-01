@@ -16,8 +16,35 @@ var spray = (function() {
                         <input type="hidden" id="sprayId">
                         
                         <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Jenis Pestisida / Fungisida / Pupuk</label>
-                            <input type="text" id="sprayName" required placeholder="Contoh: Fungisida Dithane M-45" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk / Pestisida / Fungisida</label>
+                            <input type="text" id="sprayProduct" required placeholder="Contoh: Dithane M-45 / Confidor" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis</label>
+                            <input type="text" id="sprayDose" required placeholder="Contoh: 2 gram / liter air" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Sasaran Hama & Penyakit</label>
+                                <select id="sprayTarget" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Pencegahan Umum / Rutin">Pencegahan Umum / Rutin</option>
+                                    <option value="Kutu Kebul (Whitefly)">Kutu Kebul (Whitefly)</option>
+                                    <option value="Thrips & Tungau">Thrips & Tungau</option>
+                                    <option value="Ulat Penggerek Daun/Buah">Ulat Penggerek Daun/Buah</option>
+                                    <option value="Jamur / Embun Tepung (Powdery Mildew)">Jamur / Embun Tepung (Powdery Mildew)</option>
+                                    <option value="Busuk Batang / Akar (Phytophthora)">Busuk Batang / Akar (Phytophthora)</option>
+                                    <option value="Bercak Daun Alternaria">Bercak Daun Alternaria</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Penyemprotan</label>
+                                <select id="sprayTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="Pagi (06:00 - 08:00)">Pagi (06:00 - 08:00)</option>
+                                    <option value="Sore (16:00 - 17:30)">Sore (16:00 - 17:30)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div style="margin-bottom: 10px;">
@@ -26,8 +53,8 @@ var spray = (function() {
                         </div>
 
                         <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis & Catatan</label>
-                            <textarea id="sprayDesc" rows="2" placeholder="Contoh: 2 gram per liter air, semprot merata ke daun bagian bawah..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Opsional)</label>
+                            <textarea id="sprayDesc" rows="2" placeholder="Catatan khusus pelaksanaan..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -44,7 +71,7 @@ var spray = (function() {
                         <thead>
                             <tr>
                                 <th>Tanggal</th>
-                                <th>Jenis / Dosis</th>
+                                <th>Produk & Dosis</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -68,13 +95,19 @@ var spray = (function() {
                 e.preventDefault();
 
                 var id = document.getElementById('sprayId').value;
-                var name = document.getElementById('sprayName').value;
+                var product = document.getElementById('sprayProduct').value;
+                var dose = document.getElementById('sprayDose').value;
+                var target = document.getElementById('sprayTarget').value;
+                var timeSlot = document.getElementById('sprayTimeSlot').value;
                 var date = document.getElementById('sprayDate').value;
                 var desc = document.getElementById('sprayDesc').value;
 
                 var payload = {
-                    title: 'Spray: ' + name,
-                    desc: desc || 'Penyemprotan rutin tanaman hidroponik.',
+                    title: product,
+                    dose: dose,
+                    target: target,
+                    timeSlot: timeSlot,
+                    desc: desc,
                     date: date,
                     module: 'spray',
                     icon: 'fa-spray-can',
@@ -83,21 +116,16 @@ var spray = (function() {
                 };
 
                 if (id) {
-                    // Update data yang sudah ada menggunakan Storage master
                     payload.id = id;
                     Storage.update(Storage.KEYS.SPRAY, payload);
-                    
-                    // Sinkronisasi juga ke tabel schedules alarm
                     syncToSchedules(payload);
 
                     if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                         Helper.showToast('Jadwal spray berhasil diperbarui!', 'success');
                     }
                 } else {
-                    // Tambah data baru menggunakan Storage master
                     var added = Storage.add(Storage.KEYS.SPRAY, payload);
                     if (added) {
-                        // Sinkronisasi ke tabel schedules alarm
                         syncToSchedules(added);
                     }
 
@@ -129,7 +157,6 @@ var spray = (function() {
         var tbody = document.getElementById('tableSprayBody');
         if (!tbody) return;
 
-        // Mengambil data dari master Storage.KEYS.SPRAY
         var data = Storage.getAll(Storage.KEYS.SPRAY);
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">Belum ada jadwal spray tercatat.</td></tr>`;
@@ -140,10 +167,15 @@ var spray = (function() {
         data.forEach(function(item) {
             html += `
                 <tr>
-                    <td><strong>${item.date}</strong></td>
                     <td>
-                        <div style="font-weight: 600; color: #222;">${item.title}</div>
-                        <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.desc || '-'}</div>
+                        <strong>${item.date}</strong>
+                        <div style="font-size: 10px; color: #6A1B9A; font-weight: 600; margin-top: 2px;">${item.timeSlot || ''}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: #222; font-size: 13px;">${item.title}</div>
+                        <div style="font-size: 12px; color: #444; margin-top: 1px;">Dosis: <strong>${item.dose}</strong></div>
+                        <div style="font-size: 11px; color: #666; margin-top: 2px;"><i class="fas fa-bug" style="color: #C62828;"></i> Sasaran: ${item.target || '-'}</div>
+                        ${item.desc ? '<div style="font-size: 11px; color: #777; margin-top: 2px; font-style: italic;">Note: ' + item.desc + '</div>' : ''}
                     </td>
                     <td>
                         <div class="table-actions">
@@ -162,11 +194,11 @@ var spray = (function() {
         var item = Storage.getById(Storage.KEYS.SPRAY, id);
         if (!item) return;
 
-        // Ekstrak nama asli dari title "Spray: [Nama]"
-        var cleanName = item.title.replace('Spray: ', '');
-
         document.getElementById('sprayId').value = item.id;
-        document.getElementById('sprayName').value = cleanName;
+        document.getElementById('sprayProduct').value = item.title;
+        document.getElementById('sprayDose').value = item.dose || '';
+        document.getElementById('sprayTarget').value = item.target || 'Pencegahan Umum / Rutin';
+        document.getElementById('sprayTimeSlot').value = item.timeSlot || 'Pagi (06:00 - 08:00)';
         document.getElementById('sprayDate').value = item.date;
         document.getElementById('sprayDesc').value = item.desc || '';
         document.getElementById('formTitleSpray').innerText = 'Edit Jadwal Spray';
@@ -180,10 +212,7 @@ var spray = (function() {
     function deleteItem(id) {
         if (confirm('Apakah kamu yakin ingin menghapus jadwal spray ini?')) {
             Storage.remove(Storage.KEYS.SPRAY, id);
-            
-            // Hapus juga dari master schedules alarm
             removeFromSchedules(id);
-
             loadTable();
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast('Jadwal spray berhasil dihapus', 'error');
@@ -191,14 +220,17 @@ var spray = (function() {
         }
     }
 
-    // Sinkronisasi ke master schedules untuk alarm H-1
     function syncToSchedules(item) {
         var schedules = Storage.getAll('cozycs_schedules');
+        var schedulePayload = Object.assign({}, item, {
+            title: 'Spray: ' + item.title + ' (Sasaran: ' + item.target + ')'
+        });
+        
         var index = schedules.findIndex(function(s) { return s.id === item.id; });
         if (index >= 0) {
-            schedules[index] = item;
+            schedules[index] = schedulePayload;
         } else {
-            schedules.unshift(item);
+            schedules.unshift(schedulePayload);
         }
         Storage.saveAll('cozycs_schedules', schedules);
     }
@@ -217,3 +249,4 @@ var spray = (function() {
     };
 
 })();
+             
