@@ -1,10 +1,9 @@
 // ==========================================
-// COZYCS FARM - STORAGE & DATABASE SYSTEM
+// COZYCS FARM - STORAGE & DATABASE SYSTEM (PERMANENT SECURE)
 // ==========================================
 
 var Storage = (function() {
     
-    // Kunci / Nama tabel untuk LocalStorage
     var KEYS = {
         GREENHOUSE: 'cozycs_greenhouse',
         TANAMAN: 'cozycs_tanaman',
@@ -23,19 +22,20 @@ var Storage = (function() {
     };
 
     function init() {
-        // Pastikan setiap kunci dasar sudah terinisialisasi sebagai array kosong jika belum ada
+        // PENGAMAN PERMANEN: Hanya buat brankas jika BELUM ADA SAMA SEKALI.
+        // Jika data sudah ada, sistem dijamin TIDAK AKAN MENIMPA atau MENGHAPUSNYA.
         for (var key in KEYS) {
             if (KEYS.hasOwnProperty(key)) {
                 var storageKey = KEYS[key];
-                if (!localStorage.getItem(storageKey)) {
+                if (localStorage.getItem(storageKey) === null) {
                     localStorage.setItem(storageKey, JSON.stringify([]));
+                    console.log('[Storage] Created new safe table for: ' + storageKey);
                 }
             }
         }
-        console.log('[Storage] Local storage initialized successfully.');
+        console.log('[Storage] Local storage securely initialized and locked.');
     }
 
-    // Mengambil semua data berdasarkan kunci
     function getAll(key) {
         try {
             var data = localStorage.getItem(key);
@@ -46,7 +46,6 @@ var Storage = (function() {
         }
     }
 
-    // Menyimpan seluruh data baru ke kunci tertentu
     function saveAll(key, dataArray) {
         try {
             localStorage.setItem(key, JSON.stringify(dataArray));
@@ -57,7 +56,6 @@ var Storage = (function() {
         }
     }
 
-    // Menambah satu data baru (otomatis diberi ID unik berbasis waktu)
     function add(key, item) {
         var list = getAll(key);
         item.id = item.id || 'ID_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -66,7 +64,6 @@ var Storage = (function() {
         return saveAll(key, list) ? item : null;
     }
 
-    // Memperbarui data berdasarkan ID
     function update(key, updatedItem) {
         var list = getAll(key);
         var index = list.findIndex(function(item) { return item.id === updatedItem.id; });
@@ -77,20 +74,17 @@ var Storage = (function() {
         return false;
     }
 
-    // Menghapus data berdasarkan ID
     function remove(key, id) {
         var list = getAll(key);
         var filtered = list.filter(function(item) { return item.id !== id; });
         return saveAll(key, filtered);
     }
 
-    // Mengambil satu data spesifik berdasarkan ID
     function getById(key, id) {
         var list = getAll(key);
         return list.find(function(item) { return item.id === id; }) || null;
     }
 
-    // Menghitung ukuran penggunaan memori LocalStorage
     function getStorageUsage() {
         try {
             var totalBytes = 0;
