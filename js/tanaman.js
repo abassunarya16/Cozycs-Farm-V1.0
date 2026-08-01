@@ -1,292 +1,173 @@
-// ==========================================
-// COZYCS FARM - MODUL MANAJEMEN TANAMAN (CRUD)
-// ==========================================
-
 var tanaman = (function() {
 
     function render() {
-        return `
-            <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Monitoring & Data Tanaman</div>
-                
-                <!-- Form Input / Edit Data Tanaman -->
-                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">Catat Perkembangan Tanaman</div>
-                    <form id="formTanaman">
-                        <input type="hidden" id="tanamanId">
-                        
-                        <!-- 1. Tanggal Pelaksanaan -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Monitoring</label>
-                            <input type="date" id="tanamanDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                        </div>
-
-                        <!-- 2. Varietas & Lokasi Block -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas Melon</label>
-                                <input type="text" id="tanamanVarietas" required placeholder="Contoh: Intanon / Sweet Net" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Blok / Line Bedengan</label>
-                                <input type="text" id="tanamanBlok" placeholder="Contoh: Blok A - Line 1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <!-- 3. Populasi (Tanaman Hidup & Mati/Sulam) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Jumlah Tanaman Hidup</label>
-                                <input type="number" id="tanamanHidup" placeholder="Contoh: 250" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanaman Mati / Sulam</label>
-                                <input type="number" id="tanamanMati" placeholder="Contoh: 3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <!-- 4. Pertumbuhan Vegetatif (Tinggi & Jumlah Daun) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Rata-rata Tinggi (cm)</label>
-                                <input type="text" id="tanamanTinggi" placeholder="Contoh: 120 cm" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Rata-rata Jumlah Daun</label>
-                                <input type="text" id="tanamanDaun" placeholder="Contoh: 15 Helai" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <!-- 5. Status Generatif & Kesehatan -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Jumlah Buah / Polinasi</label>
-                                <input type="text" id="tanamanBuah" placeholder="Contoh: 200 Buah Jadi" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Kondisi Vigor Umum</label>
-                                <select id="tanamanVigor" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Sangat Sehat & Vigour">Sangat Sehat & Vigour</option>
-                                    <option value="Normal / Cukup Baik">Normal / Cukup Baik</option>
-                                    <option value="Terserang Hama Ringan">Terserang Hama Ringan</option>
-                                    <option value="Perlu Perhatian Khusus">Perlu Perhatian Khusus</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- 6. Catatan Tambahan -->
-                        <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Perkembangan (Opsional)</label>
-                            <textarea id="tanamanDesc" rows="2" placeholder="Catatan kondisi tajuk, pruning cabang, seleksi buah..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
-                        </div>
-
-                        <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #2E7D32;"><i class="fas fa-save"></i> Simpan Data Tanaman</button>
-                            <button type="button" id="btnCancelTanamanEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Rekap Data / Card List Grid 2x2 -->
-                <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> Rekap Data & Perkembangan Tanaman</div>
-                <div id="containerTanamanCards">
-                    <!-- Diisi dinamis oleh JavaScript -->
-                </div>
-            </div>
-        `;
-    }
-
-    function init() {
-        loadTable();
-
-        var form = document.getElementById('formTanaman');
-        var btnCancel = document.getElementById('btnCancelTanamanEdit');
-
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                var id = document.getElementById('tanamanId').value;
-                var date = document.getElementById('tanamanDate').value;
-                var varietas = document.getElementById('tanamanVarietas').value;
-                var blok = document.getElementById('tanamanBlok').value;
-                var hidup = document.getElementById('tanamanHidup').value;
-                var mati = document.getElementById('tanamanMati').value;
-                var tinggi = document.getElementById('tanamanTinggi').value;
-                var daun = document.getElementById('tanamanDaun').value;
-                var buah = document.getElementById('tanamanBuah').value;
-                var vigor = document.getElementById('tanamanVigor').value;
-                var desc = document.getElementById('tanamanDesc').value;
-
-                var payload = {
-                    date: date,
-                    varietas: varietas || '-',
-                    blok: blok || '-',
-                    hidup: hidup || '-',
-                    mati: mati || '-',
-                    tinggi: tinggi || '-',
-                    daun: daun || '-',
-                    buah: buah || '-',
-                    vigor: vigor || 'Normal / Cukup Baik',
-                    desc: desc
-                };
-
-                if (id) {
-                    payload.id = id;
-                    Storage.update(Storage.KEYS.TANAMAN, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data tanaman berhasil diperbarui!', 'success');
-                    }
-                } else {
-                    Storage.add(Storage.KEYS.TANAMAN, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data tanaman berhasil ditambahkan!', 'success');
-                    }
-                }
-
-                form.reset();
-                document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
-                if (btnCancel) btnCancel.style.display = 'none';
-
-                loadTable();
-            });
-        }
-
-        if (btnCancel) {
-            btnCancel.addEventListener('click', function() {
-                form.reset();
-                document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
-                btnCancel.style.display = 'none';
-            });
-        }
-    }
-
-    function loadTable() {
-        var container = document.getElementById('containerTanamanCards');
-        if (!container) return;
-
-        var data = Storage.getAll(Storage.KEYS.TANAMAN);
-        if (data.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada data tanaman tercatat.</div>`;
-            return;
-        }
-
-        // Urutkan dari tanggal terbaru
-        data.sort(function(a, b) {
-            return new Date(b.date) - new Date(a.date);
-        });
-
-        var html = '';
-        data.forEach(function(item) {
-            html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Card: Tanggal Monitoring -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 14px; color: #222;">${item.date}</strong>
-                            <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">Monitoring Tanaman</span>
-                        </div>
-                    </div>
-
-                    <!-- Grid 4 Kotak (2x2) Ukuran Sama Rata -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        
-                        <!-- 1. Kiri Atas: Varietas & Blok -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Varietas & Blok</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-seedling" style="color: #2E7D32; width: 14px;"></i> <strong>${item.varietas}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-map-marker-alt" style="color: #E65100; width: 14px;"></i> <strong>${item.blok}</strong></div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Kanan Atas: Populasi Tanaman -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Populasi Tanaman</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-check-circle" style="color: #388E3C; width: 14px;"></i> <strong>Hidup: ${item.hidup}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-times-circle" style="color: #C62828; width: 14px;"></i> <strong>Mati/Sulam: ${item.mati}</strong></div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Kiri Bawah: Pertumbuhan Vegetatif -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Vegetatif</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-ruler-vertical" style="color: #0288D1; width: 14px;"></i> <strong>Tinggi: ${item.tinggi}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-leaf" style="color: #4CAF50; width: 14px;"></i> <strong>Daun: ${item.daun}</strong></div>
-                            </div>
-                        </div>
-
-                        <!-- 4. Kanan Bawah: Generatif & Vigor -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Generatif & Vigor</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-apple-alt" style="color: #F57F17; width: 14px;"></i> <strong>Buah: ${item.buah}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-heartbeat" style="color: #D32F2F; width: 14px;"></i> <strong>${item.vigor}</strong></div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Catatan Tambahan (Jika Ada) -->
-                    ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
-
-                    <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
-                        <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
-                        <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-    }
-
-    function editItem(id) {
-        var item = Storage.getById(Storage.KEYS.TANAMAN, id);
-        if (!item) return;
-
-        document.getElementById('tanamanId').value = item.id;
-        document.getElementById('tanamanDate').value = item.date;
-        document.getElementById('tanamanVarietas').value = item.varietas === '-' ? '' : item.varietas;
-        document.getElementById('tanamanBlok').value = item.blok === '-' ? '' : item.blok;
-        document.getElementById('tanamanHidup').value = item.hidup === '-' ? '' : item.hidup;
-        document.getElementById('tanamanMati').value = item.mati === '-' ? '' : item.mati;
-        document.getElementById('tanamanTinggi').value = item.tinggi === '-' ? '' : item.tinggi;
-        document.getElementById('tanamanDaun').value = item.daun === '-' ? '' : item.daun;
-        document.getElementById('tanamanBuah').value = item.buah === '-' ? '' : item.buah;
-        document.getElementById('tanamanVigor').value = item.vigor || 'Sangat Sehat & Vigour';
-        document.getElementById('tanamanDesc').value = item.desc || '';
-
-        document.getElementById('formTitleTanaman').innerText = 'Edit Data Tanaman';
+        var data = getFiltered();
+        var greenhouse = Storage.getAll(Storage.KEYS.GREENHOUSE);
         
-        var btnCancel = document.getElementById('btnCancelTanamanEdit');
-        if (btnCancel) btnCancel.style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        var html = '<div class="module-container">';
+        
+        // Header
+        html += '<div class="page-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">';
+        html += '<h2 style="margin:0; font-size:20px;"><i class="fas fa-seedling" style="color:#2E7D32; margin-right:8px;"></i> Database Tanaman</h2>';
+        html += '<button style="background:#2E7D32; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; box-shadow:0 2px 6px rgba(46,125,50,0.3);" onclick="tanaman.showForm()">';
+        html += '<i class="fas fa-plus"></i> Tambah Tanaman</button></div>';
+        
+        // Search & Filter
+        html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
+        html += '<input type="text" placeholder="🔍 Cari tanaman..." oninput="tanaman.search(this.value)" style="flex:1;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;">';
+        html += '<select onchange="tanaman.setFilter(this.value)" style="padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;background:#fff;">';
+        html += '<option value="all">Semua</option><option value="hidup">Hidup</option><option value="mati">Mati</option><option value="panen">Panen</option>';
+        html += '</select></div>';
+        
+        // ========================================
+        // REKAPAN DATA (DIUBAH)
+        // ========================================
+        if (data.length === 0) {
+            html += '<div class="empty-state" style="text-align:center;padding:40px 20px;background:#fff;border-radius:12px;border:1px dashed #ccc;">';
+            html += '<i class="fas fa-seedling" style="font-size:40px;color:#ddd;margin-bottom:12px;"></i><h3 style="color:#777;font-size:16px;">Belum ada tanaman</h3></div>';
+        } else {
+            html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+            data.forEach(function(t) {
+                var gh = greenhouse.find(function(g) { return g.id === t.greenhouse_id; });
+                
+                html += '<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04);border:1px solid #f0f0f0;">';
+                
+                // Header Card
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">';
+                html += '<div><strong style="font-size:15px;color:#1B5E20;">' + t.id + '</strong><br><small style="color:#888;">' + (t.varietas || '-') + '</small></div>';
+                html += '<span class="status-badge ' + getStatusClass(t.status_tanaman) + '" style="font-size:11px;">' + (t.status_tanaman || 'aktif') + '</span>';
+                html += '</div>';
+                
+                // 4 Grid Card
+                html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;">';
+                
+                html += '<div style="background:#E8F5E9;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Greenhouse</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">' + (gh ? gh.kode : '-') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">T' + (t.talang||'-') + ' / L' + (t.lubang||'-') + '</div></div>';
+                
+                html += '<div style="background:#FFF3E0;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">HST & HSP</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">HST: ' + (t.hst||0) + ' hr</div>';
+                html += '<div style="font-size:10px;color:#666;">HSP: ' + (t.hsp||0) + ' hr</div></div>';
+                
+                html += '<div style="background:#E3F2FD;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Tanggal</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">' + formatDate(t.tanggal_tanam) + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Semai: ' + formatDate(t.tanggal_semai) + '</div></div>';
+                
+                html += '<div style="background:#FCE4EC;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Status</div>';
+                html += '<div style="font-size:12px;font-weight:700;color:#000;">' + (t.status_polinasi||'belum') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Buah: ' + (t.status_buah||'belum') + '</div></div>';
+                
+                html += '</div>';
+                
+                if (t.catatan) html += '<div style="font-size:11px;color:#666;background:#f9f9f9;padding:8px;border-radius:6px;margin-bottom:8px;">📝 ' + t.catatan + '</div>';
+                
+                html += '<div style="display:flex;justify-content:flex-end;gap:6px;">';
+                html += '<button onclick="tanaman.editForm(\'' + t.id + '\')" style="padding:6px 12px;background:#E3F2FD;color:#1976D2;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-edit"></i> Edit</button>';
+                html += '<button onclick="tanaman.deleteItem(\'' + t.id + '\')" style="padding:6px 12px;background:#FFEBEE;color:#D32F2F;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-trash-alt"></i> Hapus</button>';
+                html += '</div>';
+                
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
     }
+
+    function init() {}
+
+    // ========================================
+    // FORM INPUT (DIUBAH - MODAL)
+    // ========================================
+    function showForm(id) {
+        var isEdit = !!id;
+        var data = isEdit ? Storage.getById(Storage.KEYS.TANAMAN, id) : {};
+        var gh = Storage.getAll(Storage.KEYS.GREENHOUSE);
+        
+        var html = '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">';
+        html += '<h3 style="margin:0;font-size:16px;"><i class="fas '+(isEdit?'fa-edit':'fa-plus-circle')+'" style="margin-right:8px;color:#2E7D32;"></i>' + (isEdit?'Edit':'Tambah') + ' Tanaman</h3>';
+        html += '<button onclick="tanaman.closeModal()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">✕</button></div>';
+        
+        html += '<div style="padding:20px;"><form onsubmit="tanaman.save(event,\'' + (id||'') + '\')">';
+        
+        html += '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Greenhouse *</label><select name="greenhouse_id" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="">Pilih Greenhouse</option>';
+        gh.forEach(function(g) { html += '<option value="' + g.id + '"' + (data.greenhouse_id===g.id?' selected':'') + '>' + g.kode + ' - ' + g.nama + '</option>'; });
+        html += '</select></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>Kode GH</label><input name="greenhouse_code" value="' + (data.greenhouse_code||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>Varietas *</label><input name="varietas" value="' + (data.varietas||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>Talang</label><input type="number" name="talang" value="' + (data.talang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>Lubang</label><input type="number" name="lubang" value="' + (data.lubang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>Tgl Semai</label><input type="date" name="tanggal_semai" value="' + (data.tanggal_semai||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>Tgl Tanam *</label><input type="date" name="tanggal_tanam" value="' + (data.tanggal_tanam||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="margin-bottom:14px;"><label>Status</label><select name="status_tanaman" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="aktif">✅ Aktif</option><option value="sehat">💚 Sehat</option><option value="sakit">⚠️ Sakit</option><option value="mati">❌ Mati</option></select></div>';
+        
+        html += '<div style="margin-bottom:14px;"><label>Catatan</label><textarea name="catatan" rows="2" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;">' + (data.catatan||'') + '</textarea></div>';
+        
+        html += '<div style="display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #eee;">';
+        html += '<button type="button" onclick="tanaman.closeModal()" style="padding:12px 20px;background:#eee;border:none;border-radius:10px;font-size:14px;cursor:pointer;">Batal</button>';
+        html += '<button type="submit" style="padding:12px 24px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Simpan</button>';
+        html += '</div></form></div>';
+        
+        document.getElementById('modalContent').innerHTML = html;
+        document.getElementById('modalContainer').style.display = 'flex';
+    }
+
+    function editForm(id) { showForm(id); }
 
     function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus data tanaman ini?')) {
+        if (confirm('Hapus tanaman ' + id + '?')) {
             Storage.remove(Storage.KEYS.TANAMAN, id);
-            loadTable();
-            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast('Data tanaman berhasil dihapus', 'error');
-            }
+            Router.navigate('tanaman');
+            Notification.success('Tanaman dihapus!');
         }
     }
 
-    return {
-        render: render,
-        init: init,
-        editItem: editItem,
-        deleteItem: deleteItem
-    };
+    function save(event, id) {
+        event.preventDefault();
+        var f = event.target;
+        var d = {
+            greenhouse_id: f.greenhouse_id.value,
+            greenhouse_code: f.greenhouse_code.value,
+            talang: parseInt(f.talang.value) || 0,
+            lubang: parseInt(f.lubang.value) || 0,
+            varietas: f.varietas.value,
+            tanggal_semai: f.tanggal_semai.value,
+            tanggal_tanam: f.tanggal_tanam.value,
+            status_tanaman: f.status_tanaman.value || 'aktif',
+            status_polinasi: 'belum polinasi',
+            status_buah: 'belum',
+            status_panen: 'belum panen',
+            catatan: f.catatan.value
+        };
+        if (!id) d.id = (d.greenhouse_code||'GH')+'-T'+String(d.talang).padStart(2,'0')+'-L'+String(d.lubang).padStart(2,'0');
+        if (id) Storage.update(Storage.KEYS.TANAMAN, id, d);
+        else Storage.create(Storage.KEYS.TANAMAN, d);
+        closeModal();
+        Router.navigate('tanaman');
+        Notification.success('Tanaman disimpan!');
+    }
 
+    function getFiltered() {
+        var data = Storage.getAll(Storage.KEYS.TANAMAN);
+        return data.sort(function(a,b){ return new Date(b.createdAt) - new Date(a.createdAt); });
+    }
+
+    function setFilter(f) { currentFilter = f; Router.navigate('tanaman'); }
+    function search(q) { currentSearch = q; Router.navigate('tanaman'); }
+    function closeModal() { document.getElementById('modalContainer').style.display = 'none'; }
+    function formatDate(d) { if(!d)return'-'; var dt=new Date(d); return ('0'+dt.getDate()).slice(-2)+'/'+('0'+(dt.getMonth()+1)).slice(-2)+'/'+dt.getFullYear(); }
+    function getStatusClass(s) { var m={aktif:'active',sehat:'active',mati:'danger',sakit:'warning'}; return m[(s||'').toLowerCase()]||'inactive'; }
+
+    return { render, init, showForm, editForm, deleteItem, save, setFilter, search, closeModal };
 })();
