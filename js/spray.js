@@ -30,27 +30,25 @@ var spray = (function() {
                             </select>
                         </div>
 
-                        <!-- 3. Nama Produk Terpisah (Bubuk & Cairan) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk (Bubuk)</label>
-                                <input type="text" id="sprayProductBubuk" placeholder="Contoh: Antracol" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk (Cairan)</label>
-                                <input type="text" id="sprayProductCairan" placeholder="Contoh: Demolish" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
+                        <!-- 3. Nama Produk -->
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk</label>
+                            <input type="text" id="sprayProduct" required placeholder="Contoh: Antracol + Demolish (Mix)" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 4. Jenis Penyemprotan Terpisah (2 Kolom Grid) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fungisida & Insektisida</label>
-                                <input type="text" id="sprayTypeFungInsek" placeholder="Contoh: Antracol / Demolish" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fertilizer / Pupuk Daun</label>
-                                <input type="text" id="sprayTypeFertilizer" placeholder="Contoh: Gandasil D" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        <!-- 4. Jenis Penyemprotan (Bisa Pilih Lebih dari 1 / Mix) -->
+                        <div style="margin-bottom: 10px; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 6px;">Jenis Penyemprotan (Bisa pilih lebih dari satu / Mix):</label>
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                <label style="font-size: 12px; color: #333; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" name="sprayTypeCheckbox" value="Fungisida"> Fungisida
+                                </label>
+                                <label style="font-size: 12px; color: #333; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" name="sprayTypeCheckbox" value="Insektisida"> Insektisida
+                                </label>
+                                <label style="font-size: 12px; color: #333; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" name="sprayTypeCheckbox" value="Fertilizer"> Fertilizer
+                                </label>
                             </div>
                         </div>
 
@@ -113,23 +111,25 @@ var spray = (function() {
                 var id = document.getElementById('sprayId').value;
                 var date = document.getElementById('sprayDate').value;
                 var timeSlot = document.getElementById('sprayTimeSlot').value;
-                var productBubuk = document.getElementById('sprayProductBubuk').value;
-                var productCairan = document.getElementById('sprayProductCairan').value;
-                var typeFungInsek = document.getElementById('sprayTypeFungInsek').value;
-                var typeFertilizer = document.getElementById('sprayTypeFertilizer').value;
+                var product = document.getElementById('sprayProduct').value;
                 var doseGram = document.getElementById('sprayDoseGram').value;
                 var doseMl = document.getElementById('sprayDoseMl').value;
                 var targetHama = document.getElementById('sprayTargetHama').value;
                 var targetPenyakit = document.getElementById('sprayTargetPenyakit').value;
                 var desc = document.getElementById('sprayDesc').value;
 
+                var checkboxes = document.querySelectorAll('input[name="sprayTypeCheckbox"]:checked');
+                var selectedTypes = [];
+                checkboxes.forEach(function(cb) {
+                    selectedTypes.push(cb.value);
+                });
+                var sprayTypeString = selectedTypes.length > 0 ? selectedTypes.join(' + ') : 'Umum';
+
                 var payload = {
                     date: date,
                     timeSlot: timeSlot,
-                    productBubuk: productBubuk || '-',
-                    productCairan: productCairan || '-',
-                    typeFungInsek: typeFungInsek || '-',
-                    typeFertilizer: typeFertilizer || '-',
+                    title: product,
+                    sprayType: sprayTypeString,
                     doseGram: doseGram || '-',
                     doseMl: doseMl || '-',
                     targetHama: targetHama || '-',
@@ -161,6 +161,7 @@ var spray = (function() {
                 }
 
                 form.reset();
+                document.querySelectorAll('input[name="sprayTypeCheckbox"]').forEach(function(cb) { cb.checked = false; });
                 document.getElementById('sprayId').value = '';
                 document.getElementById('formTitleSpray').innerText = 'Tambah Jadwal / Aksi Spray';
                 if (btnCancel) btnCancel.style.display = 'none';
@@ -172,6 +173,7 @@ var spray = (function() {
         if (btnCancel) {
             btnCancel.addEventListener('click', function() {
                 form.reset();
+                document.querySelectorAll('input[name="sprayTypeCheckbox"]').forEach(function(cb) { cb.checked = false; });
                 document.getElementById('sprayId').value = '';
                 document.getElementById('formTitleSpray').innerText = 'Tambah Jadwal / Aksi Spray';
                 btnCancel.style.display = 'none';
@@ -206,14 +208,13 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Grid 2x2 Rekap Kartu -->
+                    <!-- Grid 2x2 Rekap Kartu (Ukuran dan Format Huruf Isi Seragam: Hitam Bold) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        <!-- Kiri Atas: Nama Produk (Bubuk & Cairan) -->
+                        <!-- Kiri Atas: Nama Produk -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Nama Produk</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-box" style="color: #8D6E63; width: 14px;"></i> <strong>${item.productBubuk || '-'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-wine-bottle" style="color: #0288D1; width: 14px;"></i> <strong>${item.productCairan || '-'}</strong></div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Nama Produk</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #000; margin-top: 2px;">
+                                ${item.title}
                             </div>
                         </div>
 
@@ -226,12 +227,11 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- Kiri Bawah: Jenis Penyemprotan (Fungisida/Insektisida & Fertilizer) -->
+                        <!-- Kiri Bawah: Jenis Penyemprotan -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Jenis Penyemprotan</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-shield-alt" style="color: #C2185B; width: 14px;"></i> <strong>${item.typeFungInsek || '-'}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-seedling" style="color: #2E7D32; width: 14px;"></i> <strong>${item.typeFertilizer || '-'}</strong></div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Jenis Penyemprotan</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #000; margin-top: 2px;">
+                                ${item.sprayType || 'Umum'}
                             </div>
                         </div>
 
@@ -267,15 +267,21 @@ var spray = (function() {
         document.getElementById('sprayId').value = item.id;
         document.getElementById('sprayDate').value = item.date;
         document.getElementById('sprayTimeSlot').value = item.timeSlot || 'Pagi (06:00 - 08:00)';
-        document.getElementById('sprayProductBubuk').value = (item.productBubuk && item.productBubuk !== '-') ? item.productBubuk : '';
-        document.getElementById('sprayProductCairan').value = (item.productCairan && item.productCairan !== '-') ? item.productCairan : '';
-        document.getElementById('sprayTypeFungInsek').value = (item.typeFungInsek && item.typeFungInsek !== '-') ? item.typeFungInsek : '';
-        document.getElementById('sprayTypeFertilizer').value = (item.typeFertilizer && item.typeFertilizer !== '-') ? item.typeFertilizer : '';
+        document.getElementById('sprayProduct').value = item.title;
         document.getElementById('sprayDoseGram').value = (item.doseGram && item.doseGram !== '-') ? item.doseGram : '';
         document.getElementById('sprayDoseMl').value = (item.doseMl && item.doseMl !== '-') ? item.doseMl : '';
         document.getElementById('sprayTargetHama').value = item.targetHama === '-' ? '' : item.targetHama;
         document.getElementById('sprayTargetPenyakit').value = item.targetPenyakit === '-' ? '' : item.targetPenyakit;
         document.getElementById('sprayDesc').value = item.desc || '';
+
+        var checkboxes = document.querySelectorAll('input[name="sprayTypeCheckbox"]');
+        checkboxes.forEach(function(cb) {
+            if (item.sprayType && item.sprayType.includes(cb.value)) {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
 
         document.getElementById('formTitleSpray').innerText = 'Edit Jadwal Spray';
         
@@ -298,9 +304,8 @@ var spray = (function() {
 
     function syncToSchedules(item) {
         var schedules = Storage.getAll('cozycs_schedules');
-        var prodText = (item.productBubuk !== '-' ? item.productBubuk : '') + ' ' + (item.productCairan !== '-' ? item.productCairan : '');
         var schedulePayload = Object.assign({}, item, {
-            title: 'Spray: ' + (prodText.trim() ? prodText : 'Aktivitas Spray')
+            title: 'Spray: ' + item.title + ' (' + item.sprayType + ')'
         });
         
         var index = schedules.findIndex(function(s) { return s.id === item.id; });
@@ -308,4 +313,21 @@ var spray = (function() {
             schedules[index] = schedulePayload;
         } else {
             schedules.unshift(schedulePayload);
-  
+        }
+        Storage.saveAll('cozycs_schedules', schedules);
+    }
+
+    function removeFromSchedules(id) {
+        var schedules = Storage.getAll('cozycs_schedules');
+        var filtered = schedules.filter(function(s) { return s.id !== id; });
+        Storage.saveAll('cozycs_schedules', filtered);
+    }
+
+    return {
+        render: render,
+        init: init,
+        editItem: editItem,
+        deleteItem: deleteItem
+    };
+
+})();
