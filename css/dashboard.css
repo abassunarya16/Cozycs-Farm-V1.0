@@ -1,0 +1,62 @@
+/* ========================================== */
+/* COZYCS FARM - DASHBOARD STYLES */
+/* ========================================== */
+
+/* Jarak area header dashboard */
+.dashboard-header {
+    margin-bottom: 20px;
+}
+
+/* Gaya untuk Judul Bagian (Section Title) */
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1B5E20;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.section-title i {
+    font-size: 16px;
+}
+
+/* Wadah untuk grafik/chart (Persiapan untuk chart.js) */
+.chart-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e8e8e8;
+    position: relative;
+    width: 100%;
+    min-height: 200px;
+}
+
+/* Banner tambahan (Jika ke depannya butuh pengumuman) */
+.dashboard-banner {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.banner-text-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.banner-text-sub {
+    font-size: 12px;
+    opacity: 0.9;
+}
