@@ -324,4 +324,43 @@ var greenhouse = (function() {
         setVal('ghNama', item.nama === '-' ? '' : (item.nama || ''));
         setVal('ghStatus', item.status || 'Aktif / Berjalan');
         setVal('ghSistem', item.sistem || 'Fertigasi Tetes / Drip');
-        setVal('ghTalang', item.talang === '-' ? 
+        setVal('ghTalang', item.talang === '-' ? '' : (item.talang || ''));
+        setVal('ghLubang', item.lubang === '-' ? '' : (item.lubang || ''));
+        setVal('ghLuas', item.luas === '-' ? '' : (item.luas || ''));
+        setVal('ghTandon', item.tandon === '-' ? '' : (item.tandon || ''));
+        setVal('ghUv', item.uv === '-' ? '' : (item.uv || ''));
+        setVal('ghInsect', item.insect === '-' ? '' : (item.insect || ''));
+        setVal('ghTglOperasi', item.tglOperasi === '-' ? '' : (item.tglOperasi || ''));
+        setVal('ghTglTanam', item.tglTanam === '-' ? '' : (item.tglTanam || ''));
+        setVal('ghTglPanen', item.tglPanen === '-' ? '' : (item.tglPanen || ''));
+        setVal('ghDesc', item.desc || '');
+
+        var titleEl = document.getElementById('formTitleGh');
+        if (titleEl) titleEl.innerText = 'Edit Data Greenhouse';
+        
+        var btnCancel = document.getElementById('btnCancelGhEdit');
+        if (btnCancel) btnCancel.style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+        if (confirm('Apakah kamu yakin ingin menghapus data greenhouse ini?')) {
+            try {
+                var storageKey = getKey();
+                if (typeof Storage !== 'undefined' && Storage.remove) {
+                    Storage.remove(storageKey, id);
+                }
+            } catch(e) {}
+            loadTable();
+        }
+    }
+
+    return {
+        render: render,
+        init: init,
+        editItem: editItem,
+        deleteItem: deleteItem
+    };
+
+})();
