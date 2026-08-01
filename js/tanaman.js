@@ -4,6 +4,26 @@
 
 var tanaman = (function() {
 
+    // Fungsi pembantu untuk mengambil kunci storage dengan aman
+    function getKey() {
+        if (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.TANAMAN) {
+            return Storage.KEYS.TANAMAN;
+        }
+        return 'cozycs_tanaman';
+    }
+
+    // Fungsi pembantu pembaca nilai elemen aman (anti null error)
+    function getVal(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    // Fungsi pembantu pengisi nilai elemen aman
+    function setVal(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.value = val;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
@@ -143,21 +163,21 @@ var tanaman = (function() {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                var id = document.getElementById('tanamanId').value;
-                var date = document.getElementById('tanamanDate').value;
-                var gh = document.getElementById('tanamanGh').value;
-                var varietas = document.getElementById('tanamanVarietas').value;
-                var talang = document.getElementById('tanamanTalang').value;
-                var lubang = document.getElementById('tanamanLubang').value;
-                var tglSemai = document.getElementById('tanamanTglSemai').value;
-                var tglTanam = document.getElementById('tanamanTglTanam').value;
-                var hst = document.getElementById('tanamanHst').value;
-                var hsp = document.getElementById('tanamanHsp').value;
-                var status = document.getElementById('tanamanStatus').value;
-                var polinasi = document.getElementById('tanamanPolinasi').value;
-                var panen = document.getElementById('tanamanPanen').value;
-                var buah = document.getElementById('tanamanBuah').value;
-                var desc = document.getElementById('tanamanDesc').value;
+                var id = getVal('tanamanId');
+                var date = getVal('tanamanDate');
+                var gh = getVal('tanamanGh');
+                var varietas = getVal('tanamanVarietas');
+                var talang = getVal('tanamanTalang');
+                var lubang = getVal('tanamanLubang');
+                var tglSemai = getVal('tanamanTglSemai');
+                var tglTanam = getVal('tanamanTglTanam');
+                var hst = getVal('tanamanHst');
+                var hsp = getVal('tanamanHsp');
+                var status = getVal('tanamanStatus');
+                var polinasi = getVal('tanamanPolinasi');
+                var panen = getVal('tanamanPanen');
+                var buah = getVal('tanamanBuah');
+                var desc = getVal('tanamanDesc');
 
                 var payload = {
                     date: date,
@@ -176,24 +196,26 @@ var tanaman = (function() {
                     desc: desc
                 };
 
-                if (id) {
-                    payload.id = id;
-                    Storage.update(Storage.KEYS.TANAMAN, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data tanaman berhasil diperbarui!', 'success');
+                try {
+                    var storageKey = getKey();
+                    if (id) {
+                        payload.id = id;
+                        if (typeof Storage !== 'undefined' && Storage.update) {
+                            Storage.update(storageKey, payload);
+                        }
+                    } else {
+                        if (typeof Storage !== 'undefined' && Storage.add) {
+                            Storage.add(storageKey, payload);
+                        }
                     }
-                } else {
-                    Storage.add(Storage.KEYS.TANAMAN, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data tanaman berhasil ditambahkan!', 'success');
-                    }
+                } catch(err) {
+                    console.error("Storage Error:", err);
                 }
 
                 form.reset();
-                document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
+                setVal('tanamanId', '');
+                var titleEl = document.getElementById('formTitleTanaman');
+                if (titleEl) titleEl.innerText = 'Catat Perkembangan Tanaman';
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
@@ -202,9 +224,10 @@ var tanaman = (function() {
 
         if (btnCancel) {
             btnCancel.addEventListener('click', function() {
-                form.reset();
-                document.getElementById('tanamanId').value = '';
-                document.getElementById('formTitleTanaman').innerText = 'Catat Perkembangan Tanaman';
+                if (form) form.reset();
+                setVal('tanamanId', '');
+                var titleEl = document.getElementById('formTitleTanaman');
+                if (titleEl) titleEl.innerText = 'Catat Perkembangan Tanaman';
                 btnCancel.style.display = 'none';
             });
         }
@@ -214,26 +237,38 @@ var tanaman = (function() {
         var container = document.getElementById('containerTanamanCards');
         if (!container) return;
 
-        var data = Storage.getAll(Storage.KEYS.TANAMAN);
-        if (!data || data.length === 0) {
+        var data = [];
+        try {
+            var storageKey = getKey();
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                data = Storage.getAll(storageKey) || [];
+            }
+        } catch(e) {
+            data = [];
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada data tanaman tercatat.</div>`;
             return;
         }
 
-        // Urutkan dari tanggal terbaru
+        // Urutkan dari tanggal terbaru dengan pengecekan aman
         data.sort(function(a, b) {
-            return new Date(b.date) - new Date(a.date);
+            var dateA = a && a.date ? new Date(a.date) : new Date(0);
+            var dateB = b && b.date ? new Date(b.date) : new Date(0);
+            return dateB - dateA;
         });
 
         var html = '';
         data.forEach(function(item) {
+            if (!item) return;
             html += `
                 <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <!-- Header Card: Tanggal Penginputan -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
-                            <strong style="font-size: 14px; color: #222;">${item.date}</strong>
-                            <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.varietas}</span>
+                            <strong style="font-size: 14px; color: #222;">${item.date || '-'}</strong>
+                            <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.varietas || '-'}</span>
                         </div>
                     </div>
 
@@ -244,8 +279,8 @@ var tanaman = (function() {
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Lokasi & Penempatan</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-warehouse" style="color: #2E7D32; width: 14px;"></i> <strong>GH: ${item.gh}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-th" style="color: #E65100; width: 14px;"></i> <strong>Talang ${item.talang} / Lubang ${item.lubang}</strong></div>
+                                <div><i class="fas fa-warehouse" style="color: #2E7D32; width: 14px;"></i> <strong>GH: ${item.gh || '-'}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-th" style="color: #E65100; width: 14px;"></i> <strong>Talang ${item.talang || '-'} / Lubang ${item.lubang || '-'}</strong></div>
                             </div>
                         </div>
 
@@ -253,8 +288,8 @@ var tanaman = (function() {
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Umur & Tanggal</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-clock" style="color: #0277BD; width: 14px;"></i> <strong>HST: ${item.hst} | HSP: ${item.hsp}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-calendar-alt" style="color: #6A1B9A; width: 14px;"></i> <strong>Tanam: ${item.tglTanam}</strong></div>
+                                <div><i class="fas fa-clock" style="color: #0277BD; width: 14px;"></i> <strong>HST: ${item.hst || '-'} | HSP: ${item.hsp || '-'}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-calendar-alt" style="color: #6A1B9A; width: 14px;"></i> <strong>Tanam: ${item.tglTanam || '-'}</strong></div>
                             </div>
                         </div>
 
@@ -262,8 +297,8 @@ var tanaman = (function() {
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Kondisi & Polinasi</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-heartbeat" style="color: #388E3C; width: 14px;"></i> <strong>Tanaman: ${item.status}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-microscope" style="color: #C2185B; width: 14px;"></i> <strong>Polinasi: ${item.polinasi}</strong></div>
+                                <div><i class="fas fa-heartbeat" style="color: #388E3C; width: 14px;"></i> <strong>Tanaman: ${item.status || 'Hidup'}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-microscope" style="color: #C2185B; width: 14px;"></i> <strong>Polinasi: ${item.polinasi || '-'}</strong></div>
                             </div>
                         </div>
 
@@ -271,8 +306,8 @@ var tanaman = (function() {
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Buah & Panen</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-apple-alt" style="color: #F57F17; width: 14px;"></i> <strong>Buah: ${item.buah}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-shopping-basket" style="color: #1976D2; width: 14px;"></i> <strong>Panen: ${item.panen}</strong></div>
+                                <div><i class="fas fa-apple-alt" style="color: #F57F17; width: 14px;"></i> <strong>Buah: ${item.buah || '-'}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-shopping-basket" style="color: #1976D2; width: 14px;"></i> <strong>Panen: ${item.panen || '-'}</strong></div>
                             </div>
                         </div>
 
@@ -283,20 +318,4 @@ var tanaman = (function() {
 
                     <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
-                        <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
-                        <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-    }
-
-    function editItem(id) {
-        var item = Storage.getById(Storage.KEYS.TANAMAN, id);
-        if (!item) return;
-
-        document.getElementById('tanamanId').value = item.id;
-        document.getElementById('tanamanDate').value = item.date;
-        document.getElementById('tanamanGh').value = item.g
+                  
