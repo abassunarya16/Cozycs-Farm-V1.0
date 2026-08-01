@@ -119,9 +119,9 @@
 
     </div>
 
-    <!-- JavaScript Modules (Urutan pemuatan sangat penting) -->
+    <!-- JavaScript Modules (URUTAN PEMUATAN KUNCI UTAMA STABILITAS) -->
     <script src="js/helper.js"></script>
-    <script src="js/storage.js"></script>
+    <script src="js/storage.js"></script> <!-- Wajib ditaruh di awal agar modul lain bisa akses Storage -->
     <script src="js/chart.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/greenhouse.js"></script>
@@ -132,7 +132,7 @@
     <script src="js/pruning.js"></script>
     <script src="js/hama.js"></script>
     <script src="js/spray.js"></script>
-    <script src="js/notifikasi.js"></script> <!-- 1. Pemanggil skrip notifikasi.js -->
+    <script src="js/notifikasi.js"></script>
     <script src="js/jadwal.js"></script>
     <script src="js/panen.js"></script>
     <script src="js/laporan.js"></script>
@@ -172,11 +172,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi Storage Manager sebelum aplikasi dimuat
             if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
                 Storage.init();
             }
 
-            // 2. Daftarkan ke dalam objek router pages
+            // Daftarkan ke dalam objek router pages
             pages = {
                 'dashboard': dashboard,
                 'greenhouse': greenhouse,
@@ -198,7 +199,7 @@
 
             navigateTo('dashboard');
 
-            // 3. Ubah aksi klik pada tombol lonceng notifikasi header agar mengarah ke halaman notifikasi
+            // Aksi klik pada tombol lonceng notifikasi header
             var btnNotif = document.getElementById('btnHeaderNotif');
             if (btnNotif) {
                 btnNotif.addEventListener('click', function() {
