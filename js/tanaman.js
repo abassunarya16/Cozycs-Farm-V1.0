@@ -9,19 +9,19 @@ var tanaman = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Monitoring & Data Tanaman</div>
                 
-                <!-- Form Input / Edit Data Tanaman (14 Poin Lengkap) -->
+                <!-- Form Input / Edit Data Tanaman -->
                 <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">Catat Perkembangan Tanaman</div>
                     <form id="formTanaman">
                         <input type="hidden" id="tanamanId">
                         
-                        <!-- 1. Tanggal Penginputan -->
+                        <!-- Tanggal Penginputan -->
                         <div style="margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Penginputan</label>
                             <input type="date" id="tanamanDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 2. ID GH & 5. Varietas -->
+                        <!-- ID GH & Varietas -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
@@ -33,7 +33,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Talang & 4. Lubang -->
+                        <!-- Talang & Lubang -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Talang</label>
@@ -45,7 +45,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 6. Tanggal Semai & 7. Tanggal Tanam -->
+                        <!-- Tanggal Semai & Tanggal Tanam -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Semai</label>
@@ -57,7 +57,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 8. HST & 9. HSP -->
+                        <!-- HST & HSP -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">HST</label>
@@ -69,7 +69,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 10. Status Tanaman & 11. Status Polinasi -->
+                        <!-- Status Tanaman & Status Polinasi -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Status Tanaman</label>
@@ -89,7 +89,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 12. Status Panen & 13. Status Buah -->
+                        <!-- Status Panen & Status Buah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Status Panen</label>
@@ -111,7 +111,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 14. Catatan -->
+                        <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan</label>
                             <textarea id="tanamanDesc" rows="2" placeholder="Catatan perkembangan tanaman..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
@@ -215,7 +215,7 @@ var tanaman = (function() {
         if (!container) return;
 
         var data = Storage.getAll(Storage.KEYS.TANAMAN);
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada data tanaman tercatat.</div>`;
             return;
         }
@@ -299,4 +299,4 @@ var tanaman = (function() {
 
         document.getElementById('tanamanId').value = item.id;
         document.getElementById('tanamanDate').value = item.date;
-   
+        document.getElementById('tanamanGh').value = item.g
