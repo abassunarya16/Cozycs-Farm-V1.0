@@ -5,8 +5,7 @@
 var Storage = (function() {
 
     function init() {
-        // Inisialisasi default storage jika belum ada
-        var keys = ['spray', 'nutrisi', 'polinasi', 'pruning', 'panen', 'jadwal', 'hama', 'buah', 'tanaman', 'gudang', 'keuangan'];
+        var keys = ['spray', 'nutrisi', 'polinasi', 'pruning', 'panen', 'jadwal', 'hama', 'buah', 'tanaman', 'gudang', 'keuangan', 'schedules'];
         keys.forEach(function(key) {
             if (!localStorage.getItem('cozycs_' + key)) {
                 localStorage.setItem('cozycs_' + key, JSON.stringify([]));
@@ -14,7 +13,6 @@ var Storage = (function() {
         });
     }
 
-    // Ambil semua data berdasarkan nama modul
     function getData(moduleName) {
         var data = localStorage.getItem('cozycs_' + moduleName);
         try {
@@ -24,27 +22,23 @@ var Storage = (function() {
         }
     }
 
-    // Simpan data baru (Create) atau perbarui data yang ada (Update)
     function saveData(moduleName, item) {
         var list = getData(moduleName);
         
         if (item.id) {
-            // Update data yang sudah ada berdasarkan ID
             list = list.map(function(existing) {
                 return existing.id === item.id ? item : existing;
             });
         } else {
-            // Create data baru dengan ID unik berbasis timestamp
             item.id = 'id_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
             item.createdAt = new Date().toISOString();
-            list.unshift(item); // Taruh di urutan paling atas
+            list.unshift(item);
         }
 
         localStorage.setItem('cozycs_' + moduleName, JSON.stringify(list));
         return list;
     }
 
-    // Hapus data berdasarkan ID (Delete)
     function deleteData(moduleName, id) {
         var list = getData(moduleName);
         list = list.filter(function(item) {
@@ -54,7 +48,6 @@ var Storage = (function() {
         return list;
     }
 
-    // Ambil satu item berdasarkan ID (untuk keperluan Edit form)
     function getById(moduleName, id) {
         var list = getData(moduleName);
         return list.find(function(item) {
