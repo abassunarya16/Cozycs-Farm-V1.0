@@ -8,6 +8,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="img/favicon.png">
 
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+
     <!-- CSS Styling (Pastikan file style.css sudah ada di folder css/) -->
     <link rel="stylesheet" href="css/style.css">
 
@@ -174,6 +177,21 @@
             // Muat halaman awal (Dasbor)
             navigateTo('dashboard');
         });
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker berhasil didaftarkan dengan scope: ', registration.scope);
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker gagal didaftarkan: ', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
