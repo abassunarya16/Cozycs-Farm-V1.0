@@ -1,53 +1,105 @@
 /* ========================================== */
-/* COZYCS FARM - SIDEBAR & MENU MODULE STYLES */
+/* COZYCS FARM - SIDEBAR DRAWER STYLES        */
 /* ========================================== */
 
-.menu-category-title {
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.app-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100%;
+    background: #ffffff;
+    z-index: 1000;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-sidebar.active {
+    left: 0;
+}
+
+.sidebar-header {
+    padding: 16px;
+    background: #1B5E20;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.sidebar-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.sidebar-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.sidebar-group-title {
     font-size: 11px;
     font-weight: 700;
     color: #2E7D32;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: 12px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin: 14px 0 6px 4px;
 }
 
-.menu-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.menu-card-btn {
-    background: #ffffff;
-    border: 1px solid #e8e8e8;
-    border-radius: 10px;
-    padding: 12px;
+.sidebar-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #333;
     font-size: 13px;
     font-weight: 600;
-    color: #333;
+    text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    transition: all 0.2s ease;
-    text-align: left;
+    transition: background 0.2s;
+    border: none;
+    background: none;
     width: 100%;
+    text-align: left;
 }
 
-.menu-card-btn:hover {
+.sidebar-item:hover {
     background: #E8F5E9;
-    border-color: #2E7D32;
     color: #1B5E20;
 }
 
-.menu-card-btn i {
-    font-size: 16px;
-    width: 24px;
+.sidebar-item i {
+    width: 20px;
     text-align: center;
+    font-size: 15px;
 }
