@@ -299,4 +299,43 @@ var tanaman = (function() {
 
         document.getElementById('tanamanId').value = item.id;
         document.getElementById('tanamanDate').value = item.date;
-        document.getElementById('tanamanGh').value = item.gh === '-'
+        document.getElementById('tanamanGh').value = item.gh === '-' ? '' : item.gh;
+        document.getElementById('tanamanVarietas').value = item.varietas === '-' ? '' : item.varietas;
+        document.getElementById('tanamanTalang').value = item.talang === '-' ? '' : item.talang;
+        document.getElementById('tanamanLubang').value = item.lubang === '-' ? '' : item.lubang;
+        document.getElementById('tanamanTglSemai').value = item.tglSemai === '-' ? '' : item.tglSemai;
+        document.getElementById('tanamanTglTanam').value = item.tglTanam === '-' ? '' : item.tglTanam;
+        document.getElementById('tanamanHst').value = item.hst === '-' ? '' : item.hst;
+        document.getElementById('tanamanHsp').value = item.hsp === '-' ? '' : item.hsp;
+        document.getElementById('tanamanStatus').value = item.status || 'Hidup';
+        document.getElementById('tanamanPolinasi').value = item.polinasi || 'Belum Polinasi';
+        document.getElementById('tanamanPanen').value = item.panen || 'Belum Panen';
+        document.getElementById('tanamanBuah').value = item.buah || 'Belum Ada';
+        document.getElementById('tanamanDesc').value = item.desc || '';
+
+        document.getElementById('formTitleTanaman').innerText = 'Edit Data Tanaman';
+        
+        var btnCancel = document.getElementById('btnCancelTanamanEdit');
+        if (btnCancel) btnCancel.style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+        if (confirm('Apakah kamu yakin ingin menghapus data tanaman ini?')) {
+            Storage.remove(Storage.KEYS.TANAMAN, id);
+            loadTable();
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast('Data tanaman berhasil dihapus', 'error');
+            }
+        }
+    }
+
+    return {
+        render: render,
+        init: init,
+        editItem: editItem,
+        deleteItem: deleteItem
+    };
+
+})();
