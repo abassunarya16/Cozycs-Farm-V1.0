@@ -85,7 +85,7 @@ var nutrisi = (function() {
 
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Jumlah Nutrisi Ditambahkan, dll.)</label>
-                            <textarea id="nutrisiDesc" rows="2" placeholder="Contoh: Tambah nutrisi A&B mix 200ml, tambah pH up sedikit..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <textarea id="nutrisiDesc" rows="2" placeholder="Contoh: Tambah nutrisi A&B mix 200ml..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -95,22 +95,10 @@ var nutrisi = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data / Tabel Daftar Nutrisi -->
+                <!-- Rekap Data / Card List Menyamping -->
                 <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Waktu & HST</th>
-                                <th>PPM & pH</th>
-                                <th>Aksi & Catatan</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableNutrisiBody">
-                            <!-- Diisi dinamis oleh JavaScript -->
-                        </tbody>
-                    </table>
+                <div id="containerNutrisiCards">
+                    <!-- Diisi dinamis oleh JavaScript -->
                 </div>
             </div>
         `;
@@ -189,12 +177,12 @@ var nutrisi = (function() {
     }
 
     function loadTable() {
-        var tbody = document.getElementById('tableNutrisiBody');
-        if (!tbody) return;
+        var container = document.getElementById('containerNutrisiCards');
+        if (!container) return;
 
         var data = Storage.getAll(Storage.KEYS.NUTRISI);
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #777; padding: 20px;">Belum ada catatan nutrisi tercatat.</td></tr>`;
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada catatan nutrisi tercatat.</div>`;
             return;
         }
 
@@ -206,32 +194,55 @@ var nutrisi = (function() {
         var html = '';
         data.forEach(function(item) {
             html += `
-                <tr>
-                    <td>
-                        <strong>${item.date}</strong>
-                        <div style="font-size: 11px; color: #0277BD; font-weight: 600; margin-top: 2px;">${item.timeSlot}</div>
-                        <div style="font-size: 11px; color: #555; margin-top: 1px;">HST ${item.hst || '-'} (${item.fase || '-'})</div>
-                    </td>
-                    <td>
-                        <div style="font-size: 12px; font-weight: 700; color: #222;">PPM: ${item.ppm} <span style="font-size: 10px; color: #777; font-weight: normal;">(Target: ${item.targetPpm})</span></div>
-                        <div style="font-size: 12px; color: #444; margin-top: 1px;">pH: <strong>${item.ph}</strong></div>
-                    </td>
-                    <td>
-                        <div style="font-size: 11px; color: #C62828; font-weight: 600;">${item.phAction || '-'}</div>
-                        ${item.waterTemp || item.ghTemp ? '<div style="font-size: 10px; color: #555; margin-top: 1px;">Suhu Air: ' + (item.waterTemp||'-') + ' | GH: ' + (item.ghTemp||'-') + '</div>' : ''}
-                        ${item.desc ? '<div style="font-size: 11px; color: #666; margin-top: 2px; font-style: italic;">' + item.desc + '</div>' : ''}
-                    </td>
-                    <td>
-                        <div class="table-actions">
-                            <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit"><i class="fas fa-pen"></i></button>
-                            <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus"><i class="fas fa-trash"></i></button>
+                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <!-- Header Card: Tanggal, Waktu, & HST -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
+                        <div>
+                            <strong style="font-size: 14px; color: #222;">${item.date}</strong>
+                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot}</span>
                         </div>
-                    </td>
-                </tr>
+                        <div style="font-size: 12px; color: #555; font-weight: 600;">
+                            HST ${item.hst || '-'} <span style="font-weight: normal; color: #777;">(${item.fase || '-'})</span>
+                        </div>
+                    </div>
+
+                    <!-- Isi Card: Layout Menyamping (Grid Kolom) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                        <!-- Kolom Kiri: PPM -->
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">PPM Air</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #0277BD; margin-top: 2px;">
+                                ${item.ppm} <span style="font-size: 11px; color: #555; font-weight: normal;">(Target: ${item.targetPpm})</span>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Kanan: pH & Aksi -->
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">pH & Koreksi</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #222; margin-top: 2px;">
+                                ${item.ph} <span style="font-size: 11px; color: #C62828; font-weight: 600; margin-left: 4px;">[${item.phAction || '-'}]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informasi Tambahan / Suhu & Catatan -->
+                    ${(item.waterTemp || item.ghTemp || item.desc) ? `
+                        <div style="font-size: 11px; color: #555; background: #fafafa; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                            ${(item.waterTemp || item.ghTemp) ? `<div><i class="fas fa-thermometer-half" style="color: #FF8F00;"></i> Suhu Air: <strong>${item.waterTemp || '-'}</strong> | Suhu GH: <strong>${item.ghTemp || '-'}</strong></div>` : ''}
+                            ${item.desc ? `<div style="margin-top: 2px; font-style: italic; color: #666;">Catatan: ${item.desc}</div>` : ''}
+                        </div>
+                    ` : ''}
+
+                    <!-- Tombol Aksi Card (Edit & Hapus) -->
+                    <div style="display: flex; justify-content: flex-end; gap: 6px; border-top: 1px dashed #eee; padding-top: 8px;">
+                        <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; background: #FFF8E1; color: #F57F17; border: 1px solid #ffe082; cursor: pointer;"><i class="fas fa-pen"></i> Edit</button>
+                        <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; cursor: pointer;"><i class="fas fa-trash"></i> Hapus</button>
+                    </div>
+                </div>
             `;
         });
 
-        tbody.innerHTML = html;
+        container.innerHTML = html;
     }
 
     function editItem(id) {
@@ -276,4 +287,3 @@ var nutrisi = (function() {
     };
 
 })();
-                                                                                                           
