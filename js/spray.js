@@ -208,12 +208,12 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Grid 2x2 Rekap Kartu -->
+                    <!-- Grid 2x2 Rekap Kartu (Ukuran dan Format Huruf Isi Seragam: Hitam Bold) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         <!-- Kiri Atas: Nama Produk -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Nama Produk</div>
-                            <div style="font-size: 15px; font-weight: bold; color: #000; margin-top: 2px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #000; margin-top: 2px;">
                                 ${item.title}
                             </div>
                         </div>
@@ -230,7 +230,7 @@ var spray = (function() {
                         <!-- Kiri Bawah: Jenis Penyemprotan -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Jenis Penyemprotan</div>
-                            <div style="font-size: 13px; font-weight: bold; color: #000; margin-top: 2px;">
+                            <div style="font-size: 12px; font-weight: bold; color: #000; margin-top: 2px;">
                                 ${item.sprayType || 'Umum'}
                             </div>
                         </div>
@@ -238,7 +238,7 @@ var spray = (function() {
                         <!-- Kanan Bawah: Sasaran Hama & Penyakit -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Sasaran Hama & Penyakit</div>
-                            <div style="font-size: 11px; font-weight: bold; color: #000; line-height: 1.4;">
+                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
                                 <div><i class="fas fa-bug" style="color: #D32F2F; width: 14px;"></i> <strong>${item.targetHama}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-shield-virus" style="color: #7B1FA2; width: 14px;"></i> <strong>${item.targetPenyakit}</strong></div>
                             </div>
@@ -246,7 +246,7 @@ var spray = (function() {
                     </div>
 
                     <!-- Catatan Tambahan -->
-                    ${item.desc ? `<div style="font-size: 11px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
+                    ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
@@ -331,4 +331,3 @@ var spray = (function() {
     };
 
 })();
-                    
