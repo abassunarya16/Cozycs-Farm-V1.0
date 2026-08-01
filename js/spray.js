@@ -12,6 +12,36 @@ var spray = (function() {
         return 'cozycs_spray';
     }
 
+    // Fungsi untuk mengisi opsi dropdown ID GH dari data Greenhouse
+    function populateGhDropdown() {
+        var selectEl = document.getElementById('sprayGh');
+        if (!selectEl) return;
+
+        var keyGh = (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GREENHOUSE) ? Storage.KEYS.GREENHOUSE : 'cozycs_greenhouse';
+        var dataGh = [];
+
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                dataGh = Storage.getAll(keyGh) || [];
+            }
+        } catch(e) {
+            dataGh = [];
+        }
+
+        var optionsHtml = '<option value="">-- Pilih Greenhouse --</option>';
+        if (Array.isArray(dataGh) && dataGh.length > 0) {
+            dataGh.forEach(function(gh) {
+                if (gh && gh.kode) {
+                    optionsHtml += `<option value="${gh.kode}">${gh.kode} - ${gh.nama || 'GH'}</option>`;
+                }
+            });
+        } else {
+            optionsHtml += '<option value="GH-01">GH-01 (Default)</option>';
+        }
+
+        selectEl.innerHTML = optionsHtml;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
@@ -23,13 +53,21 @@ var spray = (function() {
                     <form id="formSpray">
                         <input type="hidden" id="sprayId">
                         
-                        <!-- 1. Tanggal Pelaksanaan di Paling Atas -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pelaksanaan</label>
-                            <input type="date" id="sprayDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        <!-- ID GH (Dropdown Konek ke Modul Greenhouse) & Tanggal Pelaksanaan -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
+                                <select id="sprayGh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
+                                    <option value="">-- Pilih Greenhouse --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pelaksanaan</label>
+                                <input type="date" id="sprayDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
                         </div>
 
-                        <!-- 2. Waktu Penyemprotan (Pagi / Sore) -->
+                        <!-- Waktu Penyemprotan (Pagi / Sore) -->
                         <div style="margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Penyemprotan</label>
                             <select id="sprayTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
@@ -38,7 +76,7 @@ var spray = (function() {
                             </select>
                         </div>
 
-                        <!-- 3. Nama Produk Terpisah (Bubuk & Cairan) -->
+                        <!-- Nama Produk Terpisah (Bubuk & Cairan) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk (Bubuk)</label>
@@ -50,7 +88,7 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Jenis Penyemprotan Terpisah (2 Kolom Grid) -->
+                        <!-- Jenis Penyemprotan Terpisah (2 Kolom Grid) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Fungisida & Insektisida</label>
@@ -62,7 +100,7 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 5. Dosis Terpisah (Gram & ml) -->
+                        <!-- Dosis Terpisah (Gram & ml) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis (Gram)</label>
@@ -74,7 +112,7 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 6. Sasaran Hama & Penyakit -->
+                        <!-- Sasaran Hama & Penyakit -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Hama</label>
@@ -86,7 +124,7 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 7. Catatan Tambahan -->
+                        <!-- Catatan Tambahan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Opsional)</label>
                             <textarea id="sprayDesc" rows="2" placeholder="Catatan khusus pelaksanaan..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
@@ -109,6 +147,7 @@ var spray = (function() {
     }
 
     function init() {
+        populateGhDropdown();
         loadTable();
 
         var form = document.getElementById('formSpray');
@@ -119,6 +158,7 @@ var spray = (function() {
                 e.preventDefault();
 
                 var idEl = document.getElementById('sprayId');
+                var ghEl = document.getElementById('sprayGh');
                 var dateEl = document.getElementById('sprayDate');
                 var timeSlotEl = document.getElementById('sprayTimeSlot');
                 var productBubukEl = document.getElementById('sprayProductBubuk');
@@ -132,6 +172,7 @@ var spray = (function() {
                 var descEl = document.getElementById('sprayDesc');
 
                 var payload = {
+                    gh: (ghEl && ghEl.value) ? ghEl.value : '-',
                     date: dateEl ? dateEl.value : '',
                     timeSlot: timeSlotEl ? timeSlotEl.value : 'Pagi (06:00 - 08:00)',
                     productBubuk: (productBubukEl && productBubukEl.value) ? productBubukEl.value : '-',
@@ -220,7 +261,7 @@ var spray = (function() {
 
         var html = '';
         data.forEach(function(item) {
-            // Kompatibilitas data lama jika tersimpan dengan nama field lama (title/sprayType)
+            var valGh = item.gh ? item.gh : '-';
             var displayBubuk = item.productBubuk || item.title || '-';
             var displayCairan = item.productCairan || '-';
             var displayFungInsek = item.typeFungInsek || item.sprayType || '-';
@@ -228,11 +269,12 @@ var spray = (function() {
 
             html += `
                 <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Card: Tanggal & Waktu -->
+                    <!-- Header Card: Tanggal, ID GH & Waktu -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: #222;">${item.date || '-'}</strong>
-                            <span style="background: #F3E5F5; color: #6A1B9A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot || ''}</span>
+                            <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
+                            <span style="background: #F3E5F5; color: #6A1B9A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${item.timeSlot || ''}</span>
                         </div>
                     </div>
 
@@ -280,7 +322,7 @@ var spray = (function() {
                     <!-- Catatan Tambahan (Jika Ada) -->
                     ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
 
-                    <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
+                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
                         <span onclick="spray.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="spray.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -300,7 +342,10 @@ var spray = (function() {
         }
         if (!item) return;
 
+        populateGhDropdown();
+
         var idEl = document.getElementById('sprayId');
+        var ghEl = document.getElementById('sprayGh');
         var dateEl = document.getElementById('sprayDate');
         var timeSlotEl = document.getElementById('sprayTimeSlot');
         var productBubukEl = document.getElementById('sprayProductBubuk');
@@ -314,6 +359,7 @@ var spray = (function() {
         var descEl = document.getElementById('sprayDesc');
 
         if (idEl) idEl.value = item.id || '';
+        if (ghEl) ghEl.value = item.gh === '-' ? '' : (item.gh || '');
         if (dateEl) dateEl.value = item.date || '';
         if (timeSlotEl) timeSlotEl.value = item.timeSlot || 'Pagi (06:00 - 08:00)';
         if (productBubukEl) productBubukEl.value = (item.productBubuk && item.productBubuk !== '-') ? item.productBubuk : (item.title || '');
@@ -353,8 +399,9 @@ var spray = (function() {
         if (typeof Storage === 'undefined' || !Storage.getAll || !Storage.saveAll) return;
         var schedules = Storage.getAll('cozycs_schedules') || [];
         var prodText = (item.productBubuk && item.productBubuk !== '-' ? item.productBubuk : '') + ' ' + (item.productCairan && item.productCairan !== '-' ? item.productCairan : '');
+        var ghText = (item.gh && item.gh !== '-') ? ('[' + item.gh + '] ') : '';
         var schedulePayload = Object.assign({}, item, {
-            title: 'Spray: ' + (prodText.trim() ? prodText : 'Aktivitas Spray')
+            title: 'Spray ' + ghText + ': ' + (prodText.trim() ? prodText : 'Aktivitas Spray')
         });
         
         var index = schedules.findIndex(function(s) { return s.id === item.id; });
