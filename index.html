@@ -29,6 +29,10 @@
         <!-- Header / Top Navigation -->
         <header class="app-header">
             <div class="header-brand">
+                <!-- Tombol Pemicu Sidebar di Kiri Header -->
+                <button id="btnOpenSidebar" style="background: none; border: none; font-size: 18px; color: #1B5E20; cursor: pointer; margin-right: 8px;" title="Buka Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <img src="img/logo-cozycs.png" alt="Logo Cozycs Farm" class="brand-logo" style="width: 36px; height: 36px; object-fit: contain;">
                 <div>
                     <div class="brand-title">Cozycs Farm</div>
@@ -41,12 +45,45 @@
             </div>
         </header>
 
+        <!-- HTML Elemen Sidebar Drawer & Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <nav class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title"><i class="fas fa-seedling"></i> Cozycs Farm 1.0</div>
+                <button class="sidebar-close-btn" id="btnCloseSidebar"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="sidebar-body">
+                <div class="sidebar-group-title">Utama</div>
+                <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> Dasbor</button>
+                
+                <div class="sidebar-group-title">Fasilitas</div>
+                <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> Greenhouse</button>
+                <button class="sidebar-item" data-page="gudang"><i class="fas fa-boxes" style="color: #37474F;"></i> Stok Gudang</button>
+                
+                <div class="sidebar-group-title">Tanaman</div>
+                <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Database Tanaman</button>
+                <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> Polinasi Bunga</button>
+                <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> Seleksi Buah</button>
+                <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> Pruning / Rempes</button>
+
+                <div class="sidebar-group-title">Monitoring & Perawatan</div>
+                <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> Nutrisi & PPM</button>
+                <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> Hama & Penyakit</button>
+                <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal Spray</button>
+                <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> Jadwal Harian</button>
+
+                <div class="sidebar-group-title">Hasil & Bisnis</div>
+                <button class="sidebar-item" data-page="panen"><i class="fas fa-box" style="color: #6A1B9A;"></i> Data Panen</button>
+                <button class="sidebar-item" data-page="laporan"><i class="fas fa-file-invoice" style="color: #00695C;"></i> Laporan Farm</button>
+            </div>
+        </nav>
+
         <!-- Main Content Area -->
         <main class="app-main" id="mainContent">
             <!-- Konten modul akan dimuat secara dinamis di sini -->
         </main>
 
-        <!-- Bottom Navigation Bar -->
+        <!-- Bottom Navigation Bar (Tab ke-6 murni Pengaturan) -->
         <nav class="bottom-nav">
             <button class="nav-item active" data-page="dashboard">
                 <i class="fas fa-home"></i>
@@ -69,8 +106,8 @@
                 <span>Keuangan</span>
             </button>
             <button class="nav-item" data-page="setting">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
+                <i class="fas fa-cog"></i>
+                <span>Pengaturan</span>
             </button>
         </nav>
 
@@ -167,7 +204,7 @@
             // Event listener global untuk tombol aksi cepat (data-page di dalam elemen lain)
             document.addEventListener('click', function(e) {
                 var targetBtn = e.target.closest('[data-page]');
-                if (targetBtn && !targetBtn.classList.contains('nav-item')) {
+                if (targetBtn && !targetBtn.classList.contains('nav-item') && !targetBtn.classList.contains('sidebar-item')) {
                     var page = targetBtn.getAttribute('data-page');
                     if (page) {
                         navigateTo(page);
@@ -177,6 +214,50 @@
 
             // Muat halaman awal (Dasbor)
             navigateTo('dashboard');
+        });
+    </script>
+
+    <!-- Sidebar Controller Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.getElementById('appSidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            var btnOpen = document.getElementById('btnOpenSidebar');
+            var btnClose = document.getElementById('btnCloseSidebar');
+
+            function toggleSidebar() {
+                if (sidebar && overlay) {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                }
+            }
+
+            if (btnOpen) btnOpen.addEventListener('click', toggleSidebar);
+            if (btnClose) btnClose.addEventListener('click', toggleSidebar);
+            if (overlay) overlay.addEventListener('click', toggleSidebar);
+
+            // Navigasi dari Sidebar
+            document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var page = this.getAttribute('data-page');
+                    if (page) {
+                        var targetModule = pages[page]; // Menggunakan router map yang ada
+                        // Memicu navigasi modul
+                        var mainContent = document.getElementById('mainContent');
+                        if (targetModule && mainContent) {
+                            mainContent.innerHTML = targetModule.render();
+                            if (typeof targetModule.init === 'function') {
+                                targetModule.init();
+                            }
+                            window.scrollTo(0, 0);
+                        }
+                    }
+                    if (sidebar && overlay) {
+                        sidebar.classList.remove('active');
+                        overlay.classList.remove('active');
+                    }
+                });
+            });
         });
     </script>
 
