@@ -65,7 +65,13 @@
     padding: 12px;
     overflow-y: auto;
     flex-grow: 1;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch; /* Sudah ada, ini bagus */
+    overscroll-behavior: contain; /* Tambahan: mencegah scroll propagation */
+    scroll-behavior: smooth; /* Tambahan: membuat scroll halus */
+    /* Tambahan untuk performa lebih baik */
+    will-change: scroll-position;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .sidebar-group-title {
@@ -93,6 +99,7 @@
     background: none;
     width: 100%;
     text-align: left;
+    -webkit-tap-highlight-color: transparent; /* Tambahan: hilangkan highlight di mobile */
 }
 
 .sidebar-item:active {
