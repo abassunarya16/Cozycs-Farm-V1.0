@@ -1,5 +1,5 @@
 /* ========================================== */
-/* COZYCS FARM - GLOBAL STYLES */
+/* COZYCS FARM - GLOBAL STYLES (FULL)        */
 /* ========================================== */
 
 * {
@@ -16,12 +16,75 @@ body {
     font-size: 14px;
 }
 
+/* App Wrapper Layout */
+.app-wrapper {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #f4f6f5;
+    position: relative;
+    padding-bottom: 80px; /* Ruang untuk bottom nav */
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+/* Header */
+.app-header {
+    background: #ffffff;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e8e8e8;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.brand-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1B5E20;
+    line-height: 1.2;
+}
+
+.brand-subtitle {
+    font-size: 11px;
+    color: #666;
+}
+
+/* Main Content Area */
+.app-main {
+    padding: 16px;
+}
+
 /* Dashboard Container */
 .dashboard-container {
     width: 100%;
 }
 
-/* Stats Grid & Cards (Dipakai di dashboard.js) */
+.section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1B5E20;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Stats Grid & Cards */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -43,7 +106,6 @@ body {
 
 .stat-card:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
 }
 
 .stat-icon {
@@ -75,12 +137,237 @@ body {
     margin-top: 2px;
 }
 
-/* Utility Classes */
-.text-center { text-align: center; }
-.mt-1 { margin-top: 8px; }
-.mt-2 { margin-top: 16px; }
+/* Quick Actions Grid */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
 
-/* Scrollbar Modern yang Rapi */
+.action-btn {
+    background: #ffffff;
+    border: 1px solid #d0e1d4;
+    border-radius: 10px;
+    padding: 14px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1B5E20;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.action-btn:hover {
+    background: #E8F5E9;
+    border-color: #2E7D32;
+}
+
+.action-btn i {
+    font-size: 16px;
+    color: #2E7D32;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s ease;
+}
+
+.btn-primary {
+    background: #2E7D32;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #1B5E20;
+}
+
+/* Tables */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #e8e8e8;
+    margin-bottom: 20px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13px;
+}
+
+.data-table th {
+    background: #f9fbf9;
+    color: #1B5E20;
+    padding: 12px 14px;
+    font-weight: 700;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.data-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f1f1;
+    color: #444;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.badge-warning {
+    background: #FFF8E1;
+    color: #F57F17;
+}
+
+.badge-danger {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+/* Table Actions */
+.table-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    background: #f1f1f1;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #555;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.btn-action.btn-edit:hover {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.btn-action.btn-delete:hover {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 4px;
+    border-top: 1px solid #e8e8e8;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    z-index: 1000;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #777;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 500;
+    flex: 1;
+    padding: 6px 0;
+    transition: color 0.2s ease;
+}
+
+.nav-item i {
+    font-size: 18px;
+}
+
+.nav-item.active {
+    color: #2E7D32;
+    font-weight: 700;
+}
+
+/* Toast Notification */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 90%;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+.toast {
+    background: #333;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    pointer-events: auto;
+    animation: fadeInOut 3s ease forwards;
+}
+
+.toast.success { background: #2E7D32; }
+.toast.error { background: #C62828; }
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Scrollbar Modern */
 ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -91,7 +378,4 @@ body {
 ::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
 }
