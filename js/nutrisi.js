@@ -233,10 +233,10 @@ var nutrisi = (function() {
                         </div>
                     ` : ''}
 
-                    <!-- Tombol Aksi Card (Edit & Hapus) -->
-                    <div style="display: flex; justify-content: flex-end; gap: 6px; border-top: 1px dashed #eee; padding-top: 8px;">
-                        <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; background: #FFF8E1; color: #F57F17; border: 1px solid #ffe082; cursor: pointer;"><i class="fas fa-pen"></i> Edit</button>
-                        <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; cursor: pointer;"><i class="fas fa-trash"></i> Hapus</button>
+                    <!-- Tombol Aksi Card (Edit di Kiri, Hapus di Kanan) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px;">
+                        <button class="btn-action btn-edit" onclick="nutrisi.editItem('${item.id}')" title="Edit" style="padding: 4px 12px; font-size: 11px; border-radius: 6px; background: #FFF8E1; color: #F57F17; border: 1px solid #ffe082; cursor: pointer; font-weight: 600;"><i class="fas fa-pen"></i> Edit</button>
+                        <button class="btn-action btn-delete" onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="padding: 4px 12px; font-size: 11px; border-radius: 6px; background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; cursor: pointer; font-weight: 600;"><i class="fas fa-trash"></i> Hapus</button>
                     </div>
                 </div>
             `;
