@@ -52,10 +52,16 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 5. Dosis -->
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis</label>
-                            <input type="text" id="sprayDose" required placeholder="Contoh: 2 gram Fungisida + 1 ml Insektisida / liter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                        <!-- 5. Dosis Terpisah (Gram & ml) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis (Gram)</label>
+                                <input type="text" id="sprayDoseGram" placeholder="Contoh: 2 gram / 16L" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis (ml)</label>
+                                <input type="text" id="sprayDoseMl" placeholder="Contoh: 15 ml / 16L" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
                         </div>
 
                         <!-- 6. Sasaran Hama & Penyakit -->
@@ -106,7 +112,8 @@ var spray = (function() {
                 var date = document.getElementById('sprayDate').value;
                 var timeSlot = document.getElementById('sprayTimeSlot').value;
                 var product = document.getElementById('sprayProduct').value;
-                var dose = document.getElementById('sprayDose').value;
+                var doseGram = document.getElementById('sprayDoseGram').value;
+                var doseMl = document.getElementById('sprayDoseMl').value;
                 var targetHama = document.getElementById('sprayTargetHama').value;
                 var targetPenyakit = document.getElementById('sprayTargetPenyakit').value;
                 var desc = document.getElementById('sprayDesc').value;
@@ -123,7 +130,8 @@ var spray = (function() {
                     timeSlot: timeSlot,
                     title: product,
                     sprayType: sprayTypeString,
-                    dose: dose,
+                    doseGram: doseGram || '-',
+                    doseMl: doseMl || '-',
                     targetHama: targetHama || '-',
                     targetPenyakit: targetPenyakit || '-',
                     desc: desc,
@@ -200,43 +208,45 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Baris 1 Card: Nama Produk (Kiri) & Dosis Aplikasi (Kanan) -->
+                    <!-- Grid 2x2 Rekap Kartu -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                        <!-- Kiri Atas: Nama Produk -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Nama Produk</div>
-                            <div style="font-size: 15px; font-weight: 700; color: #6A1B9A; margin-top: 2px;">
+                            <div style="font-size: 15px; font-weight: bold; color: #000; margin-top: 2px;">
                                 ${item.title}
                             </div>
                         </div>
 
+                        <!-- Kanan Atas: Dosis (Gram & ml) -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Dosis Aplikasi</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #222; margin-top: 2px;">
-                                ${item.dose}
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Dosis Aplikasi</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                                <div><i class="fas fa-weight-hanging" style="color: #6A1B9A; width: 14px;"></i> <strong>${item.doseGram || '-'}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-flask" style="color: #0277BD; width: 14px;"></i> <strong>${item.doseMl || '-'}</strong></div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Baris 2 Card: Jenis Penyemprotan (Kiri) & Sasaran Hama & Penyakit (Kanan) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                        <!-- Kiri Bawah: Jenis Penyemprotan -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Jenis Penyemprotan</div>
-                            <div style="font-size: 13px; font-weight: 700; color: #6A1B9A; margin-top: 2px;">
+                            <div style="font-size: 13px; font-weight: bold; color: #000; margin-top: 2px;">
                                 ${item.sprayType || 'Umum'}
                             </div>
                         </div>
 
+                        <!-- Kanan Bawah: Sasaran Hama & Penyakit -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">Sasaran Hama & Penyakit</div>
-                            <div style="font-size: 11px; color: #444; margin-top: 2px; line-height: 1.4;">
-                                <div><i class="fas fa-bug" style="color: #D32F2F;"></i> ${item.targetHama}</div>
-                                <div style="margin-top: 2px;"><i class="fas fa-shield-virus" style="color: #7B1FA2;"></i> ${item.targetPenyakit}</div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Sasaran Hama & Penyakit</div>
+                            <div style="font-size: 11px; font-weight: bold; color: #000; line-height: 1.4;">
+                                <div><i class="fas fa-bug" style="color: #D32F2F; width: 14px;"></i> <strong>${item.targetHama}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-shield-virus" style="color: #7B1FA2; width: 14px;"></i> <strong>${item.targetPenyakit}</strong></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Catatan Tambahan -->
-                    ${item.desc ? `<div style="font-size: 11px; color: #666; font-style: italic; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
+                    ${item.desc ? `<div style="font-size: 11px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
@@ -258,7 +268,8 @@ var spray = (function() {
         document.getElementById('sprayDate').value = item.date;
         document.getElementById('sprayTimeSlot').value = item.timeSlot || 'Pagi (06:00 - 08:00)';
         document.getElementById('sprayProduct').value = item.title;
-        document.getElementById('sprayDose').value = item.dose || '';
+        document.getElementById('sprayDoseGram').value = (item.doseGram && item.doseGram !== '-') ? item.doseGram : '';
+        document.getElementById('sprayDoseMl').value = (item.doseMl && item.doseMl !== '-') ? item.doseMl : '';
         document.getElementById('sprayTargetHama').value = item.targetHama === '-' ? '' : item.targetHama;
         document.getElementById('sprayTargetPenyakit').value = item.targetPenyakit === '-' ? '' : item.targetPenyakit;
         document.getElementById('sprayDesc').value = item.desc || '';
@@ -320,4 +331,4 @@ var spray = (function() {
     };
 
 })();
-            
+                    
