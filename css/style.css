@@ -64,6 +64,42 @@ body {
     color: #666;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Header Notification Button & Badge Styles */
+.header-notif-btn {
+    background: #f1f6f2;
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1B5E20;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.header-notif-btn:hover {
+    background: #E8F5E9;
+}
+
+.notif-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    background: #C62828;
+    border-radius: 50%;
+}
+
 /* Main Content Area */
 .app-main {
     padding: 16px;
@@ -378,4 +414,4 @@ body {
 ::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 4px;
-}
+         }
