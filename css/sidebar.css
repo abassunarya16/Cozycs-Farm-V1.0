@@ -1,0 +1,53 @@
+/* ========================================== */
+/* COZYCS FARM - SIDEBAR & MENU MODULE STYLES */
+/* ========================================== */
+
+.menu-category-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2E7D32;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.menu-card-btn {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.menu-card-btn:hover {
+    background: #E8F5E9;
+    border-color: #2E7D32;
+    color: #1B5E20;
+}
+
+.menu-card-btn i {
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+}
