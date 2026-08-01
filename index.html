@@ -75,6 +75,7 @@
                 <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> Nutrisi & PPM</button>
                 <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> Hama & Penyakit</button>
                 <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal Spray</button>
+                <button class="sidebar-item" data-page="notifikasi"><i class="fas fa-bell" style="color: #C62828;"></i> Pusat Notifikasi</button>
                 <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> Jadwal Harian</button>
 
                 <div class="sidebar-group-title">Hasil & Bisnis</div>
@@ -131,6 +132,7 @@
     <script src="js/pruning.js"></script>
     <script src="js/hama.js"></script>
     <script src="js/spray.js"></script>
+    <script src="js/notifikasi.js"></script> <!-- 1. Pemanggil skrip notifikasi.js -->
     <script src="js/jadwal.js"></script>
     <script src="js/panen.js"></script>
     <script src="js/laporan.js"></script>
@@ -174,6 +176,7 @@
                 Storage.init();
             }
 
+            // 2. Daftarkan ke dalam objek router pages
             pages = {
                 'dashboard': dashboard,
                 'greenhouse': greenhouse,
@@ -184,6 +187,7 @@
                 'pruning': pruning,
                 'hama': hama,
                 'spray': spray,
+                'notifikasi': notifikasi,
                 'jadwal': jadwal,
                 'panen': panen,
                 'laporan': laporan,
@@ -194,15 +198,11 @@
 
             navigateTo('dashboard');
 
-            // Inisialisasi Event Listener untuk Ikon Notifikasi di Header
+            // 3. Ubah aksi klik pada tombol lonceng notifikasi header agar mengarah ke halaman notifikasi
             var btnNotif = document.getElementById('btnHeaderNotif');
             if (btnNotif) {
                 btnNotif.addEventListener('click', function() {
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Alarm: Jadwal penyemprotan pestisida berikutnya dalam 2 hari!', 'error');
-                    } else {
-                        alert('Alarm: Jadwal penyemprotan pestisida berikutnya dalam 2 hari!');
-                    }
+                    navigateTo('notifikasi');
                 });
             }
         });
@@ -279,5 +279,4 @@
         }
     </script>
 </body>
-                    </html>
-                    
+</html>
