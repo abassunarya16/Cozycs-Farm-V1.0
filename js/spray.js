@@ -58,14 +58,14 @@ var spray = (function() {
                             <input type="text" id="sprayDose" required placeholder="Contoh: 2 gram Fungisida + 1 ml Insektisida / liter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- 6. Sasaran Hama & Penyakit (Opsional / Bebas) -->
+                        <!-- 6. Sasaran Hama & Penyakit (Tanpa tulisan opsional) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Hama [Opsional]</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Hama</label>
                                 <input type="text" id="sprayTargetHama" placeholder="Contoh: Thrips, Kutu kebul" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Penyakit [Opsional]</label>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Penyakit</label>
                                 <input type="text" id="sprayTargetPenyakit" placeholder="Contoh: Powdery mildew, Busuk" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
@@ -111,7 +111,6 @@ var spray = (function() {
                 var targetPenyakit = document.getElementById('sprayTargetPenyakit').value;
                 var desc = document.getElementById('sprayDesc').value;
 
-                // Ambil semua jenis spray yang dicentang (maksimal 3)
                 var checkboxes = document.querySelectorAll('input[name="sprayTypeCheckbox"]:checked');
                 var selectedTypes = [];
                 checkboxes.forEach(function(cb) {
@@ -154,7 +153,6 @@ var spray = (function() {
                 }
 
                 form.reset();
-                // Reset checkbox
                 document.querySelectorAll('input[name="sprayTypeCheckbox"]').forEach(function(cb) { cb.checked = false; });
                 document.getElementById('sprayId').value = '';
                 document.getElementById('formTitleSpray').innerText = 'Tambah Jadwal / Aksi Spray';
@@ -200,9 +198,6 @@ var spray = (function() {
                             <strong style="font-size: 14px; color: #222;">${item.date}</strong>
                             <span style="background: #F3E5F5; color: #6A1B9A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot || ''}</span>
                         </div>
-                        <div>
-                            <span style="background: #F3E5F5; color: #6A1B9A; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">${item.sprayType || 'Umum'}</span>
-                        </div>
                     </div>
 
                     <!-- Isi Card: Layout Menyamping (Grid Kolom Produk & Dosis) -->
@@ -224,12 +219,26 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Sasaran Hama & Penyakit -->
-                    <div style="font-size: 11px; color: #444; background: #fafafa; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
-                        <div><i class="fas fa-bug" style="color: #D32F2F;"></i> Hama: <strong>${item.targetHama}</strong></div>
-                        <div style="margin-top: 3px;"><i class="fas fa-shield-virus" style="color: #7B1FA2;"></i> Penyakit: <strong>${item.targetPenyakit}</strong></div>
-                        ${item.desc ? `<div style="margin-top: 4px; font-style: italic; color: #666;">Catatan: ${item.desc}</div>` : ''}
+                    <!-- Bagian Bawah: Jenis Spray di Kiri, Hama & Penyakit di Kanan -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fafafa; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                        <!-- Kolom Kiri Bawah: Jenis Spray -->
+                        <div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Jenis Penyemprotan</div>
+                            <span style="background: #F3E5F5; color: #6A1B9A; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block;">${item.sprayType || 'Umum'}</span>
+                        </div>
+
+                        <!-- Kolom Kanan Bawah: Hama & Penyakit -->
+                        <div>
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">Sasaran Hama & Penyakit</div>
+                            <div style="font-size: 11px; color: #444; line-height: 1.4;">
+                                <div><i class="fas fa-bug" style="color: #D32F2F;"></i> Hama: <strong>${item.targetHama}</strong></div>
+                                <div style="margin-top: 2px;"><i class="fas fa-shield-virus" style="color: #7B1FA2;"></i> Penyakit: <strong>${item.targetPenyakit}</strong></div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Catatan Tambahan -->
+                    ${item.desc ? `<div style="font-size: 11px; color: #666; font-style: italic; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
@@ -256,7 +265,6 @@ var spray = (function() {
         document.getElementById('sprayTargetPenyakit').value = item.targetPenyakit === '-' ? '' : item.targetPenyakit;
         document.getElementById('sprayDesc').value = item.desc || '';
 
-        // Ceklis otomatis checkbox jenis spray yang tersimpan
         var checkboxes = document.querySelectorAll('input[name="sprayTypeCheckbox"]');
         checkboxes.forEach(function(cb) {
             if (item.sprayType && item.sprayType.includes(cb.value)) {
