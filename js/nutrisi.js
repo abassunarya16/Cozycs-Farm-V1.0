@@ -1,289 +1,192 @@
-// ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (CRUD)
-// ==========================================
-
 var nutrisi = (function() {
 
     function render() {
-        return `
-            <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> Cek & Kontrol Nutrisi (PPM & pH)</div>
-                
-                <!-- Form Input / Edit Data Nutrisi -->
-                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #0277BD; margin-bottom: 12px;" id="formTitleNutrisi">Catat Cek Nutrisi Harian</div>
-                    <form id="formNutrisi">
-                        <input type="hidden" id="nutrisiId">
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pengecekan</label>
-                                <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Cek</label>
-                                <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Pagi">Pagi</option>
-                                    <option value="Sore">Sore</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">HST (Hari Setelah Tanam)</label>
-                                <input type="number" id="nutrisiHst" placeholder="Contoh: 15" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fase Tanaman</label>
-                                <select id="nutrisiFase" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Vegetatif Awal (Bibit/Pindahan)">Vegetatif Awal</option>
-                                    <option value="Vegetatif Pertumbuhan">Vegetatif Pertumbuhan</option>
-                                    <option value="Pembungaan / Polinasi">Pembungaan / Polinasi</option>
-                                    <option value="Pembesaran Buah">Pembesaran Buah</option>
-                                    <option value="Pematangan Buah / Ripening">Pematangan Buah</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">PPM Aktual (Tercatat)</label>
-                                <input type="number" id="nutrisiPpm" required placeholder="Contoh: 1000" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Target PPM</label>
-                                <input type="number" id="nutrisiTargetPpm" required placeholder="Contoh: 1200" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">pH Aktual</label>
-                                <input type="text" id="nutrisiPh" required placeholder="Contoh: 6.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Aksi Koreksi pH</label>
-                                <select id="nutrisiPhAction" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Aman / Tanpa Koreksi">Aman / Tanpa Koreksi</option>
-                                    <option value="Tambah pH Up">Tambah pH Up</option>
-                                    <option value="Tambah pH Down">Tambah pH Down</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Air Tandon (°C) [Opsional]</label>
-                                <input type="text" id="nutrisiWaterTemp" placeholder="Contoh: 26°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Greenhouse (°C) [Opsional]</label>
-                                <input type="text" id="nutrisiGhTemp" placeholder="Contoh: 32°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Jumlah Nutrisi Ditambahkan, dll.)</label>
-                            <textarea id="nutrisiDesc" rows="2" placeholder="Contoh: Tambah nutrisi A&B mix 200ml..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
-                        </div>
-
-                        <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #0277BD;"><i class="fas fa-save"></i> Simpan Catatan Nutrisi</button>
-                            <button type="button" id="btnCancelNutrisiEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Rekap Data / Card List Menyamping -->
-                <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
-                <div id="containerNutrisiCards">
-                    <!-- Diisi dinamis oleh JavaScript -->
-                </div>
-            </div>
-        `;
-    }
-
-    function init() {
-        loadTable();
-
-        var form = document.getElementById('formNutrisi');
-        var btnCancel = document.getElementById('btnCancelNutrisiEdit');
-
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                var id = document.getElementById('nutrisiId').value;
-                var date = document.getElementById('nutrisiDate').value;
-                var timeSlot = document.getElementById('nutrisiTimeSlot').value;
-                var hst = document.getElementById('nutrisiHst').value;
-                var fase = document.getElementById('nutrisiFase').value;
-                var ppm = document.getElementById('nutrisiPpm').value;
-                var targetPpm = document.getElementById('nutrisiTargetPpm').value;
-                var ph = document.getElementById('nutrisiPh').value;
-                var phAction = document.getElementById('nutrisiPhAction').value;
-                var waterTemp = document.getElementById('nutrisiWaterTemp').value;
-                var ghTemp = document.getElementById('nutrisiGhTemp').value;
-                var desc = document.getElementById('nutrisiDesc').value;
-
-                var payload = {
-                    date: date,
-                    timeSlot: timeSlot,
-                    hst: hst,
-                    fase: fase,
-                    ppm: ppm,
-                    targetPpm: targetPpm,
-                    ph: ph,
-                    phAction: phAction,
-                    waterTemp: waterTemp,
-                    ghTemp: ghTemp,
-                    desc: desc,
-                    title: `PPM: ${ppm} (Target: ${targetPpm}) | pH: ${ph}`
-                };
-
-                if (id) {
-                    payload.id = id;
-                    Storage.update(Storage.KEYS.NUTRISI, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data nutrisi berhasil diperbarui!', 'success');
-                    }
-                } else {
-                    Storage.add(Storage.KEYS.NUTRISI, payload);
-
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Data nutrisi berhasil ditambahkan!', 'success');
-                    }
-                }
-
-                form.reset();
-                document.getElementById('nutrisiId').value = '';
-                document.getElementById('formTitleNutrisi').innerText = 'Catat Cek Nutrisi Harian';
-                if (btnCancel) btnCancel.style.display = 'none';
-
-                loadTable();
-            });
-        }
-
-        if (btnCancel) {
-            btnCancel.addEventListener('click', function() {
-                form.reset();
-                document.getElementById('nutrisiId').value = '';
-                document.getElementById('formTitleNutrisi').innerText = 'Catat Cek Nutrisi Harian';
-                btnCancel.style.display = 'none';
-            });
-        }
-    }
-
-    function loadTable() {
-        var container = document.getElementById('containerNutrisiCards');
-        if (!container) return;
-
         var data = Storage.getAll(Storage.KEYS.NUTRISI);
-        if (data.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada catatan nutrisi tercatat.</div>`;
-            return;
-        }
-
-        // Urutkan dari tanggal terbaru
-        data.sort(function(a, b) {
-            return new Date(b.date) - new Date(a.date);
-        });
-
-        var html = '';
-        data.forEach(function(item) {
-            html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Card: Tanggal, Waktu, & HST -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 14px; color: #222;">${item.date}</strong>
-                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.timeSlot}</span>
-                        </div>
-                        <div style="font-size: 12px; color: #555; font-weight: 600;">
-                            HST ${item.hst || '-'} <span style="font-weight: normal; color: #777;">(${item.fase || '-'})</span>
-                        </div>
-                    </div>
-
-                    <!-- Isi Card: Layout Menyamping (Grid Kolom) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        <!-- Kolom Kiri: PPM -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">PPM Air</div>
-                            <div style="font-size: 16px; font-weight: 700; color: #0277BD; margin-top: 2px;">
-                                ${item.ppm} <span style="font-size: 11px; color: #555; font-weight: normal;">(Target: ${item.targetPpm})</span>
-                            </div>
-                        </div>
-
-                        <!-- Kolom Kanan: pH & Aksi -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase;">pH & Koreksi</div>
-                            <div style="font-size: 15px; font-weight: 700; color: #222; margin-top: 2px;">
-                                ${item.ph} <span style="font-size: 11px; color: #C62828; font-weight: 600; margin-left: 4px;">[${item.phAction || '-'}]</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informasi Tambahan / Suhu & Catatan -->
-                    ${(item.waterTemp || item.ghTemp || item.desc) ? `
-                        <div style="font-size: 11px; color: #555; background: #fafafa; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-                            ${(item.waterTemp || item.ghTemp) ? `<div><i class="fas fa-thermometer-half" style="color: #FF8F00;"></i> Suhu Air: <strong>${item.waterTemp || '-'}</strong> | Suhu GH: <strong>${item.ghTemp || '-'}</strong></div>` : ''}
-                            ${item.desc ? `<div style="margin-top: 2px; font-style: italic; color: #666;">Catatan: ${item.desc}</div>` : ''}
-                        </div>
-                    ` : ''}
-
-                    <!-- Tombol Aksi Logo Saja (Ikon Pensil di Kiri, Ikon Tong Sampah di Kanan Tanpa Kotak) -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
-                        <span onclick="nutrisi.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
-                        <span onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
-    }
-
-    function editItem(id) {
-        var item = Storage.getById(Storage.KEYS.NUTRISI, id);
-        if (!item) return;
-
-        document.getElementById('nutrisiId').value = item.id;
-        document.getElementById('nutrisiDate').value = item.date;
-        document.getElementById('nutrisiTimeSlot').value = item.timeSlot || 'Pagi';
-        document.getElementById('nutrisiHst').value = item.hst || '';
-        document.getElementById('nutrisiFase').value = item.fase || 'Vegetatif Pertumbuhan';
-        document.getElementById('nutrisiPpm').value = item.ppm || '';
-        document.getElementById('nutrisiTargetPpm').value = item.targetPpm || '';
-        document.getElementById('nutrisiPh').value = item.ph || '';
-        document.getElementById('nutrisiPhAction').value = item.phAction || 'Aman / Tanpa Koreksi';
-        document.getElementById('nutrisiWaterTemp').value = item.waterTemp || '';
-        document.getElementById('nutrisiGhTemp').value = item.ghTemp || '';
-        document.getElementById('nutrisiDesc').value = item.desc || '';
-        document.getElementById('formTitleNutrisi').innerText = 'Edit Data Nutrisi';
+        data.sort(function(a,b) { return new Date(b.tanggal) - new Date(a.tanggal); });
+        var latest = data[0] || {};
         
-        var btnCancel = document.getElementById('btnCancelNutrisiEdit');
-        if (btnCancel) btnCancel.style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        var html = '<div class="module-container">';
+        
+        // Header
+        html += '<div class="page-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">';
+        html += '<h2 style="margin:0; font-size:20px;"><i class="fas fa-flask" style="color:#2E7D32; margin-right:8px;"></i> Nutrisi</h2>';
+        html += '<button style="background:#2E7D32; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; box-shadow:0 2px 6px rgba(46,125,50,0.3);" onclick="nutrisi.showForm()">';
+        html += '<i class="fas fa-plus"></i> Input Nutrisi</button></div>';
+        
+        // Pembacaan Terakhir
+        if (data.length > 0) {
+            html += '<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid #e0e0e0;">';
+            html += '<div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:12px;"><i class="fas fa-chart-bar"></i> Pembacaan Terakhir</div>';
+            html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">';
+            html += '<div style="background:#F3E5F5;padding:12px;border-radius:10px;"><div style="font-size:20px;font-weight:700;color:#7B1FA2;">'+(latest.ppm_pagi||'-')+'</div><div style="font-size:11px;color:#666;">PPM</div></div>';
+            html += '<div style="background:#E0F2F1;padding:12px;border-radius:10px;"><div style="font-size:20px;font-weight:700;color:#00838F;">'+(latest.ph_pagi||'-')+'</div><div style="font-size:11px;color:#666;">pH</div></div>';
+            html += '<div style="background:#E3F2FD;padding:12px;border-radius:10px;"><div style="font-size:20px;font-weight:700;color:#1976D2;">'+(latest.suhu_air?latest.suhu_air+'°C':'-')+'</div><div style="font-size:11px;color:#666;">Suhu Air</div></div>';
+            html += '</div></div>';
+        }
+        
+        // Riwayat Nutrisi
+        if (data.length === 0) {
+            html += '<div class="empty-state" style="text-align:center;padding:40px 20px;background:#fff;border-radius:12px;border:1px dashed #ccc;">';
+            html += '<i class="fas fa-flask" style="font-size:40px;color:#ddd;margin-bottom:12px;"></i><h3 style="color:#777;font-size:16px;">Belum ada data nutrisi</h3></div>';
+        } else {
+            html += '<div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;"><i class="fas fa-history"></i> Riwayat & Rekap Kontrol Nutrisi</div>';
+            
+            html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+            data.slice(0, 20).forEach(function(n) {
+                html += '<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04);border:1px solid #f0f0f0;">';
+                
+                // Header: Tanggal + Waktu + Operator
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">';
+                html += '<div>';
+                html += '<strong style="font-size:14px;color:#1B5E20;">' + formatDate(n.tanggal) + '</strong>';
+                if (n.jam) html += '<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-left:6px;">' + n.jam + '</span>';
+                html += '</div>';
+                if (n.operator) html += '<span style="font-size:11px;color:#888;">👤 ' + n.operator + '</span>';
+                html += '</div>';
+                
+                // 4 Grid Card
+                html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;">';
+                
+                // 1. PPM
+                html += '<div style="background:#F3E5F5;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">PPM</div>';
+                html += '<div style="font-size:15px;font-weight:700;color:#000;">' + (n.ppm_pagi||'-') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Target: ' + (n.ppm_sore||'-') + '</div>';
+                html += '</div>';
+                
+                // 2. pH & Koreksi
+                html += '<div style="background:#E0F2F1;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">pH & Koreksi</div>';
+                html += '<div style="font-size:15px;font-weight:700;color:#000;">' + (n.ph_pagi||'-') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">' + (n.ph_sore||'-') + '</div>';
+                html += '</div>';
+                
+                // 3. HST & Fase
+                html += '<div style="background:#FFF3E0;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">HST & Fase</div>';
+                html += '<div style="font-size:15px;font-weight:700;color:#000;">' + (n.hst||'-') + ' hari</div>';
+                html += '<div style="font-size:10px;color:#666;">' + (n.fase||'-') + '</div>';
+                html += '</div>';
+                
+                // 4. Suhu Air & Ruangan
+                html += '<div style="background:#E3F2FD;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Suhu Air & Ruangan</div>';
+                html += '<div style="font-size:15px;font-weight:700;color:#000;">' + (n.suhu_air?n.suhu_air+'°C':'-') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">' + (n.suhu_udara?n.suhu_udara+'°C':'-') + '</div>';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                // Catatan
+                if (n.catatan) html += '<div style="font-size:11px;color:#666;background:#f9f9f9;padding:8px;border-radius:6px;margin-bottom:8px;">📝 ' + n.catatan + '</div>';
+                
+                // Tombol Edit & Hapus
+                html += '<div style="display:flex;justify-content:flex-end;gap:6px;">';
+                html += '<button onclick="nutrisi.editForm(\'' + n.id + '\')" style="padding:6px 12px;background:#E3F2FD;color:#1976D2;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-edit"></i> Edit</button>';
+                html += '<button onclick="nutrisi.deleteItem(\'' + n.id + '\')" style="padding:6px 12px;background:#FFEBEE;color:#D32F2F;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-trash-alt"></i> Hapus</button>';
+                html += '</div>';
+                
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        
+        html += '</div>';
+        return html;
     }
+
+    function init() {}
+
+    function showForm(id) {
+        var isEdit = !!id;
+        var data = isEdit ? Storage.getById(Storage.KEYS.NUTRISI, id) : {};
+        
+        var html = '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">';
+        html += '<h3 style="margin:0;font-size:16px;">' + (isEdit?'Edit':'Input') + ' Nutrisi</h3>';
+        html += '<button onclick="nutrisi.closeModal()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">✕</button></div>';
+        
+        html += '<div style="padding:20px;"><form onsubmit="nutrisi.save(event,\'' + (id||'') + '\')">';
+        html += '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Tanggal *</label><input type="date" name="tanggal" value="' + (data.tanggal||getToday()) + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>PPM Pagi</label><input type="number" name="ppm_pagi" value="' + (data.ppm_pagi||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>PPM Sore (Target)</label><input type="number" name="ppm_sore" value="' + (data.ppm_sore||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>pH Pagi</label><input type="number" name="ph_pagi" value="' + (data.ph_pagi||'') + '" step="0.1" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>pH Sore (Koreksi)</label><input type="number" name="ph_sore" value="' + (data.ph_sore||'') + '" step="0.1" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>HST</label><input type="number" name="hst" value="' + (data.hst||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>Fase</label><select name="fase" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="Vegetatif Awal">Vegetatif Awal</option><option value="Vegetatif Pertumbuhan">Vegetatif Pertumbuhan</option><option value="Pembungaan">Pembungaan</option><option value="Pembesaran Buah">Pembesaran Buah</option><option value="Pematangan">Pematangan</option></select></div></div>';
+        
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
+        html += '<div><label>Suhu Air (°C)</label><input type="number" name="suhu_air" value="' + (data.suhu_air||'') + '" step="0.1" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label>Suhu Ruangan (°C)</label><input type="number" name="suhu_udara" value="' + (data.suhu_udara||'') + '" step="0.1" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="margin-bottom:14px;"><label>Operator</label><input name="operator" value="' + (data.operator||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div style="margin-bottom:14px;"><label>Catatan</label><textarea name="catatan" rows="2" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;">' + (data.catatan||'') + '</textarea></div>';
+        
+        html += '<div style="display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #eee;">';
+        html += '<button type="button" onclick="nutrisi.closeModal()" style="padding:12px 20px;background:#eee;border:none;border-radius:10px;font-size:14px;cursor:pointer;">Batal</button>';
+        html += '<button type="submit" style="padding:12px 24px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Simpan</button>';
+        html += '</div></form></div>';
+        
+        document.getElementById('modalContent').innerHTML = html;
+        document.getElementById('modalContainer').style.display = 'flex';
+    }
+
+    function editForm(id) { showForm(id); }
 
     function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus data nutrisi ini?')) {
+        if (confirm('Hapus data nutrisi ini?')) {
             Storage.remove(Storage.KEYS.NUTRISI, id);
-            loadTable();
-            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast('Data nutrisi berhasil dihapus', 'error');
-            }
+            Router.navigate('nutrisi');
+            Notification.success('Data nutrisi dihapus!');
         }
     }
 
-    return {
-        render: render,
-        init: init,
-        editItem: editItem,
-        deleteItem: deleteItem
+    function save(event, id) {
+        event.preventDefault();
+        var f = event.target;
+        var d = {
+            tanggal: f.tanggal.value,
+            ppm_pagi: parseInt(f.ppm_pagi.value) || null,
+            ppm_sore: parseInt(f.ppm_sore.value) || null,
+            ph_pagi: parseFloat(f.ph_pagi.value) || null,
+            ph_sore: parseFloat(f.ph_sore.value) || null,
+            hst: parseInt(f.hst.value) || null,
+            fase: f.fase.value,
+            suhu_air: parseFloat(f.suhu_air.value) || null,
+            suhu_udara: parseFloat(f.suhu_udara.value) || null,
+            operator: f.operator.value,
+            catatan: f.catatan.value
+        };
+        if (id) Storage.update(Storage.KEYS.NUTRISI, id, d);
+        else Storage.create(Storage.KEYS.NUTRISI, d);
+        closeModal();
+        Router.navigate('nutrisi');
+        Notification.success('Nutrisi disimpan!');
+    }
+
+    function closeModal() { document.getElementById('modalContainer').style.display = 'none'; }
+    
+    function formatDate(d) { 
+        if(!d) return '-'; 
+        var dt = new Date(d); 
+        return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2) + '/' + dt.getFullYear(); 
+    }
+    
+    function getToday() { return new Date().toISOString().split('T')[0]; }
+
+    return { 
+        render: render, 
+        init: init, 
+        showForm: showForm, 
+        editForm: editForm, 
+        deleteItem: deleteItem, 
+        save: save, 
+        closeModal: closeModal 
     };
 
 })();
