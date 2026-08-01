@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL LAPORAN & EVALUASI FARM
+// COZYCS FARM - MODUL LAPORAN & BACKUP DATA
 // ==========================================
 
 var laporan = (function() {
@@ -7,234 +7,143 @@ var laporan = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-file-invoice" style="color: #00695C;"></i> Laporan & Evaluasi Farm</div>
-                <div style="font-size: 13px; color: #666; margin-bottom: 16px;">
-                    Pusat rekapitulasi seluruh aktivitas operasional musim ini. Pilih kategori untuk mengunduh laporan terpisah dalam format spreadsheet Excel/CSV.
-                </div>
-
-                <!-- Kartu Statistik Ringkasan Musim Ini -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
-                    <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Aksi Spray</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #6A1B9A; margin-top: 4px;" id="statTotalSpray">0</div>
-                    </div>
-                    <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Agenda / Jadwal</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #EF6C00; margin-top: 4px;" id="statTotalJadwal">0</div>
-                    </div>
-                    <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Catatan Panen</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #1B5E20; margin-top: 4px;" id="statTotalPanen">0</div>
-                    </div>
-                    <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Log Aktivitas</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #0277BD; margin-top: 4px;" id="statTotalLog">0</div>
+                <div class="section-title"><i class="fas fa-file-alt" style="color: #2E7D32;"></i> Laporan & Backup Data Kebun</div>
+                
+                <!-- Card Informasi Keamanan Data -->
+                <div style="background: #E8F5E9; border: 1px solid #C8E6C9; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 6px;"><i class="fas fa-shield-alt"></i> Pusat Keamanan Data Kebun</div>
+                    <div style="font-size: 12px; color: #333; line-height: 1.5;">
+                        Selalu unduh file backup secara berkala (terutama setelah selesai menginput data harian) agar catatan Nutrisi, Spray, dan Jadwal kebunmu tetap aman dan bisa dipulihkan kapan saja.
                     </div>
                 </div>
 
-                <!-- Tombol Unduh Per Kategori Spreadsheet -->
-                <div class="section-title"><i class="fas fa-download" style="color: #00695C;"></i> Unduh Laporan Terpisah (Excel / CSV)</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px;">
-                    <button id="btnExportSpray" class="btn" style="background: #F3E5F5; color: #6A1B9A; border: 1px solid #d1c4e9; font-weight: 600; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fas fa-file-excel"></i> Laporan Spray</button>
-                    <button id="btnExportNutrisi" class="btn" style="background: #E1F5FE; color: #0277BD; border: 1px solid #b3e5fc; font-weight: 600; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fas fa-file-excel"></i> Laporan Nutrisi</button>
-                    <button id="btnExportPanen" class="btn" style="background: #E8F5E9; color: #1B5E20; border: 1px solid #c8e6c9; font-weight: 600; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fas fa-file-excel"></i> Laporan Panen</button>
-                    <button id="btnExportJadwal" class="btn" style="background: #FFF3E0; color: #EF6C00; border: 1px solid #ffe0b2; font-weight: 600; font-size: 12px; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fas fa-file-excel"></i> Laporan Jadwal</button>
+                <!-- Tombol Aksi Backup & Restore -->
+                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px;">Manajemen File Cadangan (.JSON)</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <!-- Tombol Download Backup -->
+                        <button type="button" onclick="laporan.downloadBackup()" style="background: #2E7D32; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fas fa-download"></i> Unduh Backup
+                        </button>
+
+                        <!-- Tombol Upload Restore -->
+                        <label style="background: #0277BD; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center;">
+                            <i class="fas fa-upload"></i> Pulihkan Data
+                            <input type="file" id="restoreFile" accept=".json" style="display: none;" onchange="laporan.restoreBackup(event)">
+                        </label>
+                    </div>
                 </div>
 
-                <!-- Tombol Reset Data -->
-                <div style="margin-bottom: 20px;">
-                    <button id="btnClearAllData" style="width: 100%; background: #FFEBEE; color: #C62828; border: 1px solid #ffcdd2; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;"><i class="fas fa-trash-alt"></i> Reset Seluruh Data Farm</button>
-                </div>
-
-                <!-- Tabel Rekapitulasi Gabungan Aktivitas -->
-                <div class="section-title"><i class="fas fa-list-alt" style="color: #00695C;"></i> Rekapitulasi Aktivitas Farm</div>
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Kategori</th>
-                                <th>Tanggal</th>
-                                <th>Detail Kegiatan / Catatan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableLaporanBody">
-                            <!-- Diisi dinamis oleh JavaScript -->
-                        </tbody>
-                    </table>
+                <!-- Ringkasan Statistik Laporan -->
+                <div class="section-title"><i class="fas fa-chart-pie" style="color: #2E7D32;"></i> Ringkasan Rekap Kebun</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="summaryCardsReport">
+                    <!-- Diisi dinamis oleh JavaScript -->
                 </div>
             </div>
         `;
     }
 
     function init() {
-        loadReportData();
-
-        // Event listener unduh per kategori
-        var btnSpray = document.getElementById('btnExportSpray');
-        if (btnSpray) btnSpray.addEventListener('click', function() { exportCategory('spray'); });
-
-        var btnNutrisi = document.getElementById('btnExportNutrisi');
-        if (btnNutrisi) btnNutrisi.addEventListener('click', function() { exportCategory('nutrisi'); });
-
-        var btnPanen = document.getElementById('btnExportPanen');
-        if (btnPanen) btnPanen.addEventListener('click', function() { exportCategory('panen'); });
-
-        var btnJadwal = document.getElementById('btnExportJadwal');
-        if (btnJadwal) btnJadwal.addEventListener('click', function() { exportCategory('jadwal'); });
-
-        var btnReset = document.getElementById('btnClearAllData');
-        if (btnReset) {
-            btnReset.addEventListener('click', function() {
-                if (confirm('PERINGATAN: Apakah kamu yakin ingin menghapus seluruh data rekam jejak farm? Tindakan ini tidak dapat dibatalkan!')) {
-                    localStorage.clear();
-                    Storage.init();
-                    loadReportData();
-                    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Seluruh data berhasil direset.', 'error');
-                    }
-                }
-            });
-        }
+        loadSummary();
     }
 
-    function loadReportData() {
-        var sprayData = Storage.getAll(Storage.KEYS.SPRAY);
-        var jadwalData = Storage.getAll(Storage.KEYS.JADWAL);
-        var panenData = Storage.getAll(Storage.KEYS.PANEN);
+    function loadSummary() {
+        var container = document.getElementById('summaryCardsReport');
+        if (!container) return;
+
         var nutrisiData = Storage.getAll(Storage.KEYS.NUTRISI);
-        var pruningData = Storage.getAll(Storage.KEYS.PRUNING);
-        var polinasiData = Storage.getAll(Storage.KEYS.POLINASI);
+        var sprayData = Storage.getAll(Storage.KEYS.SPRAY);
+        var schedulesData = Storage.getAll('cozycs_schedules');
 
-        // Update Statistik Angka
-        document.getElementById('statTotalSpray').innerText = sprayData.length;
-        document.getElementById('statTotalJadwal').innerText = jadwalData.length;
-        document.getElementById('statTotalPanen').innerText = panenData.length;
-        
-        var totalLog = sprayData.length + jadwalData.length + panenData.length + nutrisiData.length + pruningData.length + polinasiData.length;
-        document.getElementById('statTotalLog').innerText = totalLog;
-
-        var tbody = document.getElementById('tableLaporanBody');
-        if (!tbody) return;
-
-        var combined = [];
-        
-        sprayData.forEach(function(item) {
-            combined.push({
-                category: 'Spray',
-                color: '#6A1B9A',
-                date: item.date || '-',
-                info: `Produk: <strong>${item.title}</strong> (Dosis: ${item.dose || '-'}) - Sasaran: ${item.target || '-'}`
-            });
-        });
-
-        jadwalData.forEach(function(item) {
-            combined.push({
-                category: 'Jadwal',
-                color: '#EF6C00',
-                date: item.date || '-',
-                info: `Agenda: <strong>${item.title}</strong> - ${item.desc || '-'}`
-            });
-        });
-
-        panenData.forEach(function(item) {
-            combined.push({
-                category: 'Panen',
-                color: '#1B5E20',
-                date: item.date || item.tanggal || '-',
-                info: `Panen Melon: ${item.berat || item.jumlah || 'Sukses'} kg`
-            });
-        });
-
-        nutrisiData.forEach(function(item) {
-            combined.push({
-                category: 'Nutrisi',
-                color: '#0277BD',
-                date: item.date || '-',
-                info: `PPM: ${item.ppm || '-'} | Tandon: ${item.tandon || 'Stabil'}`
-            });
-        });
-
-        combined.sort(function(a, b) {
-            return new Date(b.date) - new Date(a.date);
-        });
-
-        if (combined.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">Belum ada rekam jejak aktivitas tercatat.</td></tr>`;
-            return;
-        }
-
-        var html = '';
-        combined.forEach(function(row) {
-            html += `
-                <tr>
-                    <td><span style="background: ${row.color}15; color: ${row.color}; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">${row.category}</span></td>
-                    <td><strong>${row.date}</strong></td>
-                    <td style="font-size: 12px; color: #333; line-height: 1.4;">${row.info}</td>
-                </tr>
-            `;
-        });
-
-        tbody.innerHTML = html;
+        container.innerHTML = `
+            <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Cek Nutrisi</div>
+                <div style="font-size: 20px; font-weight: bold; color: #0277BD; margin-top: 4px;">${nutrisiData.length} <span style="font-size: 12px; font-weight: normal; color: #555;">Catatan</span></div>
+            </div>
+            <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase;">Total Aksi Spray</div>
+                <div style="font-size: 20px; font-weight: bold; color: #6A1B9A; margin-top: 4px;">${sprayData.length} <span style="font-size: 12px; font-weight: normal; color: #555;">Jadwal</span></div>
+            </div>
+        `;
     }
 
-    function exportCategory(type) {
-        var csvContent = "data:text/csv;charset=utf-8,";
-        var filename = "cozycs_farm_laporan_" + type + "_" + new Date().toISOString().slice(0,10) + ".csv";
-        var data = [];
+    // Fungsi Mengunduh File Backup JSON
+    function downloadBackup() {
+        try {
+            var backupData = {
+                version: "1.0",
+                app: "Cozycs Farm Management",
+                exportDate: new Date().toISOString(),
+                data: {
+                    nutrisi: Storage.getAll(Storage.KEYS.NUTRISI),
+                    spray: Storage.getAll(Storage.KEYS.SPRAY),
+                    schedules: Storage.getAll('cozycs_schedules')
+                }
+            };
 
-        if (type === 'spray') {
-            csvContent += "Tanggal,Waktu,Produk Pestisida,Dosis,Sasaran Hama,Catatan\r\n";
-            data = Storage.getAll(Storage.KEYS.SPRAY);
-            data.forEach(function(item) {
-                var row = [item.date || "", item.timeSlot || "", `"${item.title || ''}"`, `"${item.dose || ''}"`, `"${item.target || ''}"`, `"${item.desc || ''}"`];
-                csvContent += row.join(",") + "\r\n";
-            });
-        } else if (type === 'nutrisi') {
-            csvContent += "Tanggal,PPM,pH,Kondisi Tandon,Catatan\r\n";
-            data = Storage.getAll(Storage.KEYS.NUTRISI);
-            data.forEach(function(item) {
-                var row = [item.date || "", item.ppm || "", item.ph || "", `"${item.tandon || ''}"`, `"${item.desc || ''}"`];
-                csvContent += row.join(",") + "\r\n";
-            });
-        } else if (type === 'panen') {
-            csvContent += "Tanggal,Nomor Tanaman / Greenhouse,Berat (Kg),Jumlah Buah,Kualitas,Catatan\r\n";
-            data = Storage.getAll(Storage.KEYS.PANEN);
-            data.forEach(function(item) {
-                var row = [item.date || item.tanggal || "", `"${item.tanaman || item.gh || ''}"`, item.berat || item.jumlah || "", item.pcs || 1, `"${item.kualitas || 'Grade A'}"`, `"${item.desc || ''}"`];
-                csvContent += row.join(",") + "\r\n";
-            });
-        } else if (type === 'jadwal') {
-            csvContent += "Tanggal,Judul Agenda,Keterangan\r\n";
-            data = Storage.getAll(Storage.KEYS.JADWAL);
-            data.forEach(function(item) {
-                var row = [item.date || "", `"${item.title || ''}"`, `"${item.desc || ''}"`];
-                csvContent += row.join(",") + "\r\n";
-            });
-        }
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            var downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `cozycs_farm_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
 
-        if (data.length === 0) {
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast('Belum ada data untuk kategori ' + type, 'error');
+                Helper.showToast('Backup data berhasil diunduh!', 'success');
             }
-            return;
+        } catch (err) {
+            alert('Gagal mengunduh backup: ' + err.message);
         }
+    }
 
-        var encodedUri = encodeURI(csvContent);
-        var downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", encodedUri);
-        downloadAnchor.setAttribute("download", filename);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
+    // Fungsi Memulihkan Data dari File JSON
+    function restoreBackup(event) {
+        var file = event.target.files[0];
+        if (!file) return;
 
-        if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-            Helper.showToast('Laporan ' + type + ' berhasil diunduh!', 'success');
-        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var jsonContent = JSON.parse(e.target.result);
+                
+                if (!jsonContent.data) {
+                    throw new Error('Format file backup tidak valid!');
+                }
+
+                // Masukkan kembali ke localStorage melalui Storage helper
+                if (jsonContent.data.nutrisi) {
+                    Storage.saveAll(Storage.KEYS.NUTRISI, jsonContent.data.nutrisi);
+                }
+                if (jsonContent.data.spray) {
+                    Storage.saveAll(Storage.KEYS.SPRAY, jsonContent.data.spray);
+                }
+                if (jsonContent.data.schedules) {
+                    Storage.saveAll('cozycs_schedules', jsonContent.data.schedules);
+                }
+
+                if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                    Helper.showToast('Data kebun berhasil dipulihkan!', 'success');
+                } else {
+                    alert('Data kebun berhasil dipulihkan!');
+                }
+
+                loadSummary();
+                event.target.value = ''; // Reset input file
+            } catch (err) {
+                alert('Gagal memulihkan data. Pastikan file berformat JSON Cozycs Farm yang benar.\nError: ' + err.message);
+                event.target.value = '';
+            }
+        };
+        reader.readAsText(file);
     }
 
     return {
         render: render,
-        init: init
+        init: init,
+        downloadBackup: downloadBackup,
+        restoreBackup: restoreBackup
     };
 
 })();
