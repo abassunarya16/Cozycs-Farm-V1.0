@@ -1,0 +1,100 @@
+/* ========================================== */
+/* COZYCS FARM - MODAL STYLES (POP-UP) */
+/* ========================================== */
+
+/* Container utama penampung modal */
+.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1500;
+    display: none;
+    align-items: flex-end; /* Membuat modal muncul di bawah (Mobile Style) */
+    justify-content: center;
+}
+
+.modal-container.show {
+    display: flex;
+}
+
+/* Latar belakang gelap (dimming) */
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-container.show .modal-backdrop {
+    opacity: 1;
+}
+
+/* Kotak konten modal utama */
+.modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 20px 20px 0 0; /* Melengkung di sudut atas saja */
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(100%); /* Sembunyi di bawah layar */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efek membal saat muncul */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+}
+
+.modal-container.show .modal-content {
+    transform: translateY(0); /* Muncul ke atas */
+}
+
+/* Bagian Header Modal (Judul & Tombol Tutup) */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1B5E20;
+}
+
+/* Tombol X (Tutup) */
+.btn-close {
+    background: #f5f5f5;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #555;
+    font-size: 16px;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-close:active {
+    transform: scale(0.9);
+}
+
+/* Bagian Isi Konten Modal (Form dll) */
+.modal-body {
+    padding: 20px;
+    padding-bottom: 40px; /* Jarak ekstra di bawah biar tidak terpotong layar HP */
+}
