@@ -8,15 +8,20 @@ var tanaman = (function() {
         
         var html = '<div class="module-container">';
         
+        // Header
         html += '<div class="page-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">';
         html += '<h2 style="margin:0; font-size:20px;"><i class="fas fa-seedling" style="color:#2E7D32; margin-right:8px;"></i> Database Tanaman</h2>';
         html += '<button style="background:#2E7D32; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; box-shadow:0 2px 6px rgba(46,125,50,0.3);" onclick="tanaman.showForm()">';
-        html += '<i class="fas fa-plus"></i> Tambah</button></div>';
+        html += '<i class="fas fa-plus"></i> Tambah Tanaman</button></div>';
         
+        // Search & Filter
         html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
         html += '<input type="text" placeholder="🔍 Cari tanaman..." value="' + currentSearch + '" oninput="tanaman.search(this.value)" style="flex:1;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;">';
         html += '<select onchange="tanaman.setFilter(this.value)" style="padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;background:#fff;">';
-        html += '<option value="all">Semua</option><option value="hidup">Hidup</option><option value="mati">Mati</option><option value="panen">Panen</option>';
+        html += '<option value="all" ' + (currentFilter==='all'?'selected':'') + '>Semua</option>';
+        html += '<option value="hidup" ' + (currentFilter==='hidup'?'selected':'') + '>Hidup</option>';
+        html += '<option value="mati" ' + (currentFilter==='mati'?'selected':'') + '>Mati</option>';
+        html += '<option value="panen" ' + (currentFilter==='panen'?'selected':'') + '>Panen</option>';
         html += '</select></div>';
         
         if (data.length === 0) {
@@ -26,22 +31,53 @@ var tanaman = (function() {
             html += '<div style="display:flex;flex-direction:column;gap:10px;">';
             data.forEach(function(t) {
                 var gh = greenhouse.find(function(g) { return g.id === t.greenhouse_id; });
+                var hst = t.hst || 0;
                 
                 html += '<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04);border:1px solid #f0f0f0;">';
                 
-                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
-                html += '<div><strong style="font-size:14px;color:#1B5E20;">' + t.id + '</strong><br><small style="color:#888;">' + (t.varietas || '-') + '</small></div>';
-                html += '<span class="status-badge ' + getStatusClass(t.status_tanaman) + '">' + (t.status_tanaman || 'aktif') + '</span>';
+                // Header Card: ID + Varietas + Status
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">';
+                html += '<div><strong style="font-size:15px;color:#1B5E20;">' + t.id + '</strong><br><small style="color:#888;">' + (t.varietas || '-') + '</small></div>';
+                html += '<span class="status-badge ' + getStatusClass(t.status_tanaman) + '" style="font-size:11px;">' + (t.status_tanaman || 'aktif') + '</span>';
                 html += '</div>';
                 
-                html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:10px;">';
-                html += '<div style="background:#E8F5E9;padding:8px;border-radius:8px;"><div style="font-weight:700;color:#2E7D32;">' + (gh ? gh.kode : '-') + '</div><div style="font-size:10px;color:#666;">Greenhouse</div></div>';
-                html += '<div style="background:#FFF3E0;padding:8px;border-radius:8px;"><div style="font-weight:700;color:#F57C00;">' + (t.hst || 0) + ' hr</div><div style="font-size:10px;color:#666;">HST</div></div>';
-                html += '<div style="background:#E3F2FD;padding:8px;border-radius:8px;"><div style="font-weight:700;color:#1976D2;">' + formatDate(t.tanggal_tanam) + '</div><div style="font-size:10px;color:#666;">Tgl Tanam</div></div>';
+                // 4 Grid Card
+                html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;">';
+                
+                // 1. Greenhouse & Lokasi
+                html += '<div style="background:#E8F5E9;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Greenhouse</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">' + (gh ? gh.kode : '-') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Talang ' + (t.talang||'-') + ' / Lubang ' + (t.lubang||'-') + '</div>';
                 html += '</div>';
                 
+                // 2. HST & HSP
+                html += '<div style="background:#FFF3E0;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">HST & HSP</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">HST: ' + hst + ' hr</div>';
+                html += '<div style="font-size:10px;color:#666;">HSP: ' + (t.hsp||0) + ' hr</div>';
+                html += '</div>';
+                
+                // 3. Tanggal Tanam & Semai
+                html += '<div style="background:#E3F2FD;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Tanggal</div>';
+                html += '<div style="font-size:14px;font-weight:700;color:#000;">' + formatDate(t.tanggal_tanam) + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Semai: ' + formatDate(t.tanggal_semai) + '</div>';
+                html += '</div>';
+                
+                // 4. Status Detail
+                html += '<div style="background:#FCE4EC;padding:10px;border-radius:8px;text-align:center;">';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:2px;">Status Detail</div>';
+                html += '<div style="font-size:12px;font-weight:700;color:#000;">' + (t.status_polinasi||'belum') + '</div>';
+                html += '<div style="font-size:10px;color:#666;">Buah: ' + (t.status_buah||'belum') + ' | Panen: ' + (t.status_panen||'belum') + '</div>';
+                html += '</div>';
+                
+                html += '</div>';
+                
+                // Catatan
                 if (t.catatan) html += '<div style="font-size:11px;color:#666;background:#f9f9f9;padding:8px;border-radius:6px;margin-bottom:8px;">📝 ' + t.catatan + '</div>';
                 
+                // Tombol Edit & Hapus
                 html += '<div style="display:flex;justify-content:flex-end;gap:6px;">';
                 html += '<button onclick="tanaman.editForm(\'' + t.id + '\')" style="padding:6px 12px;background:#E3F2FD;color:#1976D2;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-edit"></i> Edit</button>';
                 html += '<button onclick="tanaman.deleteItem(\'' + t.id + '\')" style="padding:6px 12px;background:#FFEBEE;color:#D32F2F;border:none;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-trash-alt"></i> Hapus</button>';
@@ -79,20 +115,27 @@ var tanaman = (function() {
         html += '<button onclick="tanaman.closeModal()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">✕</button></div>';
         
         html += '<div style="padding:20px;"><form onsubmit="tanaman.save(event,\'' + (id||'') + '\')">';
-        html += '<div style="margin-bottom:14px;"><label>Greenhouse *</label><select name="greenhouse_id" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="">Pilih</option>';
+        
+        html += '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Greenhouse *</label><select name="greenhouse_id" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="">Pilih Greenhouse</option>';
         gh.forEach(function(g) { html += '<option value="' + g.id + '"' + (data.greenhouse_id===g.id?' selected':'') + '>' + g.kode + ' - ' + g.nama + '</option>'; });
         html += '</select></div>';
+        
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
-        html += '<div><label>Kode GH</label><input name="greenhouse_code" value="' + (data.greenhouse_code||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
-        html += '<div><label>Varietas *</label><input name="varietas" value="' + (data.varietas||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Kode GH</label><input name="greenhouse_code" value="' + (data.greenhouse_code||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Varietas *</label><input name="varietas" value="' + (data.varietas||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
-        html += '<div><label>Talang</label><input type="number" name="talang" value="' + (data.talang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
-        html += '<div><label>Lubang</label><input type="number" name="lubang" value="' + (data.lubang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Talang</label><input type="number" name="talang" value="' + (data.talang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Lubang</label><input type="number" name="lubang" value="' + (data.lubang||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">';
-        html += '<div><label>Tgl Semai</label><input type="date" name="tanggal_semai" value="' + (data.tanggal_semai||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
-        html += '<div><label>Tgl Tanam *</label><input type="date" name="tanggal_tanam" value="' + (data.tanggal_tanam||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
-        html += '<div style="margin-bottom:14px;"><label>Status</label><select name="status_tanaman" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="aktif">✅ Aktif</option><option value="sehat">💚 Sehat</option><option value="sakit">⚠️ Sakit</option><option value="mati">❌ Mati</option></select></div>';
-        html += '<div style="margin-bottom:14px;"><label>Catatan</label><textarea name="catatan" rows="2" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;">' + (data.catatan||'') + '</textarea></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Tgl Semai</label><input type="date" name="tanggal_semai" value="' + (data.tanggal_semai||'') + '" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div>';
+        html += '<div><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Tgl Tanam *</label><input type="date" name="tanggal_tanam" value="' + (data.tanggal_tanam||'') + '" required style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;"></div></div>';
+        
+        html += '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Status Tanaman</label><select name="status_tanaman" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;background:#fff;"><option value="aktif">✅ Aktif</option><option value="sehat">💚 Sehat</option><option value="sakit">⚠️ Sakit</option><option value="mati">❌ Mati</option></select></div>';
+        
+        html += '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">Catatan</label><textarea name="catatan" rows="2" style="width:100%;padding:12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;">' + (data.catatan||'') + '</textarea></div>';
+        
         html += '<div style="display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid #eee;">';
         html += '<button type="button" onclick="tanaman.closeModal()" style="padding:12px 20px;background:#eee;border:none;border-radius:10px;font-size:14px;cursor:pointer;">Batal</button>';
         html += '<button type="submit" style="padding:12px 24px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">💾 Simpan</button>';
@@ -105,8 +148,10 @@ var tanaman = (function() {
     function editForm(id) { showForm(id); }
 
     function deleteItem(id) {
-        if (confirm('Hapus tanaman ' + id + '?')) {
+        if (confirm('Hapus tanaman ' + id + '?\n\nData terkait juga akan dihapus.')) {
             Storage.remove(Storage.KEYS.TANAMAN, id);
+            Storage.removeMany(Storage.KEYS.POLINASI, function(p) { return p.tanaman_id === id; });
+            Storage.removeMany(Storage.KEYS.BUAH, function(b) { return b.tanaman_id === id; });
             Router.navigate('tanaman');
             Notification.success('Tanaman dihapus!');
         }
@@ -115,7 +160,20 @@ var tanaman = (function() {
     function save(event, id) {
         event.preventDefault();
         var f = event.target;
-        var d = { greenhouse_id: f.greenhouse_id.value, greenhouse_code: f.greenhouse_code.value, talang: parseInt(f.talang.value)||0, lubang: parseInt(f.lubang.value)||0, varietas: f.varietas.value, tanggal_semai: f.tanggal_semai.value, tanggal_tanam: f.tanggal_tanam.value, status_tanaman: f.status_tanaman.value||'aktif', status_polinasi: 'belum polinasi', status_buah: 'belum', status_panen: 'belum panen', catatan: f.catatan.value };
+        var d = {
+            greenhouse_id: f.greenhouse_id.value,
+            greenhouse_code: f.greenhouse_code.value,
+            talang: parseInt(f.talang.value) || 0,
+            lubang: parseInt(f.lubang.value) || 0,
+            varietas: f.varietas.value,
+            tanggal_semai: f.tanggal_semai.value,
+            tanggal_tanam: f.tanggal_tanam.value,
+            status_tanaman: f.status_tanaman.value || 'aktif',
+            status_polinasi: 'belum polinasi',
+            status_buah: 'belum',
+            status_panen: 'belum panen',
+            catatan: f.catatan.value
+        };
         if (!id) d.id = (d.greenhouse_code||'GH')+'-T'+String(d.talang).padStart(2,'0')+'-L'+String(d.lubang).padStart(2,'0');
         if (id) Storage.update(Storage.KEYS.TANAMAN, id, d);
         else Storage.create(Storage.KEYS.TANAMAN, d);
