@@ -38,25 +38,31 @@ var urlsToCache = [
     'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
-// 1. Install Service Worker & Cache Seluruh Aset
+// ========================================
+// 1. INSTALL - Cache semua aset
+// ========================================
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(function(cache) {
-                console.log('[ServiceWorker] Menyimpan cache aset farm terbaru...');
+                console.log('[SW] Menyimpan cache aset farm terbaru...');
                 return cache.addAll(urlsToCache);
             })
     );
+    // CATATAN: self.skipWaiting() sengaja tidak dipasang di sini
+    // agar Service Worker baru menunggu sampai pengguna menekan tombol "PERBARUI" di layar.
 });
 
-// 2. Aktivasi & Hapus Cache Versi Lama Secara Otomatis
+// ========================================
+// 2. AKTIVASI - Hapus cache versi lama & klaim klien
+// ========================================
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(cacheNames) {
             return Promise.all(
                 cacheNames.map(function(cacheName) {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('[ServiceWorker] Menghapus cache lama:', cacheName);
+                        console.log('[SW] Menghapus cache lama:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -67,20 +73,31 @@ self.addEventListener('activate', function(event) {
     );
 });
 
-// 3. Tangkap Perintah SKIP_WAITING dari Tombol "PERBARUI" pada Toast di Application
-self.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-});
-
-// 4. Fetch / Tangkap Permintaan Jaringan
+// ========================================
+// 3. FETCH - Cache first, network fallback
+// ========================================
 self.addEventListener('fetch', function(event) {
     event.respondWith(
         caches.match(event.request)
             .then(function(response) {
-                // Ambil dari cache jika ada, jika tidak ada baru ambil dari jaringan internet
                 return response || fetch(event.request);
             })
     );
 });
+
+// ========================================
+// 4. MESSAGE - Dijalankan HANYA saat pengguna mengklik tombol "PERBARUI"
+// ========================================
+self.addEventListener('message', function(event) {
+    if (event.data) {
+        // Menerima dua format perintah: 'SKIP_WAITING' & 'skipWaiting'
+        var action = event.data.type || event.data.action || '';
+        
+        if (action === 'SKIP_WAITING' || action === 'skipWaiting') {
+            console.log('[SW] ⏩ User klik PERBARUI, SW baru diaktifkan!');
+            self.skipWaiting();
+        }
+    }
+});
+
+console.log('[SW] 🌱 Cozycs Farm Service Worker Siap!');
