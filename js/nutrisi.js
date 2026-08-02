@@ -218,6 +218,11 @@ var nutrisi = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+
+                        // --- AUTOCUT STOK GUDANG OTOMATIS ---
+                        if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
+                            gudang.potongStokOtomatis('AB Mix', 1, 'Nutrisi', gh || '-', 'Operator');
+                        }
                     }
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast('Data berhasil disimpan!', 'success');
@@ -328,7 +333,7 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                       <!-- 4. Kanan Bawah: Suhu Air & Ruangan -->
+                        <!-- 4. Kanan Bawah: Suhu Air & Ruangan -->
                         <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Suhu Air & Ruangan</div>
                             <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
