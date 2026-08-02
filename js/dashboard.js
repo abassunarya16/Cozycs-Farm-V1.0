@@ -1,11 +1,13 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & MULTI-GH BANNER)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & COLLAPSIBLE MONITORING)
 // ==========================================
 
 var dashboard = (function() {
 
     // State untuk menyimpan GH yang sedang dipilih ('ALL' atau Kode GH misal 'GH-01')
     var selectedGh = 'ALL';
+    // State untuk toggle collapse monitoring IoT
+    var isIotCollapsed = false;
 
     function render() {
         return `
@@ -24,38 +26,44 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- ========================================== -->
-                <!-- KARTU INFORMASI GH (STYLE REFERENSI GAMBAR) -->
-                <!-- ========================================== -->
+                <!-- KARTU INFORMASI GH -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;">
                     <!-- Dynamic Info Banner -->
                 </div>
 
                 <!-- ========================================== -->
-                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN) -->
+                <!-- IOT MONITORING: AIR & LINGKUNGAN (WITH SPLIT TOGGLE COLLAPSE) -->
                 <!-- ========================================== -->
-                
-                <!-- 1. MONITORING AIR & NUTRISI TANDON -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 6px;"></i> Monitoring Air & Nutrisi</span>
-                        <span style="font-size: 10px; background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-wifi"></i> IoT Sensor</span>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotWaterCards">
-                        <!-- Dynamic Water Cards -->
-                    </div>
-                </div>
-
-                <!-- 2. MONITORING LINGKUNGAN GREENHOUSE -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 13px; font-weight: 700; color: #E65100;"><i class="fas fa-sun" style="margin-right: 6px;"></i> Monitoring Lingkungan GH</span>
-                        <span style="font-size: 10px; background: #FFF3E0; color: #E65100; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-microchip"></i> Real-time</span>
+                    <!-- Header Section IoT dengan Tombol Split / Minimize -->
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-microchip" style="margin-right: 4px;"></i> Monitoring IoT & Lingkungan</span>
+                            <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Real-time</span>
+                        </div>
+                        
+                        <!-- Tombol Split / Toggle Collapse -->
+                        <button onclick="dashboard.toggleIotSection()" title="Sembunyikan / Tampilkan Monitoring" style="background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <span id="txtToggleIot">${isIotCollapsed ? 'Buka Monitoring' : 'Ringkas'}</span>
+                            <i id="iconToggleIot" class="fas ${isIotCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                        </button>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards">
-                        <!-- Dynamic Env Cards -->
+
+                    <!-- BLOK CONTENT MONITORING (BISA DISEMBUNYIKAN/RINGKAS) -->
+                    <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; margin-top: 14px; transition: all 0.3s ease;">
+                        
+                        <!-- 1. MONITORING AIR & NUTRISI TANDON -->
+                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">💧 Parameter Air Tandon</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards">
+                            <!-- Dynamic Water Cards -->
+                        </div>
+
+                        <!-- 2. MONITORING LINGKUNGAN GREENHOUSE -->
+                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">☀️ Iklim & Lingkungan GH</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards">
+                            <!-- Dynamic Env Cards -->
+                        </div>
+
                     </div>
                 </div>
 
@@ -161,6 +169,25 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
+    // FUNGSI TOGGLE COLLAPSE UNTUK BLOK MONITORING IOT
+    function toggleIotSection() {
+        isIotCollapsed = !isIotCollapsed;
+        
+        var contentEl = document.getElementById('wrapperIotContent');
+        var txtEl = document.getElementById('txtToggleIot');
+        var iconEl = document.getElementById('iconToggleIot');
+
+        if (contentEl) {
+            contentEl.style.display = isIotCollapsed ? 'none' : 'block';
+        }
+        if (txtEl) {
+            txtEl.innerText = isIotCollapsed ? 'Buka Monitoring' : 'Ringkas';
+        }
+        if (iconEl) {
+            iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        }
+    }
+
     // Pembaca Data LocalStorage
     function getData(key) {
         try {
@@ -208,7 +235,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // FUNGSI RENDER BANNER KARTU GH (STYLE REFERENSI GAMBAR)
+    // FUNGSI RENDER BANNER KARTU GH
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -221,7 +248,6 @@ var dashboard = (function() {
 
         var titleZona = selectedGh === 'ALL' ? 'Cozycs Farm (Semua GH)' : (selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'GH') : 'Greenhouse'));
         
-        // Data Varietas, Umur, dan Status
         var varietasText = 'Melon Premium';
         var hstText = '45';
         var statusText = 'Saatnya Pembesaran Buah';
@@ -240,13 +266,10 @@ var dashboard = (function() {
             statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
         }
 
-        // Gambar Melon SVG / Image Placeholder jika belum ada URL
         var melonImgUrl = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
 
         el.innerHTML = `
             <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
-                
-                <!-- Foto Melon & Info Teks -->
                 <div style="display: flex; align-items: center; gap: 14px;">
                     <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
                         <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
@@ -258,7 +281,6 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- Tombol Pintas Sebelah Kanan -->
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
                         <i class="fas fa-seedling" style="font-size: 15px;"></i>
@@ -267,12 +289,11 @@ var dashboard = (function() {
                         <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
                     </button>
                 </div>
-
             </div>
         `;
     }
 
-    // FUNGSI IOT: MONITORING AIR & NUTRISI (ICON BESAR 28PX + BG BOX)
+    // FUNGSI IOT: MONITORING AIR & NUTRISI
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         if (!el) return;
@@ -745,6 +766,7 @@ var dashboard = (function() {
         render: render,
         init: init,
         selectGhFilter: selectGhFilter,
+        toggleIotSection: toggleIotSection,
         toggleTask: toggleTask
     };
 
