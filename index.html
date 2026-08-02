@@ -274,109 +274,113 @@
     </script>
 
     <!-- Service Worker Registration & PWA In-App Update Toast -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            let newWorker;
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            
+            // Pendaftaran Service Worker
+            navigator.serviceWorker.register('./sw.js').then(function(reg) {
+                
+                // 1. Cek langsung jika SW versi baru sudah ada di memori dan siap dipasang
+                if (reg.waiting && navigator.serviceWorker.controller) {
+                    showUpdateToast(reg.waiting);
+                }
 
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js').then(function(reg) {
-                    
-                    // Paksa Service Worker untuk langsung mengecek update file ke server setiap kali app dibuka
-                    reg.update();
+                // 2. Pasang event listener langsung untuk menangkap SW baru yang sedang diunduh
+                reg.onupdatefound = function() {
+                    var newWorker = reg.installing;
+                    if (!newWorker) return;
 
-                    // 1. Cek jika sudah ada Service Worker baru yang menunggu dipasang
-                    if (reg.waiting) {
-                        newWorker = reg.waiting;
-                        showUpdateToast(newWorker);
-                    }
+                    newWorker.onstatechange = function() {
+                        // Jika selesai diinstal & aplikasi sudah dikontrol oleh SW versi sebelumnya
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateToast(newWorker);
+                        }
+                    };
+                };
 
-                    // 2. Cek saat ada Service Worker baru yang sedang diinstal dari server
-                    reg.addEventListener('updatefound', function() {
-                        newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', function() {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showUpdateToast(newWorker);
-                            }
-                        });
-                    });
-
-                }).catch(function(err) {
-                    console.log('[ServiceWorker] Registrasi gagal:', err);
+                // 3. Paksa browser memeriksa pembaruan file sw.js ke server GitHub
+                reg.update().catch(function(err) {
+                    console.log('[ServiceWorker] Gagal update:', err);
                 });
 
-                // 3. Reload otomatis halaman saat pengguna mengklik tombol PERBARUI
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', function() {
-                    if (!refreshing) {
-                        refreshing = true;
-                        window.location.reload();
-                    }
-                });
+            }).catch(function(err) {
+                console.log('[ServiceWorker] Registrasi gagal:', err);
             });
 
-            // Menampilkan Toast Update melayang di atas Bottom Navigation Bar (bottom: 75px)
-            function showUpdateToast(worker) {
-                if (document.getElementById('pwaUpdateToast')) return;
+            // 4. Reload otomatis halaman saat tombol PERBARUI diklik
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        });
 
-                var toastHtml = `
-                    <div id="pwaUpdateToast" style="
-                        position: fixed;
-                        bottom: 75px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: #1B5E20;
-                        color: #ffffff;
-                        padding: 10px 16px;
-                        border-radius: 30px;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        z-index: 999999;
-                        font-family: sans-serif;
-                        font-size: 12px;
-                        font-weight: 600;
-                        width: calc(100% - 40px);
-                        max-width: 380px;
-                        justify-content: space-between;
-                        border: 1px solid #4CAF50;
-                        animation: slideUpPwa 0.3s ease-out;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-sync-alt fa-spin" style="color: #A5D6A7;"></i>
-                            <span>Versi baru Cozycs Farm tersedia!</span>
-                        </div>
-                        <button id="btnReloadPwa" style="
-                            background: #ffffff;
-                            color: #1B5E20;
-                            border: none;
-                            padding: 6px 14px;
-                            border-radius: 20px;
-                            font-size: 11px;
-                            font-weight: 800;
-                            cursor: pointer;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                        ">
-                            PERBARUI
-                        </button>
+        // Menampilkan Toast Update melayang di atas Bottom Navigation Bar (bottom: 75px)
+        function showUpdateToast(worker) {
+            if (document.getElementById('pwaUpdateToast')) return;
+
+            var toastHtml = `
+                <div id="pwaUpdateToast" style="
+                    position: fixed;
+                    bottom: 75px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #1B5E20;
+                    color: #ffffff;
+                    padding: 10px 16px;
+                    border-radius: 30px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    z-index: 999999;
+                    font-family: sans-serif;
+                    font-size: 12px;
+                    font-weight: 600;
+                    width: calc(100% - 40px);
+                    max-width: 380px;
+                    justify-content: space-between;
+                    border: 1px solid #4CAF50;
+                    animation: slideUpPwa 0.3s ease-out;
+                ">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-sync-alt fa-spin" style="color: #A5D6A7;"></i>
+                        <span>Versi baru Cozycs Farm tersedia!</span>
                     </div>
-                    <style>
-                        @keyframes slideUpPwa {
-                            from { transform: translate(-50%, 100%); opacity: 0; }
-                            to { transform: translate(-50%, 0); opacity: 1; }
-                        }
-                    </style>
-                `;
-
-                document.body.insertAdjacentHTML('beforeend', toastHtml);
-
-                document.getElementById('btnReloadPwa').addEventListener('click', function() {
-                    if (worker) {
-                        worker.postMessage({ type: 'SKIP_WAITING' });
+                    <button id="btnReloadPwa" style="
+                        background: #ffffff;
+                        color: #1B5E20;
+                        border: none;
+                        padding: 6px 14px;
+                        border-radius: 20px;
+                        font-size: 11px;
+                        font-weight: 800;
+                        cursor: pointer;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    ">
+                        PERBARUI
+                    </button>
+                </div>
+                <style>
+                    @keyframes slideUpPwa {
+                        from { transform: translate(-50%, 100%); opacity: 0; }
+                        to { transform: translate(-50%, 0); opacity: 1; }
                     }
-                });
-            }
+                </style>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+            document.getElementById('btnReloadPwa').addEventListener('click', function() {
+                if (worker) {
+                    worker.postMessage({ type: 'SKIP_WAITING' });
+                }
+            });
         }
-    </script>
+    }
+</script>
 </body>
 </html>
