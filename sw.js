@@ -3,7 +3,7 @@
 // ==========================================
 
 // UBAH NAMA VERSI INI (misal: v1 -> v1.1) SETIAP KALI ADA PERUBAHAN KODE DI GITHUB
-var CACHE_NAME = 'cozycs-farm-v1.2';
+var CACHE_NAME = 'cozycs-farm-v1.5';
 
 var urlsToCache = [
     './',
