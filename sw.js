@@ -2,8 +2,11 @@
 // COZYCS FARM - SERVICE WORKER (OFFLINE MODE)
 // ==========================================
 
-var CACHE_NAME = 'cozycs-farm-v1';
+// UBAH NAMA VERSI INI (misal: v1 -> v1.1) SETIAP KALI ADA PERUBAHAN KODE DI GITHUB
+var CACHE_NAME = 'cozycs-farm-v1.2';
+
 var urlsToCache = [
+    './',
     'index.html',
     'manifest.json',
     'css/style.css',
@@ -27,6 +30,8 @@ var urlsToCache = [
     'js/setting.js',
     'img/logo-cozycs.png',
     'img/favicon.png',
+    'img/icon-app-white-192.png',
+    'img/icon-app-white-512.png',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
     'https://cdn.jsdelivr.net/npm/chart.js'
 ];
@@ -54,8 +59,17 @@ self.addEventListener('activate', function(event) {
                     }
                 })
             );
+        }).then(function() {
+            return self.clients.claim();
         })
     );
+});
+
+// Menerima Sinyal "PERBARUI" dari Tombol Toast di Application
+self.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 // Fetch / Tangkap Permintaan Jaringan
