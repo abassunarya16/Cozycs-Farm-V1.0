@@ -77,17 +77,18 @@ var panen = (function() {
                             </div>
                         </div>
 
-                        <!-- Varietas Melon & Petugas Panen -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas Melon</label>
-                                <input type="text" id="panenVarietas" required placeholder="Contoh: Intanon" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Petugas / Penanggung Jawab</label>
-                                <input type="text" id="panenPetugas" placeholder="Contoh: Rizky / Team GH" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
+                        <!-- Varietas Melon & Penanggung Jawab -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div>
+        <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas Melon</label>
+        <input type="text" id="panenVarietas" required placeholder="Contoh: Intanon" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+    </div>
+    <div>
+        <label style="font-size: 12px; font-weight: 600; color: #555;">Penanggung Jawab</label>
+        <input type="text" id="panenPetugas" placeholder="Contoh: Rizky" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+    </div>
+</div>
+
 
                         <!-- Jumlah Buah & Total Berat -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
@@ -350,13 +351,13 @@ var panen = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Petugas -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Petugas Panen</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-user-check" style="color: #0288D1; width: 14px;"></i> <strong>${item.petugas || 'Team Panen'}</strong></div>
-                            </div>
-                        </div>
+                        <!-- 4. Penanggung Jawab -->
+<div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+    <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Penanggung Jawab</div>
+    <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+        <div><i class="fas fa-user-check" style="color: #0288D1; width: 14px;"></i> <strong>${item.petugas || 'Penanggung Jawab'}</strong></div>
+    </div>
+</div>
 
                     </div>
 
