@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (REVISI EX-SUMMARY & AGENDA)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI CLEAN & UNIFIED FONT GRID)
 // ==========================================
 
 var dashboard = (function() {
@@ -10,21 +10,17 @@ var dashboard = (function() {
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
-                <!-- HEADER TITLE (REVISI: HANYA OWNER VIEW) -->
-                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
-                    <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Owner View</span>
-                </div>
-
-                <!-- SWITCHER / FILTER GREENHOUSE -->
+                
+                <!-- 1. SWITCHER / FILTER GREENHOUSE (SEKARANG PALING ATAS DI DASHBOARD) -->
                 <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
                     <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
                 </div>
 
-                <!-- KARTU INFORMASI GH BANNER -->
+                <!-- 2. KARTU INFORMASI GH BANNER -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
 
-                <!-- MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -46,10 +42,10 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- EXECUTIVE SUMMARY (REVISI 4 GRID LAYOUT) -->
+                <!-- 4. EXECUTIVE SUMMARY (4 GRID DENGAN SERAGAM FONT & UKURAN) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
-                <!-- AGENDA HARI INI (REVISI TANPA CORETAN & MAX 10 BARIS) -->
+                <!-- 5. AGENDA HARI INI -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
@@ -58,47 +54,19 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- STATUS GREENHOUSE REAL-TIME -->
-                <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Operasional Greenhouse</div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList"></div>
-
-                <!-- WARNING CENTER -->
-                <div style="background: #FFF5F5; padding: 14px; border-radius: 12px; border: 1px solid #FFCDD2; margin-bottom: 16px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #C62828; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Warning & Alert Center</div>
-                    <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;"></div>
-                </div>
-
-                <!-- PROGRESS MUSIM & ESTIMASI OMZET -->
+                <!-- 6. PROGRESS MUSIM & ESTIMASI OMZET -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> Progress Musim & Estimasi Hasil</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- GRAFIK PANEN PROGRESS BAR -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #0277BD; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i> Target vs Realisasi Panen</div>
-                    <div id="dashPanenProgress"></div>
-                </div>
-
-                <!-- RINGKASAN GUDANG & KEUANGAN -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; cursor: pointer;" onclick="window.location.hash='#gudang'">
-                        <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-bottom: 6px;"><i class="fas fa-boxes"></i> Stok Gudang</div>
-                        <div id="dashGudangSummary" style="font-size: 12px;"></div>
-                    </div>
-                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
-                        <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 6px;"><i class="fas fa-wallet"></i> Keuangan</div>
-                        <div id="dashKeuanganSummary" style="font-size: 12px;"></div>
-                    </div>
-                </div>
-
-                <!-- AKTIVITAS TERAKHIR -->
+                <!-- 7. AKTIVITAS TERAKHIR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- QUICK ACTION BUTTONS -->
+                <!-- 8. QUICK ACTION BUTTONS -->
                 <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -125,12 +93,7 @@ var dashboard = (function() {
         loadIotEnvData();
         loadExecutiveSummary();
         loadTodayAgenda();
-        loadGreenhouseStatus();
-        loadWarningCenter();
         loadProgressMusim();
-        loadPanenProgress();
-        loadGudangSummary();
-        loadKeuanganSummary();
         loadRecentActivities();
     }
 
@@ -377,7 +340,7 @@ var dashboard = (function() {
         `;
     }
 
-    // EXECUTIVE SUMMARY (REVISI PERMINTAAN 3)
+    // EXECUTIVE SUMMARY (REVISI POIN 3: SERAGAM KELAS & UKURAN TYPOGRAPHY)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -387,32 +350,31 @@ var dashboard = (function() {
         var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
-        // 1. Grid 1: Total Tanaman Aktif (Kapasitas Mula)
+        // 1. Tanaman Aktif
         var totalTanaman = 0;
         var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
-
         filteredGhList.forEach(function(g) {
             totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 490);
         });
         if (totalTanaman === 0) totalTanaman = (selectedGh === 'ALL') ? 980 : 490;
 
-        // 2. Grid 2: Tanaman Hidup (Populasi Aktif)
+        // 2. Tanaman Hidup
         var tanamanHidup = 0;
         var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
         filteredTanaman.forEach(function(t) {
             tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
         });
-        if (tanamanHidup === 0) tanamanHidup = Math.round(totalTanaman * 0.98); // Fallback ~98% hidup
+        if (tanamanHidup === 0) tanamanHidup = Math.round(totalTanaman * 0.98);
 
-        // 3. Grid 3: Buah Fix (Buah lolos seleksi)
+        // 3. Buah Fix
         var buahFix = 0;
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh; });
         filteredBuah.forEach(function(b) {
             buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0);
         });
-        if (buahFix === 0) buahFix = Math.round(tanamanHidup * 0.95); // Fallback 1 buah / pohon
+        if (buahFix === 0) buahFix = Math.round(tanamanHidup * 0.95);
 
-        // 4. Grid 4: Estimasi Panen (Tanggal & Bobot)
+        // 4. Estimasi Panen
         var tglPanenStr = '20 Ags 2026';
         var totalEstimasiKg = 0;
         var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
@@ -427,35 +389,41 @@ var dashboard = (function() {
             totalEstimasiKg = (selectedGh === 'ALL') ? 1420 : 710;
         }
 
+        // SERAGAM UNTUK SEMUA GRID:
+        // Title: font-size 10px, uppercase, color #777, weight 700
+        // Value: font-size 15px, weight 800, color #2E7D32 / #0277BD / #E65100
+        // SubText: font-size 10px, weight 600, color #555
         el.innerHTML = `
-            <!-- Grid 1: Tanaman Aktif (Dipertahankan) -->
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+            <!-- Grid 1: Tanaman Aktif -->
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
-                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalTanaman} Batang</div>
+                <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} Batang</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Kapasitas Mula</div>
             </div>
 
             <!-- Grid 2: Tanaman Hidup -->
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌿 Tanaman Hidup</div>
-                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${tanamanHidup} Pohon</div>
+                <div style="font-size: 15px; font-weight: 800; color: #0277BD; margin-top: 4px;">${tanamanHidup} Pohon</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Populasi Aktif</div>
             </div>
 
             <!-- Grid 3: Buah Fix -->
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Buah Fix</div>
-                <div style="font-size: 16px; font-weight: bold; color: #E65100; margin-top: 2px;">${buahFix} Buah</div>
+                <div style="font-size: 15px; font-weight: 800; color: #E65100; margin-top: 4px;">${buahFix} Buah</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Seleksi Lolos</div>
             </div>
 
-            <!-- Grid 4: Estimasi Panen (Tanggal & Bobot) -->
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+            <!-- Grid 4: Estimasi Panen -->
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📅 Estimasi Panen</div>
-                <div style="font-size: 13px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${tglPanenStr}</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600;">Est. ${totalEstimasiKg} Kg</div>
+                <div style="font-size: 13px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${tglPanenStr}</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Est. ${totalEstimasiKg} Kg</div>
             </div>
         `;
     }
 
-    // AGENDA HARI INI (REVISI PERMINTAAN 4: MAKS 10 BARIS, KONEK JADWAL, TANPA CORETAN, RESET HARIAN)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -466,14 +434,12 @@ var dashboard = (function() {
 
         var schedules = getData('cozycs_schedules');
         
-        // Filter murni berdasarkan tanggal HARI INI & GH yang dipilih
         var todayTasks = schedules.filter(function(s) {
             var matchDate = (s.date === todayStr || s.tanggal === todayStr);
             var matchGh = (selectedGh === 'ALL') || (s.gh === selectedGh) || (s.gh === 'Seluruh Farm');
             return matchDate && matchGh;
         });
 
-        // Jika hari ini belum ada data di LocalStorage, tampilkan sampel jadwal harian khusus hari ini
         if (todayTasks.length === 0) {
             todayTasks = [
                 { id: 'def_1', title: 'Nutrisi ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh) + ' - Cek PPM & pH', status: 'Selesai', date: todayStr },
@@ -482,7 +448,6 @@ var dashboard = (function() {
             ];
         }
 
-        // DIBATASI MAKSIMAL 10 BARIS AGENDA HARI INI
         var limitedTasks = todayTasks.slice(0, 10);
 
         var html = '';
@@ -492,7 +457,6 @@ var dashboard = (function() {
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <!-- TANPA LINE-THROUGH (HANYA WARNA ABU-ABU JIKA SELESAI) -->
                         <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'};">
                             ${item.title || item.judul || 'Agenda Kegiatan'}
                         </span>
@@ -502,111 +466,6 @@ var dashboard = (function() {
                     </span>
                 </div>
             `;
-        });
-
-        el.innerHTML = html;
-    }
-
-    function loadGreenhouseStatus() {
-        var el = document.getElementById('dashGreenhouseStatusList');
-        if (!el) return;
-
-        var dataGh = getData('cozycs_greenhouse');
-        var dataNutrisi = getData('cozycs_nutrisi');
-
-        if (dataGh.length === 0) {
-            dataGh = [
-                { kode: 'GH-01', nama: 'Melon Intanon', fase: 'Pembesaran Buah', hst: 43 },
-                { kode: 'GH-02', nama: 'Melon Talent', fase: 'Vegetatif Pertumbuhan', hst: 18 }
-            ];
-        }
-
-        var filteredGh = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
-
-        if (filteredGh.length === 0) {
-            filteredGh = [{ kode: selectedGh, nama: 'Melon Special', fase: 'Pembesaran Buah', hst: 30 }];
-        }
-
-        var html = '';
-        filteredGh.forEach(function(gh) {
-            var nut = dataNutrisi.filter(function(n) { return n.gh === gh.kode; }).pop() || {};
-
-            html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div>
-                            <strong style="font-size: 14px; color: #222;">${gh.kode}</strong>
-                            <span style="font-size: 11px; color: #666; margin-left: 6px;">(${gh.nama || 'GH'})</span>
-                        </div>
-                        <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-weight: bold;">
-                            Fase: ${gh.fase || 'Pembesaran'}
-                        </span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; background: #F9F9F9; padding: 8px; border-radius: 8px;">
-                        <div>
-                            <div style="font-size: 9px; color: #777;">PPM</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #0277BD;">${nut.ppm || '1180'}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 9px; color: #777;">pH</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #E65100;">${nut.ph || '6.1'}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 9px; color: #777;">HST</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #222;">${gh.hst || '43'}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 9px; color: #777;">STATUS</div>
-                            <div style="font-size: 11px; font-weight: bold; color: #2E7D32;">Normal</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        el.innerHTML = html;
-    }
-
-    function loadWarningCenter() {
-        var el = document.getElementById('dashWarningList');
-        if (!el) return;
-
-        var gudang = getData('cozycs_gudang');
-        var hama = getData('cozycs_hama');
-
-        var warnings = [];
-
-        if (selectedGh === 'ALL') {
-            gudang.forEach(function(g) {
-                if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) {
-                    warnings.push(`🔴 <strong>${g.nama}</strong> sisa ${g.stok} ${g.satuan} di Gudang (Perlu Restock!)`);
-                }
-            });
-        }
-
-        var filteredHama = (selectedGh === 'ALL') ? hama : hama.filter(function(h) { return h.gh === selectedGh; });
-        filteredHama.forEach(function(h) {
-            if (h.tingkat && h.tingkat.indexOf('Ringan') === -1) {
-                warnings.push(`🟡 Temuan <strong>${h.nama}</strong> di ${h.gh || selectedGh} (${h.tingkat})`);
-            }
-        });
-
-        if (warnings.length === 0) {
-            if (selectedGh === 'GH-01' || selectedGh === 'ALL') {
-                warnings.push('🔴 pH Air Tandon GH-01 sedikit terlalu tinggi (6.8)');
-            }
-            if (selectedGh === 'GH-02' || selectedGh === 'ALL') {
-                warnings.push('🟡 Thrips terdeteksi di GH-02 (Baris B)');
-            }
-            if (warnings.length === 0) {
-                warnings.push('🟢 Semua parameter aman untuk ' + selectedGh);
-            }
-        }
-
-        var html = '';
-        warnings.forEach(function(w) {
-            html += `<div style="font-size: 12px; color: #222; line-height: 1.4;">${w}</div>`;
         });
 
         el.innerHTML = html;
@@ -629,56 +488,6 @@ var dashboard = (function() {
                 <div style="width: ${selectedGh === 'GH-02' ? '45%' : '82%'}; background: #2E7D32; height: 100%;"></div>
             </div>
             <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
-        `;
-    }
-
-    function loadPanenProgress() {
-        var el = document.getElementById('dashPanenProgress');
-        if (!el) return;
-
-        var targetKg = (selectedGh === 'ALL') ? 600 : 300;
-        var panenReal = (selectedGh === 'ALL') ? 420 : 210;
-        var percentage = Math.round((panenReal / targetKg) * 100);
-
-        el.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 6px;">
-                <span>Panen ${selectedGh}: ${panenReal} Kg / ${targetKg} Kg</span>
-                <span style="color: #0277BD;">${percentage}%</span>
-            </div>
-            <div style="width: 100%; background: #E0E0E0; height: 12px; border-radius: 6px; overflow: hidden;">
-                <div style="width: ${percentage}%; background: #0277BD; height: 100%;"></div>
-            </div>
-        `;
-    }
-
-    function loadGudangSummary() {
-        var el = document.getElementById('dashGudangSummary');
-        if (!el) return;
-
-        var gudang = getData('cozycs_gudang');
-        var totalItem = gudang.length || 68;
-        var kritis = 0;
-
-        gudang.forEach(function(g) {
-            if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) kritis++;
-        });
-
-        el.innerHTML = `
-            <div style="color: #333;">Total: <strong>${totalItem} Item</strong></div>
-            <div style="color: #C62828; font-weight: bold; margin-top: 2px;">Kritis: ${kritis > 0 ? kritis : 2} Barang</div>
-        `;
-    }
-
-    function loadKeuanganSummary() {
-        var el = document.getElementById('dashKeuanganSummary');
-        if (!el) return;
-
-        var omzetText = selectedGh === 'ALL' ? 'Rp21.0M' : 'Rp10.5M';
-        var labaText = selectedGh === 'ALL' ? 'Rp8.7M' : 'Rp4.3M';
-
-        el.innerHTML = `
-            <div style="color: #333;">Omzet: <strong>${omzetText}</strong></div>
-            <div style="color: #2E7D32; font-weight: bold; margin-top: 2px;">Laba: ${labaText}</div>
         `;
     }
 
