@@ -1,12 +1,10 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & COLLAPSIBLE MONITORING)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (REVISI JUDUL & MINIMALIST TOGGLE)
 // ==========================================
 
 var dashboard = (function() {
 
-    // State untuk menyimpan GH yang sedang dipilih ('ALL' atau Kode GH misal 'GH-01')
     var selectedGh = 'ALL';
-    // State untuk toggle collapse monitoring IoT
     var isIotCollapsed = false;
 
     function render() {
@@ -18,59 +16,48 @@ var dashboard = (function() {
                     <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Owner View</span>
                 </div>
 
-                <!-- SWITCHER / FILTER GREENHOUSE (DINAMIS) -->
+                <!-- SWITCHER / FILTER GREENHOUSE -->
                 <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
-                    <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
-                        <!-- Opsi GH akan dimuat otomatis -->
-                    </div>
+                    <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
                 </div>
 
-                <!-- KARTU INFORMASI GH -->
-                <div id="dashGhInfoBanner" style="margin-bottom: 16px;">
-                    <!-- Dynamic Info Banner -->
-                </div>
+                <!-- KARTU INFORMASI GH BANNER -->
+                <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
 
                 <!-- ========================================== -->
-                <!-- IOT MONITORING: AIR & LINGKUNGAN (WITH SPLIT TOGGLE COLLAPSE) -->
+                <!-- MONITORING AIR DAN LINGKUNGAN (REVISI JUDUL & MINIMALIST CHEVRON) -->
                 <!-- ========================================== -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Section IoT dengan Tombol Split / Minimize -->
+                    <!-- Header Monitoring dengan Tombol Chevron Minimalis Tanpa Teks -->
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-microchip" style="margin-right: 4px;"></i> Monitoring IoT & Lingkungan</span>
+                            <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 4px;"></i> Monitoring Air Dan Lingkungan</span>
                             <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Real-time</span>
                         </div>
                         
-                        <!-- Tombol Split / Toggle Collapse -->
-                        <button onclick="dashboard.toggleIotSection()" title="Sembunyikan / Tampilkan Monitoring" style="background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <span id="txtToggleIot">${isIotCollapsed ? 'Buka Monitoring' : 'Ringkas'}</span>
-                            <i id="iconToggleIot" class="fas ${isIotCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+                        <!-- Tombol Chevron Toggle Minimalis -->
+                        <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                            <i id="iconToggleIot" class="fas ${isIotCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}" style="font-size: 12px;"></i>
                         </button>
                     </div>
 
-                    <!-- BLOK CONTENT MONITORING (BISA DISEMBUNYIKAN/RINGKAS) -->
+                    <!-- WRAPPER CONTENT MONITORING -->
                     <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; margin-top: 14px; transition: all 0.3s ease;">
                         
-                        <!-- 1. MONITORING AIR & NUTRISI TANDON -->
+                        <!-- 1. PARAMETER AIR TANDON -->
                         <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">💧 Parameter Air Tandon</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards">
-                            <!-- Dynamic Water Cards -->
-                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards"></div>
 
-                        <!-- 2. MONITORING LINGKUNGAN GREENHOUSE -->
-                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">☀️ Iklim & Lingkungan GH</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards">
-                            <!-- Dynamic Env Cards -->
-                        </div>
+                        <!-- 2. PARAMETER LINGKUNGAN (NAMA REVISI) -->
+                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">☀️ Parameter Lingkungan</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards"></div>
 
                     </div>
                 </div>
 
-                <!-- EXECUTIVE SUMMARY (4 STAT CARDS) -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary">
-                    <!-- Dynamic Stat Cards -->
-                </div>
+                <!-- EXECUTIVE SUMMARY -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
                 <!-- AGENDA HARI INI -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -78,39 +65,29 @@ var dashboard = (function() {
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
                         <span style="font-size: 10px; color: #777;" id="dashTodayDate">Hari Ini</span>
                     </div>
-                    <div id="dashTodayAgendaList">
-                        <!-- Dynamic Checklist Agenda -->
-                    </div>
+                    <div id="dashTodayAgendaList"></div>
                 </div>
 
                 <!-- STATUS GREENHOUSE REAL-TIME -->
                 <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Operasional Greenhouse</div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList">
-                    <!-- Dynamic Greenhouse Cards -->
-                </div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList"></div>
 
                 <!-- WARNING CENTER -->
                 <div style="background: #FFF5F5; padding: 14px; border-radius: 12px; border: 1px solid #FFCDD2; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #C62828; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Warning & Alert Center</div>
-                    <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;">
-                        <!-- Dynamic Warning Items -->
-                    </div>
+                    <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <!-- PROGRESS MUSIM & ESTIMASI OMZET -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> Progress Musim & Estimasi Hasil</div>
-                    <div id="dashProgressMusim">
-                        <!-- Dynamic Progress Musim -->
-                    </div>
+                    <div id="dashProgressMusim"></div>
                 </div>
 
                 <!-- GRAFIK PANEN PROGRESS BAR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #0277BD; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i> Target vs Realisasi Panen</div>
-                    <div id="dashPanenProgress">
-                        <!-- Dynamic Progress Bar Panen -->
-                    </div>
+                    <div id="dashPanenProgress"></div>
                 </div>
 
                 <!-- RINGKASAN GUDANG & KEUANGAN -->
@@ -128,9 +105,7 @@ var dashboard = (function() {
                 <!-- AKTIVITAS TERAKHIR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
-                    <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;">
-                        <!-- Dynamic Recent Activities -->
-                    </div>
+                    <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <!-- QUICK ACTION BUTTONS -->
@@ -169,26 +144,16 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
-    // FUNGSI TOGGLE COLLAPSE UNTUK BLOK MONITORING IOT
+    // TOGGLE MINIMALIS CHEVRON SAJA
     function toggleIotSection() {
         isIotCollapsed = !isIotCollapsed;
-        
         var contentEl = document.getElementById('wrapperIotContent');
-        var txtEl = document.getElementById('txtToggleIot');
         var iconEl = document.getElementById('iconToggleIot');
 
-        if (contentEl) {
-            contentEl.style.display = isIotCollapsed ? 'none' : 'block';
-        }
-        if (txtEl) {
-            txtEl.innerText = isIotCollapsed ? 'Buka Monitoring' : 'Ringkas';
-        }
-        if (iconEl) {
-            iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-        }
+        if (contentEl) contentEl.style.display = isIotCollapsed ? 'none' : 'block';
+        if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
 
-    // Pembaca Data LocalStorage
     function getData(key) {
         try {
             if (typeof Storage !== 'undefined' && Storage.getAll) {
@@ -198,7 +163,6 @@ var dashboard = (function() {
         return [];
     }
 
-    // RENDER TOMBOL SWITCHER GREENHOUSE
     function renderGhSwitcher() {
         var el = document.getElementById('dashGhSwitcher');
         if (!el) return;
@@ -235,7 +199,6 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // FUNGSI RENDER BANNER KARTU GH
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -293,7 +256,6 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI IOT: MONITORING AIR & NUTRISI
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         if (!el) return;
@@ -307,7 +269,6 @@ var dashboard = (function() {
         var valWaterTemp = latest.waterTemp || '26.5°C';
 
         el.innerHTML = `
-            <!-- Card 1: Nutrisi PPM -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E8F5E9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -321,7 +282,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Baik</span></div>
             </div>
 
-            <!-- Card 2: pH Air -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -335,7 +295,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Optimal</span></div>
             </div>
 
-            <!-- Card 3: Suhu Air -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E0F7FA; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -349,7 +308,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sejuk</span></div>
             </div>
 
-            <!-- Card 4: Level Air Tandon -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -365,7 +323,6 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI IOT: MONITORING LINGKUNGAN GREENHOUSE
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -377,7 +334,6 @@ var dashboard = (function() {
         var valRoomTemp = latest.roomTemp || (selectedGh === 'GH-02' ? '32.0°C' : '29.5°C');
 
         el.innerHTML = `
-            <!-- Card 1: Suhu Udara -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFF3E0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -391,7 +347,6 @@ var dashboard = (function() {
                 <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Hangat</span></div>
             </div>
 
-            <!-- Card 2: Kelembaban Udara (RH) -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E3F2FD; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -405,7 +360,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Ideal</span></div>
             </div>
 
-            <!-- Card 3: Intensitas Cahaya -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFFDE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -419,7 +373,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
             </div>
 
-            <!-- Card 4: Sirkulasi Kipas -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #EDE7F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -435,7 +388,6 @@ var dashboard = (function() {
         `;
     }
 
-    // EXECUTIVE SUMMARY
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -498,7 +450,6 @@ var dashboard = (function() {
         `;
     }
 
-    // AGENDA HARI INI
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -542,7 +493,6 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // STATUS GREENHOUSE REAL-TIME
     function loadGreenhouseStatus() {
         var el = document.getElementById('dashGreenhouseStatusList');
         if (!el) return;
@@ -604,7 +554,6 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // WARNING CENTER
     function loadWarningCenter() {
         var el = document.getElementById('dashWarningList');
         if (!el) return;
@@ -649,7 +598,6 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // PROGRESS MUSIM
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -670,7 +618,6 @@ var dashboard = (function() {
         `;
     }
 
-    // GRAFIK PANEN PROGRESS
     function loadPanenProgress() {
         var el = document.getElementById('dashPanenProgress');
         if (!el) return;
@@ -690,7 +637,6 @@ var dashboard = (function() {
         `;
     }
 
-    // RINGKASAN GUDANG
     function loadGudangSummary() {
         var el = document.getElementById('dashGudangSummary');
         if (!el) return;
@@ -709,7 +655,6 @@ var dashboard = (function() {
         `;
     }
 
-    // RINGKASAN KEUANGAN
     function loadKeuanganSummary() {
         var el = document.getElementById('dashKeuanganSummary');
         if (!el) return;
@@ -723,7 +668,6 @@ var dashboard = (function() {
         `;
     }
 
-    // AKTIVITAS TERAKHIR
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
