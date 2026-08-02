@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI BANNERS & TOGGLE AIRFLOW)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI ALL GH BANNER & AIRFLOW STATUS)
 // ==========================================
 
 var dashboard = (function() {
@@ -107,7 +107,6 @@ var dashboard = (function() {
         if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
 
-    // Toggle Airflow Fan (Klik Switch tanpa teks ON/OFF)
     function toggleAirflow() {
         isAirflowOn = !isAirflowOn;
         loadIotEnvData();
@@ -129,8 +128,8 @@ var dashboard = (function() {
         var dataGh = getData('cozycs_greenhouse');
         if (dataGh.length === 0) {
             dataGh = [
-                { kode: 'GH-01', nama: 'Melon Intanon' },
-                { kode: 'GH-02', nama: 'Melon Talent' }
+                { kode: 'GH-01', nama: 'Melon Diva 099', hst: '65' },
+                { kode: 'GH-02', nama: 'Melon Diva 095', hst: '55' }
             ];
         }
 
@@ -158,7 +157,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // REVISI POIN 2 & 3: HST FORMAT & TANPA ICON DI TULISAN FASE/STATUS
+    // REVISI POIN 1: TAMPILAN KHUSUS KHUSUS "SEMUA GH" & SPESIFIK GH
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -166,55 +165,103 @@ var dashboard = (function() {
         var dataGh = getData('cozycs_greenhouse');
         var dataTanaman = getData('cozycs_tanaman');
 
-        var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
-        var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh; });
-
-        var titleZona = selectedGh === 'ALL' ? 'Cozycs Farm (Semua GH)' : (selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'GH') : 'Greenhouse'));
-        
-        var varietasText = 'Melon Premium';
-        var hstText = '45 HST';
-        var statusText = 'Saatnya Pembesaran Buah';
-        
-        if (selectedGh === 'GH-01') {
-            varietasText = 'Melon Diva 099';
-            hstText = '65 HST';
-            statusText = 'Saatnya Panen';
-        } else if (selectedGh === 'GH-02') {
-            varietasText = 'Melon Diva 095';
-            hstText = '30 HST';
-            statusText = 'Saatnya Polinasi';
-        } else if (currentTanaman) {
-            varietasText = currentTanaman.varietas || 'Melon Premium';
-            hstText = (currentTanaman.hst || '30') + ' HST';
-            statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
+        if (dataGh.length === 0) {
+            dataGh = [
+                { kode: 'GH-01', nama: 'Melon Diva 099', hst: '65' },
+                { kode: 'GH-02', nama: 'Melon Diva 095', hst: '55' }
+            ];
         }
 
-        var melonImgUrl = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
+        var melonImgUrl = 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
 
-        el.innerHTML = `
-            <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
-                        <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
+        if (selectedGh === 'ALL') {
+            // DRAFTING DAFTAR GH UNTUK FILTER SEMUA GH
+            var listGhHtml = '';
+            dataGh.forEach(function(g) {
+                var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode; });
+                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || 'Melon Premium');
+                var hst = (currentTanaman && currentTanaman.hst) ? currentTanaman.hst : (g.hst || (g.kode === 'GH-01' ? '65' : '55'));
+                
+                listGhHtml += `
+                    <div style="font-size: 12px; font-weight: 600; color: #2E7D32; display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                        <span>🏡</span>
+                        <span>${varietas} (${hst} HST)</span>
                     </div>
-                    <div>
-                        <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">${titleZona}</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText})</div>
-                        <!-- MURNI TULISAN TANPA EMOJI / ICON -->
-                        <div style="font-size: 12px; font-weight: 700; color: #00897B;">${statusText}</div>
+                `;
+            });
+
+            el.innerHTML = `
+                <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
+                            <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        <div>
+                            <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">Cozycs Farm (Semua GH)</div>
+                            ${listGhHtml}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                            <i class="fas fa-seedling" style="font-size: 15px;"></i>
+                        </button>
+                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                            <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
+                        </button>
                     </div>
                 </div>
+            `;
+        } else {
+            // TAMPILAN JIKA PILIH SPESIFIK GH (GH-01 / GH-02 dst)
+            var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
+            var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh; });
 
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-                        <i class="fas fa-seedling" style="font-size: 15px;"></i>
-                    </button>
-                    <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-                        <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
-                    </button>
+            var titleZona = selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'Greenhouse') : 'Greenhouse');
+            var varietasText = 'Melon Premium';
+            var hstText = '45 HST';
+            var statusText = 'Saatnya Pembesaran Buah';
+            
+            if (selectedGh === 'GH-01') {
+                varietasText = 'Melon Diva 099';
+                hstText = '65 HST';
+                statusText = 'Saatnya Panen';
+            } else if (selectedGh === 'GH-02') {
+                varietasText = 'Melon Diva 095';
+                hstText = '55 HST';
+                statusText = 'Saatnya Polinasi';
+            } else if (currentTanaman) {
+                varietasText = currentTanaman.varietas || 'Melon Premium';
+                hstText = (currentTanaman.hst || '30') + ' HST';
+                statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
+            }
+
+            var singleMelonImg = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : melonImgUrl;
+
+            el.innerHTML = `
+                <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
+                            <img src="${singleMelonImg}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        <div>
+                            <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">${titleZona}</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText})</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #00897B;">${statusText}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                            <i class="fas fa-seedling" style="font-size: 15px;"></i>
+                        </button>
+                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                            <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 
     function loadIotWaterData() {
@@ -284,7 +331,7 @@ var dashboard = (function() {
         `;
     }
 
-    // REVISI POIN 4: TOGGLE SWITCH PADA AIRFLOW FAN (TANPA TULISAN ON/OFF)
+    // REVISI POIN 2: AIRFLOW STATUS MENGGUNAKAN TEKS "Aktif" ATAU "Tidak Aktif"
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -335,7 +382,7 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
             </div>
 
-            <!-- TOGGLE SWITCH INTERAKTIF TANPA TULISAN ON/OFF -->
+            <!-- CARD AIRFLOW DENGAN STATUS TEKS "Aktif" ATAU "Tidak Aktif" -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: ${isAirflowOn ? '#EDE7F6' : '#F5F5F5'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
@@ -343,13 +390,16 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Airflow</div>
-                        <div style="font-size: 15px; font-weight: 800; color: ${isAirflowOn ? '#111' : '#888'};">Kipas GH</div>
+                        <!-- TEKS BERUBAH DINAMIS: Aktif / Tidak Aktif -->
+                        <div style="font-size: 15px; font-weight: 800; color: ${isAirflowOn ? '#2E7D32' : '#C62828'}; transition: color 0.3s ease;">
+                            ${isAirflowOn ? 'Aktif' : 'Tidak Aktif'}
+                        </div>
                     </div>
                 </div>
                 
-                <!-- STYLING TOGGLE PILL MINIMALIS (KLIKABLE) -->
+                <!-- TOGGLE PILL KLIKABLE -->
                 <div style="display: flex; align-items: center;">
-                    <div onclick="dashboard.toggleAirflow()" title="Klik untuk saklar Airflow" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
+                    <div onclick="dashboard.toggleAirflow()" title="Klik untuk ubah status Airflow" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
                         <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
                     </div>
                 </div>
@@ -357,7 +407,6 @@ var dashboard = (function() {
         `;
     }
 
-    // REVISI POIN 1: TEKS "Kapasitas Awal"
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -367,7 +416,6 @@ var dashboard = (function() {
         var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
-        // 1. Tanaman Aktif
         var totalTanaman = 0;
         var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
         filteredGhList.forEach(function(g) {
@@ -375,7 +423,6 @@ var dashboard = (function() {
         });
         if (totalTanaman === 0) totalTanaman = (selectedGh === 'ALL') ? 980 : 490;
 
-        // 2. Tanaman Hidup
         var tanamanHidup = 0;
         var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
         filteredTanaman.forEach(function(t) {
@@ -383,7 +430,6 @@ var dashboard = (function() {
         });
         if (tanamanHidup === 0) tanamanHidup = Math.round(totalTanaman * 0.98);
 
-        // 3. Buah Fix
         var buahFix = 0;
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh; });
         filteredBuah.forEach(function(b) {
@@ -391,7 +437,6 @@ var dashboard = (function() {
         });
         if (buahFix === 0) buahFix = Math.round(tanamanHidup * 0.95);
 
-        // 4. Estimasi Panen
         var tglPanenStr = '20 Ags 2026';
         var totalEstimasiKg = 0;
         var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
@@ -407,28 +452,24 @@ var dashboard = (function() {
         }
 
         el.innerHTML = `
-            <!-- Grid 1: Tanaman Aktif (Kapasitas Awal) -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
                 <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} Batang</div>
                 <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Kapasitas Awal</div>
             </div>
 
-            <!-- Grid 2: Tanaman Hidup -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌿 Tanaman Hidup</div>
                 <div style="font-size: 15px; font-weight: 800; color: #0277BD; margin-top: 4px;">${tanamanHidup} Pohon</div>
                 <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Populasi Aktif</div>
             </div>
 
-            <!-- Grid 3: Buah Fix -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Buah Fix</div>
                 <div style="font-size: 15px; font-weight: 800; color: #E65100; margin-top: 4px;">${buahFix} Buah</div>
                 <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Seleksi Lolos</div>
             </div>
 
-            <!-- Grid 4: Estimasi Panen -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📅 Estimasi Panen</div>
                 <div style="font-size: 13px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${tglPanenStr}</div>
