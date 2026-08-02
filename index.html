@@ -7,10 +7,10 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="img/favicon.png">
-
+    
     <!-- Manifest PWA -->
     <link rel="manifest" href="manifest.json">
-
+    
     <!-- CSS Styling -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/sidebar.css">
@@ -18,369 +18,349 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Chart.js (Opsional untuk grafik) -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <!-- App Wrapper -->
-    <div class="app-wrapper">
+<!-- ======================================== -->
+<!-- APP WRAPPER -->
+<!-- ======================================== -->
+<div class="app-wrapper">
+
+    <!-- Header / Top Navigation -->
+    <header class="app-header" style="background: #2E7D32; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
         
-        <!-- Header / Top Navigation -->
-        <header class="app-header" style="background: #2E7D32; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
-            <div class="header-brand" style="display: flex; align-items: center; gap: 8px;">
-                <!-- Tombol Pemicu Sidebar -->
-                <button id="btnOpenSidebar" style="background: none; border: none; font-size: 18px; color: #fff; cursor: pointer; padding: 0; margin-right: 4px;" title="Buka Menu">
-                    <i class="fas fa-bars"></i>
-                </button>
-
-                <!-- Logo (25px) & Nama Cozycs Farm -->
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 25px; height: 25px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 2px;">
-                        <img src="img/logo-cozycs.png" alt="Logo Cozycs Farm" class="brand-logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909787.png';">
-                    </div>
-                    <div class="brand-title" style="font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; line-height: 1;">
-                        Cozycs Farm
-                    </div>
-                </div>
-            </div>
-
-            <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
-                <!-- BADGE OWNER VIEW -->
-                <span style="font-size: 10px; background: #1B5E20; color: #E8F5E9; padding: 3px 8px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.3px;">
-                    Owner View
-                </span>
-
-                <!-- Tombol Ikon Notifikasi / Alarm -->
-                <button class="header-notif-btn" id="btnHeaderNotif" title="Klik 2x / Klik untuk Buka/Tutup Notifikasi" style="background: transparent; border: none; color: #fff; font-size: 17px; cursor: pointer; position: relative; padding: 2px;">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge"></span>
-                </button>
-                <div id="toastContainer" class="toast-container"></div>
-            </div>
-        </header>
-
-        <!-- HTML Elemen Sidebar Drawer & Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <nav class="app-sidebar" id="appSidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title"><i class="fas fa-seedling"></i> Cozycs Farm 1.0</div>
-                <button class="sidebar-close-btn" id="btnCloseSidebar"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="sidebar-body">
-                <div class="sidebar-group-title">Utama</div>
-                <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> Dasbor</button>
-                
-                <div class="sidebar-group-title">Fasilitas</div>
-                <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> Greenhouse</button>
-                <button class="sidebar-item" data-page="gudang"><i class="fas fa-boxes" style="color: #37474F;"></i> Stok Gudang</button>
-                
-                <div class="sidebar-group-title">Tanaman</div>
-                <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Database Tanaman</button>
-                <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> Polinasi Bunga</button>
-                <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> Seleksi Buah</button>
-                <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> Pruning / Rempes</button>
-
-                <div class="sidebar-group-title">Monitoring & Perawatan</div>
-                <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> Nutrisi & PPM</button>
-                <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> Hama & Penyakit</button>
-                <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal Spray</button>
-                <button class="sidebar-item" data-page="notifikasi"><i class="fas fa-bell" style="color: #C62828;"></i> Pusat Notifikasi</button>
-                <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> Jadwal Harian</button>
-
-                <div class="sidebar-group-title">Hasil & Bisnis</div>
-                <button class="sidebar-item" data-page="panen"><i class="fas fa-box" style="color: #6A1B9A;"></i> Data Panen</button>
-                <button class="sidebar-item" data-page="laporan"><i class="fas fa-file-invoice" style="color: #00695C;"></i> Laporan Farm</button>
-            </div>
-        </nav>
-
-        <!-- Main Content Area -->
-        <main class="app-main" id="mainContent"></main>
-
-        <!-- Bottom Navigation Bar -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-page="dashboard">
-                <i class="fas fa-home"></i>
-                <span>Dasbor</span>
+        <div class="header-brand" style="display: flex; align-items: center; gap: 8px;">
+            <button id="btnOpenSidebar" style="background: none; border: none; font-size: 18px; color: #fff; cursor: pointer; padding: 0; margin-right: 4px;" title="Buka Menu">
+                <i class="fas fa-bars"></i>
             </button>
-            <button class="nav-item" data-page="tanaman">
-                <i class="fas fa-seedling"></i>
-                <span>Tanaman</span>
-            </button>
-            <button class="nav-item" data-page="nutrisi">
-                <i class="fas fa-flask"></i>
-                <span>Nutrisi</span>
-            </button>
-            <button class="nav-item" data-page="panen">
-                <i class="fas fa-box"></i>
-                <span>Panen</span>
-            </button>
-            <button class="nav-item" data-page="keuangan">
-                <i class="fas fa-wallet"></i>
-                <span>Keuangan</span>
-            </button>
-            <button class="nav-item" data-page="setting">
-                <i class="fas fa-cog"></i>
-                <span>Pengaturan</span>
-            </button>
-        </nav>
-
-    </div>
-
-    <!-- JavaScript Modules -->
-    <script src="js/helper.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/chart.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/greenhouse.js"></script>
-    <script src="js/tanaman.js"></script>
-    <script src="js/polinasi.js"></script>
-    <script src="js/buah.js"></script>
-    <script src="js/nutrisi.js"></script>
-    <script src="js/pruning.js"></script>
-    <script src="js/hama.js"></script>
-    <script src="js/spray.js"></script>
-    <script src="js/notifikasi.js"></script>
-    <script src="js/jadwal.js"></script>
-    <script src="js/panen.js"></script>
-    <script src="js/laporan.js"></script>
-    <script src="js/gudang.js"></script>
-    <script src="js/keuangan.js"></script>
-    <script src="js/setting.js"></script>
-
-    <!-- App Router & Global Navigation Script -->
-    <script>
-        var pages = {};
-        var currentPage = 'dashboard';
-
-        function navigateTo(pageName) {
-            var targetModule = pages[pageName];
-            var mainContent = document.getElementById('mainContent');
-
-            if (targetModule && mainContent) {
-                currentPage = pageName;
-                mainContent.innerHTML = targetModule.render();
-                
-                if (typeof targetModule.init === 'function') {
-                    targetModule.init();
-                }
-
-                var navItems = document.querySelectorAll('.bottom-nav .nav-item');
-                navItems.forEach(function(item) {
-                    if (item.getAttribute('data-page') === pageName) {
-                        item.classList.add('active');
-                    } else {
-                        item.classList.remove('active');
-                    }
-                });
-
-                window.scrollTo(0, 0);
-            }
-        }
-
-        function toggleNotifikasiPage() {
-            if (currentPage === 'notifikasi') {
-                navigateTo('dashboard');
-            } else {
-                navigateTo('notifikasi');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
-                Storage.init();
-            }
-
-            pages = {
-                'dashboard': dashboard,
-                'greenhouse': greenhouse,
-                'tanaman': tanaman,
-                'polinasi': polinasi,
-                'buah': buah,
-                'nutrisi': nutrisi,
-                'pruning': pruning,
-                'hama': hama,
-                'spray': spray,
-                'notifikasi': notifikasi,
-                'jadwal': jadwal,
-                'panen': panen,
-                'laporan': laporan,
-                'gudang': gudang,
-                'keuangan': keuangan,
-                'setting': setting
-            };
-
-            navigateTo('dashboard');
-
-            var btnNotif = document.getElementById('btnHeaderNotif');
-            if (btnNotif) {
-                btnNotif.addEventListener('click', function() {
-                    toggleNotifikasiPage();
-                });
-                btnNotif.addEventListener('dblclick', function(e) {
-                    e.preventDefault();
-                    toggleNotifikasiPage();
-                });
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            var navBtn = e.target.closest('.bottom-nav .nav-item');
-            if (navBtn) {
-                var page = navBtn.getAttribute('data-page');
-                if (page) navigateTo(page);
-            }
-
-            var targetBtn = e.target.closest('[data-page]');
-            if (targetBtn && !targetBtn.classList.contains('nav-item') && !targetBtn.classList.contains('sidebar-item')) {
-                var page = targetBtn.getAttribute('data-page');
-                if (page) navigateTo(page);
-            }
-        });
-    </script>
-
-    <!-- Sidebar Controller Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var sidebar = document.getElementById('appSidebar');
-            var overlay = document.getElementById('sidebarOverlay');
-            var btnOpen = document.getElementById('btnOpenSidebar');
-            var btnClose = document.getElementById('btnCloseSidebar');
-
-            function toggleSidebar() {
-                if (sidebar && overlay) {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                    document.body.classList.toggle('sidebar-open');
-                }
-            }
-
-            if (btnOpen) btnOpen.addEventListener('click', toggleSidebar);
-            if (btnClose) btnClose.addEventListener('click', toggleSidebar);
-            if (overlay) overlay.addEventListener('click', toggleSidebar);
-
-            document.querySelectorAll('.sidebar-item').forEach(function(item) {
-                item.addEventListener('click', function() {
-                    var page = this.getAttribute('data-page');
-                    if (page) navigateTo(page);
-                    if (sidebar && overlay) {
-                        sidebar.classList.remove('active');
-                        overlay.classList.remove('active');
-                        document.body.classList.remove('sidebar-open');
-                    }
-                });
-            });
-        });
-    </script>
-
-    <!-- Service Worker Registration & PWA In-App Update Toast -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
             
-            // Pendaftaran Service Worker
-            navigator.serviceWorker.register('./sw.js').then(function(reg) {
-                
-                // 1. Cek langsung jika SW versi baru sudah ada di memori dan siap dipasang
-                if (reg.waiting && navigator.serviceWorker.controller) {
-                    showUpdateToast(reg.waiting);
-                }
-
-                // 2. Pasang event listener langsung untuk menangkap SW baru yang sedang diunduh
-                reg.onupdatefound = function() {
-                    var newWorker = reg.installing;
-                    if (!newWorker) return;
-
-                    newWorker.onstatechange = function() {
-                        // Jika selesai diinstal & aplikasi sudah dikontrol oleh SW versi sebelumnya
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateToast(newWorker);
-                        }
-                    };
-                };
-
-                // 3. Paksa browser memeriksa pembaruan file sw.js ke server GitHub
-                reg.update().catch(function(err) {
-                    console.log('[ServiceWorker] Gagal update:', err);
-                });
-
-            }).catch(function(err) {
-                console.log('[ServiceWorker] Registrasi gagal:', err);
-            });
-
-            // 4. Reload otomatis halaman saat tombol PERBARUI diklik
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', function() {
-                if (!refreshing) {
-                    refreshing = true;
-                    window.location.reload();
-                }
-            });
-        });
-
-        // Menampilkan Toast Update melayang di atas Bottom Navigation Bar (bottom: 75px)
-        function showUpdateToast(worker) {
-            if (document.getElementById('pwaUpdateToast')) return;
-
-            var toastHtml = `
-                <div id="pwaUpdateToast" style="
-                    position: fixed;
-                    bottom: 75px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: #1B5E20;
-                    color: #ffffff;
-                    padding: 10px 16px;
-                    border-radius: 30px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    z-index: 999999;
-                    font-family: sans-serif;
-                    font-size: 12px;
-                    font-weight: 600;
-                    width: calc(100% - 40px);
-                    max-width: 380px;
-                    justify-content: space-between;
-                    border: 1px solid #4CAF50;
-                    animation: slideUpPwa 0.3s ease-out;
-                ">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-sync-alt fa-spin" style="color: #A5D6A7;"></i>
-                        <span>Versi baru Cozycs Farm tersedia!</span>
-                    </div>
-                    <button id="btnReloadPwa" style="
-                        background: #ffffff;
-                        color: #1B5E20;
-                        border: none;
-                        padding: 6px 14px;
-                        border-radius: 20px;
-                        font-size: 11px;
-                        font-weight: 800;
-                        cursor: pointer;
-                        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                    ">
-                        PERBARUI
-                    </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 25px; height: 25px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 2px;">
+                    <img src="img/logo-cozycs.png" alt="Logo Cozycs Farm" class="brand-logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909787.png';">
                 </div>
-                <style>
-                    @keyframes slideUpPwa {
-                        from { transform: translate(-50%, 100%); opacity: 0; }
-                        to { transform: translate(-50%, 0); opacity: 1; }
-                    }
-                </style>
-            `;
+                <div class="brand-title" style="font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; line-height: 1;">
+                    Cozycs Farm
+                </div>
+            </div>
+        </div>
+        
+        <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 10px; background: #1B5E20; color: #E8F5E9; padding: 3px 8px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.3px;">
+                Owner View
+            </span>
+            
+            <button class="header-notif-btn" id="btnHeaderNotif" title="Pusat Notifikasi" style="background: transparent; border: none; color: #fff; font-size: 17px; cursor: pointer; position: relative; padding: 2px;">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge"></span>
+            </button>
+            
+            <div id="toastContainer" class="toast-container"></div>
+        </div>
+    </header>
 
-            document.body.insertAdjacentHTML('beforeend', toastHtml);
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar Drawer -->
+    <nav class="app-sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title"><i class="fas fa-seedling"></i> Cozycs Farm 1.0</div>
+            <button class="sidebar-close-btn" id="btnCloseSidebar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sidebar-body">
+            <div class="sidebar-group-title">Utama</div>
+            <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> Dasbor</button>
+            
+            <div class="sidebar-group-title">Fasilitas</div>
+            <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> Greenhouse</button>
+            <button class="sidebar-item" data-page="gudang"><i class="fas fa-boxes" style="color: #37474F;"></i> Stok Gudang</button>
+            
+            <div class="sidebar-group-title">Tanaman</div>
+            <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Database Tanaman</button>
+            <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> Polinasi Bunga</button>
+            <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> Seleksi Buah</button>
+            <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> Pruning / Rempes</button>
+            
+            <div class="sidebar-group-title">Monitoring & Perawatan</div>
+            <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> Nutrisi & PPM</button>
+            <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> Hama & Penyakit</button>
+            <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal Spray</button>
+            <button class="sidebar-item" data-page="notifikasi"><i class="fas fa-bell" style="color: #C62828;"></i> Pusat Notifikasi</button>
+            <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> Jadwal Harian</button>
+            
+            <div class="sidebar-group-title">Hasil & Bisnis</div>
+            <button class="sidebar-item" data-page="panen"><i class="fas fa-box" style="color: #6A1B9A;"></i> Data Panen</button>
+            <button class="sidebar-item" data-page="laporan"><i class="fas fa-file-invoice" style="color: #00695C;"></i> Laporan Farm</button>
+        </div>
+    </nav>
 
-            document.getElementById('btnReloadPwa').addEventListener('click', function() {
-                if (worker) {
-                    worker.postMessage({ type: 'SKIP_WAITING' });
-                }
-            });
+    <!-- Main Content Area -->
+    <main class="app-main" id="mainContent"></main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span>Dasbor</span></button>
+        <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
+        <button class="nav-item" data-page="nutrisi"><i class="fas fa-flask"></i><span>Nutrisi</span></button>
+        <button class="nav-item" data-page="panen"><i class="fas fa-box"></i><span>Panen</span></button>
+        <button class="nav-item" data-page="keuangan"><i class="fas fa-wallet"></i><span>Keuangan</span></button>
+        <button class="nav-item" data-page="setting"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+    </nav>
+</div>
+
+<!-- ======================================== -->
+<!-- JAVASCRIPT MODULES -->
+<!-- ======================================== -->
+<script src="js/helper.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/greenhouse.js"></script>
+<script src="js/tanaman.js"></script>
+<script src="js/polinasi.js"></script>
+<script src="js/buah.js"></script>
+<script src="js/nutrisi.js"></script>
+<script src="js/pruning.js"></script>
+<script src="js/hama.js"></script>
+<script src="js/spray.js"></script>
+<script src="js/notifikasi.js"></script>
+<script src="js/jadwal.js"></script>
+<script src="js/panen.js"></script>
+<script src="js/laporan.js"></script>
+<script src="js/gudang.js"></script>
+<script src="js/keuangan.js"></script>
+<script src="js/setting.js"></script>
+
+<!-- ======================================== -->
+<!-- APP ROUTER & NAVIGATION -->
+<!-- ======================================== -->
+<script>
+var pages = {};
+var currentPage = 'dashboard';
+
+function navigateTo(pageName) {
+    var targetModule = pages[pageName];
+    var mainContent = document.getElementById('mainContent');
+    
+    if (targetModule && mainContent) {
+        currentPage = pageName;
+        mainContent.innerHTML = targetModule.render();
+        
+        if (typeof targetModule.init === 'function') {
+            targetModule.init();
+        }
+        
+        var navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        navItems.forEach(function(item) {
+            if (item.getAttribute('data-page') === pageName) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        window.scrollTo(0, 0);
+    }
+}
+
+function toggleNotifikasiPage() {
+    if (currentPage === 'notifikasi') {
+        navigateTo('dashboard');
+    } else {
+        navigateTo('notifikasi');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
+        Storage.init();
+    }
+    
+    pages = {
+        'dashboard': dashboard,
+        'greenhouse': greenhouse,
+        'tanaman': tanaman,
+        'polinasi': polinasi,
+        'buah': buah,
+        'nutrisi': nutrisi,
+        'pruning': pruning,
+        'hama': hama,
+        'spray': spray,
+        'notifikasi': notifikasi,
+        'jadwal': jadwal,
+        'panen': panen,
+        'laporan': laporan,
+        'gudang': gudang,
+        'keuangan': keuangan,
+        'setting': setting
+    };
+    
+    navigateTo('dashboard');
+    
+    var btnNotif = document.getElementById('btnHeaderNotif');
+    if (btnNotif) {
+        btnNotif.addEventListener('click', function() {
+            toggleNotifikasiPage();
+        });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    var navBtn = e.target.closest('.bottom-nav .nav-item');
+    if (navBtn) {
+        var page = navBtn.getAttribute('data-page');
+        if (page) navigateTo(page);
+    }
+});
+</script>
+
+<!-- ======================================== -->
+<!-- SIDEBAR CONTROLLER -->
+<!-- ======================================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sidebar = document.getElementById('appSidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    var btnOpen = document.getElementById('btnOpenSidebar');
+    var btnClose = document.getElementById('btnCloseSidebar');
+    
+    function openSidebar() {
+        if (sidebar && overlay) {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.classList.add('sidebar-open');
         }
     }
+    
+    function closeSidebar() {
+        if (sidebar && overlay) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
+        }
+    }
+    
+    if (btnOpen) btnOpen.addEventListener('click', openSidebar);
+    if (btnClose) btnClose.addEventListener('click', closeSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+    
+    document.querySelectorAll('.sidebar-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var page = this.getAttribute('data-page');
+            if (page) navigateTo(page);
+            closeSidebar();
+        });
+    });
+});
 </script>
+
+<!-- ======================================== -->
+<!-- SERVICE WORKER & PWA AUTO UPDATE -->
+<!-- ======================================== -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        
+        navigator.serviceWorker.register('./sw.js').then(function(reg) {
+            console.log('✅ SW registered:', reg.scope);
+            
+            // 💡 Cek update SEGERA saat aplikasi dibuka
+            reg.update();
+            
+            // Cek apakah sudah ada SW waiting
+            if (reg.waiting && navigator.serviceWorker.controller) {
+                showUpdateToast(reg.waiting);
+            }
+            
+            // Deteksi update baru
+            reg.addEventListener('updatefound', function() {
+                var newWorker = reg.installing;
+                if (!newWorker) return;
+                
+                newWorker.addEventListener('statechange', function() {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('🔄 Update tersedia!');
+                        showUpdateToast(newWorker);
+                    }
+                });
+            });
+            
+            // Cek update berkala tiap 5 menit
+            setInterval(function() {
+                reg.update();
+                console.log('🔍 Memeriksa pembaruan...');
+            }, 300000);
+            
+        }).catch(function(err) {
+            console.log('❌ SW registration failed:', err);
+        });
+        
+        // Reload saat controller berubah
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (!refreshing) {
+                refreshing = true;
+                console.log('🔄 SW baru aktif, reload...');
+                window.location.reload();
+            }
+        });
+    });
+    
+    // ========================================
+    // TOAST UPDATE
+    // ========================================
+    function showUpdateToast(worker) {
+        if (document.getElementById('pwaUpdateToast')) return;
+        
+        var toastHtml = 
+        '<div id="pwaUpdateToast" style="' +
+            'position:fixed;bottom:75px;left:50%;transform:translateX(-50%);' +
+            'background:#1B5E20;color:#fff;padding:10px 16px;' +
+            'border-radius:30px;box-shadow:0 4px 15px rgba(0,0,0,0.3);' +
+            'display:flex;align-items:center;gap:12px;z-index:999999;' +
+            'font-family:sans-serif;font-size:12px;font-weight:600;' +
+            'width:calc(100% - 40px);max-width:380px;' +
+            'justify-content:space-between;border:1px solid #4CAF50;' +
+            'animation:slideUpPwa 0.3s ease-out;' +
+        '">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<i class="fas fa-sync-alt fa-spin" style="color:#A5D6A7;"></i>' +
+                '<span>Versi baru Cozycs Farm tersedia!</span>' +
+            '</div>' +
+            '<button id="btnReloadPwa" style="' +
+                'background:#fff;color:#1B5E20;border:none;' +
+                'padding:6px 14px;border-radius:20px;font-size:11px;' +
+                'font-weight:800;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);' +
+            '">PERBARUI</button>' +
+        '</div>' +
+        '<style>' +
+            '@keyframes slideUpPwa {' +
+                'from {transform:translate(-50%,100%);opacity:0;}' +
+                'to {transform:translate(-50%,0);opacity:1;}' +
+            '}' +
+        '</style>';
+        
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+        
+        document.getElementById('btnReloadPwa').addEventListener('click', function() {
+            if (worker) {
+                worker.postMessage({ action: 'skipWaiting' });
+            } else if (navigator.serviceWorker.waiting) {
+                navigator.serviceWorker.waiting.postMessage({ action: 'skipWaiting' });
+            }
+            
+            setTimeout(function() {
+                window.location.reload();
+            }, 1500);
+            
+            var toast = document.getElementById('pwaUpdateToast');
+            if (toast) toast.remove();
+        });
+    }
+}
+</script>
+
 </body>
 </html>
