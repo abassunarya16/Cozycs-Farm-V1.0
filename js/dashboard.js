@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (REVISI JUDUL & MINIMALIST TOGGLE)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (REVISI EX-SUMMARY & AGENDA)
 // ==========================================
 
 var dashboard = (function() {
@@ -10,9 +10,8 @@ var dashboard = (function() {
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
-                <!-- HEADER TITLE -->
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span><i class="fas fa-chart-line" style="color: #2E7D32;"></i> Command & Decision Center</span>
+                <!-- HEADER TITLE (REVISI: HANYA OWNER VIEW) -->
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
                     <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Owner View</span>
                 </div>
 
@@ -25,41 +24,32 @@ var dashboard = (function() {
                 <!-- KARTU INFORMASI GH BANNER -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
 
-                <!-- ========================================== -->
-                <!-- MONITORING AIR DAN LINGKUNGAN (REVISI JUDUL & MINIMALIST CHEVRON) -->
-                <!-- ========================================== -->
+                <!-- MONITORING AIR DAN LINGKUNGAN -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <!-- Header Monitoring dengan Tombol Chevron Minimalis Tanpa Teks -->
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 4px;"></i> Monitoring Air Dan Lingkungan</span>
                             <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Real-time</span>
                         </div>
                         
-                        <!-- Tombol Chevron Toggle Minimalis -->
                         <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
                             <i id="iconToggleIot" class="fas ${isIotCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}" style="font-size: 12px;"></i>
                         </button>
                     </div>
 
-                    <!-- WRAPPER CONTENT MONITORING -->
                     <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; margin-top: 14px; transition: all 0.3s ease;">
-                        
-                        <!-- 1. PARAMETER AIR TANDON -->
                         <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">💧 Parameter Air Tandon</div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards"></div>
 
-                        <!-- 2. PARAMETER LINGKUNGAN (NAMA REVISI) -->
                         <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">☀️ Parameter Lingkungan</div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards"></div>
-
                     </div>
                 </div>
 
-                <!-- EXECUTIVE SUMMARY -->
+                <!-- EXECUTIVE SUMMARY (REVISI 4 GRID LAYOUT) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
-                <!-- AGENDA HARI INI -->
+                <!-- AGENDA HARI INI (REVISI TANPA CORETAN & MAX 10 BARIS) -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
@@ -144,7 +134,6 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
-    // TOGGLE MINIMALIS CHEVRON SAJA
     function toggleIotSection() {
         isIotCollapsed = !isIotCollapsed;
         var contentEl = document.getElementById('wrapperIotContent');
@@ -388,68 +377,85 @@ var dashboard = (function() {
         `;
     }
 
+    // EXECUTIVE SUMMARY (REVISI PERMINTAAN 3)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
 
         var dataGh = getData('cozycs_greenhouse');
-        var dataGudang = getData('cozycs_gudang');
+        var dataTanaman = getData('cozycs_tanaman');
+        var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
+        // 1. Grid 1: Total Tanaman Aktif (Kapasitas Mula)
         var totalTanaman = 0;
         var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
-
-        if (filteredGhList.length === 0 && selectedGh !== 'ALL') {
-            filteredGhList = [{ kode: selectedGh, populasi: 490 }];
-        } else if (filteredGhList.length === 0 && selectedGh === 'ALL') {
-            filteredGhList = [{ kode: 'GH-01', populasi: 490 }, { kode: 'GH-02', populasi: 490 }];
-        }
 
         filteredGhList.forEach(function(g) {
             totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 490);
         });
+        if (totalTanaman === 0) totalTanaman = (selectedGh === 'ALL') ? 980 : 490;
 
-        var nilaiGudang = 0;
-        dataGudang.forEach(function(b) {
-            nilaiGudang += ((parseFloat(b.stok) || 0) * (parseFloat(b.harga) || 0));
+        // 2. Grid 2: Tanaman Hidup (Populasi Aktif)
+        var tanamanHidup = 0;
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
+        filteredTanaman.forEach(function(t) {
+            tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
         });
+        if (tanamanHidup === 0) tanamanHidup = Math.round(totalTanaman * 0.98); // Fallback ~98% hidup
 
-        var totalEstimasiPanenKg = 0;
+        // 3. Grid 3: Buah Fix (Buah lolos seleksi)
+        var buahFix = 0;
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh; });
+        filteredBuah.forEach(function(b) {
+            buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0);
+        });
+        if (buahFix === 0) buahFix = Math.round(tanamanHidup * 0.95); // Fallback 1 buah / pohon
+
+        // 4. Grid 4: Estimasi Panen (Tanggal & Bobot)
+        var tglPanenStr = '20 Ags 2026';
+        var totalEstimasiKg = 0;
         var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
         
         filteredPolinasi.forEach(function(p) {
             var jumlahBunga = parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0;
-            totalEstimasiPanenKg += (jumlahBunga * 1.5);
+            totalEstimasiKg += (jumlahBunga * 1.5);
+            if (p.tglPanen) tglPanenStr = p.tglPanen;
         });
 
-        if (totalEstimasiPanenKg === 0) {
-            totalEstimasiPanenKg = selectedGh === 'ALL' ? 1820 : 910;
+        if (totalEstimasiKg === 0) {
+            totalEstimasiKg = (selectedGh === 'ALL') ? 1420 : 710;
         }
 
-        var formatRupiah = function(val) {
-            return 'Rp' + val.toLocaleString('id-ID');
-        };
-
         el.innerHTML = `
+            <!-- Grid 1: Tanaman Aktif (Dipertahankan) -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman (${selectedGh})</div>
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
                 <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalTanaman} Batang</div>
             </div>
+
+            <!-- Grid 2: Tanaman Hidup -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🏡 GH Dipilih</div>
-                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${selectedGh === 'ALL' ? dataGh.length || 2 : selectedGh}</div>
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌿 Tanaman Hidup</div>
+                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${tanamanHidup} Pohon</div>
             </div>
+
+            <!-- Grid 3: Buah Fix -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📦 Nilai Gudang</div>
-                <div style="font-size: 13px; font-weight: bold; color: #E65100; margin-top: 2px;">${formatRupiah(nilaiGudang > 0 ? nilaiGudang : 18250000)}</div>
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Buah Fix</div>
+                <div style="font-size: 16px; font-weight: bold; color: #E65100; margin-top: 2px;">${buahFix} Buah</div>
             </div>
+
+            <!-- Grid 4: Estimasi Panen (Tanggal & Bobot) -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Est. Panen</div>
-                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalEstimasiPanenKg} Kg</div>
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📅 Estimasi Panen</div>
+                <div style="font-size: 13px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${tglPanenStr}</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600;">Est. ${totalEstimasiKg} Kg</div>
             </div>
         `;
     }
 
+    // AGENDA HARI INI (REVISI PERMINTAAN 4: MAKS 10 BARIS, KONEK JADWAL, TANPA CORETAN, RESET HARIAN)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -459,27 +465,35 @@ var dashboard = (function() {
         if (dateEl) dateEl.innerText = todayStr;
 
         var schedules = getData('cozycs_schedules');
+        
+        // Filter murni berdasarkan tanggal HARI INI & GH yang dipilih
         var todayTasks = schedules.filter(function(s) {
             var matchDate = (s.date === todayStr || s.tanggal === todayStr);
             var matchGh = (selectedGh === 'ALL') || (s.gh === selectedGh) || (s.gh === 'Seluruh Farm');
             return matchDate && matchGh;
         });
 
+        // Jika hari ini belum ada data di LocalStorage, tampilkan sampel jadwal harian khusus hari ini
         if (todayTasks.length === 0) {
             todayTasks = [
-                { id: 'def_1', title: 'Nutrisi ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh) + ' - Cek PPM & pH', status: 'Selesai', gh: selectedGh },
-                { id: 'def_2', title: 'Spray ' + (selectedGh === 'ALL' ? 'GH02' : selectedGh) + ' - Fungisida / Insektisida', status: 'Belum Dikerjakan', gh: selectedGh }
+                { id: 'def_1', title: 'Nutrisi ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh) + ' - Cek PPM & pH', status: 'Selesai', date: todayStr },
+                { id: 'def_2', title: 'Spray ' + (selectedGh === 'ALL' ? 'GH02' : selectedGh) + ' - Fungisida / Insektisida', status: 'Belum Dikerjakan', date: todayStr },
+                { id: 'def_3', title: 'Seleksi Buah & Binding Tali ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh), status: 'Belum Dikerjakan', date: todayStr }
             ];
         }
 
+        // DIBATASI MAKSIMAL 10 BARIS AGENDA HARI INI
+        var limitedTasks = todayTasks.slice(0, 10);
+
         var html = '';
-        todayTasks.forEach(function(item) {
+        limitedTasks.forEach(function(item) {
             var isDone = item.status === 'Selesai';
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span style="font-size: 12px; font-weight: 600; text-decoration: ${isDone ? 'line-through' : 'none'}; color: ${isDone ? '#888' : '#222'};">
+                        <!-- TANPA LINE-THROUGH (HANYA WARNA ABU-ABU JIKA SELESAI) -->
+                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'};">
                             ${item.title || item.judul || 'Agenda Kegiatan'}
                         </span>
                     </div>
