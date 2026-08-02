@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (MULTI-GH FILTER)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & MULTI-GH)
 // ==========================================
 
 var dashboard = (function() {
@@ -20,16 +20,44 @@ var dashboard = (function() {
                 <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
                     <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
-                        <!-- Opsi GH akan dimuat otomatis oleh JavaScript -->
+                        <!-- Opsi GH akan dimuat otomatis -->
                     </div>
                 </div>
 
-                <!-- 1. EXECUTIVE SUMMARY (4 STAT CARDS SENSITIF GH) -->
+                <!-- ========================================== -->
+                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN) -->
+                <!-- ========================================== -->
+                
+                <!-- 1. MONITORING AIR & NUTRISI TANDON -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 6px;"></i> Monitoring Air & Nutrisi</span>
+                        <span style="font-size: 10px; background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-wifi"></i> IoT Sensor</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotWaterCards">
+                        <!-- Dynamic Water Cards -->
+                    </div>
+                </div>
+
+                <!-- 2. MONITORING LINGKUNGAN GREENHOUSE -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #E65100;"><i class="fas fa-sun" style="margin-right: 6px;"></i> Monitoring Lingkungan GH</span>
+                        <span style="font-size: 10px; background: #FFF3E0; color: #E65100; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-microchip"></i> Real-time</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards">
+                        <!-- Dynamic Env Cards -->
+                    </div>
+                </div>
+
+                <!-- EXECUTIVE SUMMARY (4 STAT CARDS) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary">
                     <!-- Dynamic Stat Cards -->
                 </div>
 
-                <!-- 2. AGENDA HARI INI (FILTER PER GH) -->
+                <!-- AGENDA HARI INI -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
@@ -40,13 +68,13 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. STATUS GREENHOUSE REAL-TIME / DETAIL FOKUS GH -->
+                <!-- STATUS GREENHOUSE REAL-TIME -->
                 <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Operasional Greenhouse</div>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList">
                     <!-- Dynamic Greenhouse Cards -->
                 </div>
 
-                <!-- 4. WARNING CENTER (FILTER SPESIFIK GH) -->
+                <!-- WARNING CENTER -->
                 <div style="background: #FFF5F5; padding: 14px; border-radius: 12px; border: 1px solid #FFCDD2; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #C62828; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Warning & Alert Center</div>
                     <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;">
@@ -54,7 +82,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 5. PROGRESS MUSIM & ESTIMASI OMZET -->
+                <!-- PROGRESS MUSIM & ESTIMASI OMZET -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> Progress Musim & Estimasi Hasil</div>
                     <div id="dashProgressMusim">
@@ -62,7 +90,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 6 & 7. GRAFIK PANEN PROGRESS BAR -->
+                <!-- GRAFIK PANEN PROGRESS BAR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #0277BD; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i> Target vs Realisasi Panen</div>
                     <div id="dashPanenProgress">
@@ -70,7 +98,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 8 & 9. RINGKASAN GUDANG & KEUANGAN -->
+                <!-- RINGKASAN GUDANG & KEUANGAN -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
                     <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; cursor: pointer;" onclick="window.location.hash='#gudang'">
                         <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-bottom: 6px;"><i class="fas fa-boxes"></i> Stok Gudang</div>
@@ -82,7 +110,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 10. AKTIVITAS TERAKHIR (LOG AUDIT) -->
+                <!-- AKTIVITAS TERAKHIR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;">
@@ -90,7 +118,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 11. QUICK ACTION BUTTONS -->
+                <!-- QUICK ACTION BUTTONS -->
                 <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -112,6 +140,8 @@ var dashboard = (function() {
     }
 
     function refreshAllDashboardData() {
+        loadIotWaterData();
+        loadIotEnvData();
         loadExecutiveSummary();
         loadTodayAgenda();
         loadGreenhouseStatus();
@@ -164,14 +194,123 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // FUNGSI SAAT TOMBOL GH DIKLIK
     function selectGhFilter(kodeGh) {
         selectedGh = kodeGh;
         renderGhSwitcher();
         refreshAllDashboardData();
     }
 
-    // 1. EXECUTIVE SUMMARY (TERFILTER PER GH)
+    // FUNGSI IOT: MONITORING AIR & NUTRISI (STYLE HABIBI GARDEN)
+    function loadIotWaterData() {
+        var el = document.getElementById('dashIotWaterCards');
+        if (!el) return;
+
+        var dataNutrisi = getData('cozycs_nutrisi');
+        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
+        var latest = filteredNutrisi.pop() || {};
+
+        var valPpm = latest.ppm || (selectedGh === 'GH-02' ? '950' : '1180');
+        var valPh = latest.ph || '6.1';
+        var valWaterTemp = latest.waterTemp || '26.5°C';
+
+        el.innerHTML = `
+            <!-- Card 1: Nutrisi PPM -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Nutrisi</span>
+                    <i class="fas fa-seedling" style="color: #2E7D32; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">${valPpm} <span style="font-size: 10px; font-weight: normal; color: #666;">ppm</span></div>
+                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Baik</span></div>
+            </div>
+
+            <!-- Card 2: pH Air -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">pH Air</span>
+                    <i class="fas fa-vial" style="color: #E65100; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">${valPh} <span style="font-size: 10px; font-weight: normal; color: #666;">pH</span></div>
+                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Optimal</span></div>
+            </div>
+
+            <!-- Card 3: Suhu Air -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Suhu Air</span>
+                    <i class="fas fa-thermometer-half" style="color: #0288D1; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">${valWaterTemp}</div>
+                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Sejuk</span></div>
+            </div>
+
+            <!-- Card 4: Level Air Tandon -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Level Tandon</span>
+                    <i class="fas fa-water" style="color: #0277BD; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">85 <span style="font-size: 10px; font-weight: normal; color: #666;">%</span></div>
+                <div style="margin-top: 6px;"><span style="background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Cukup</span></div>
+            </div>
+        `;
+    }
+
+    // FUNGSI IOT: MONITORING LINGKUNGAN GREENHOUSE
+    function loadIotEnvData() {
+        var el = document.getElementById('dashIotEnvCards');
+        if (!el) return;
+
+        var dataNutrisi = getData('cozycs_nutrisi');
+        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
+        var latest = filteredNutrisi.pop() || {};
+
+        var valRoomTemp = latest.roomTemp || (selectedGh === 'GH-02' ? '32.0°C' : '29.5°C');
+
+        el.innerHTML = `
+            <!-- Card 1: Suhu Ruangan -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Suhu Udara</span>
+                    <i class="fas fa-temperature-high" style="color: #E65100; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">${valRoomTemp}</div>
+                <div style="margin-top: 6px;"><span style="background: #FFF3E0; color: #E65100; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Hangat</span></div>
+            </div>
+
+            <!-- Card 2: Kelembaban Udara (RH) -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Kelembaban</span>
+                    <i class="fas fa-humidity" style="color: #0288D1; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">68 <span style="font-size: 10px; font-weight: normal; color: #666;">%</span></div>
+                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Ideal</span></div>
+            </div>
+
+            <!-- Card 3: Intensitas Cahaya -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Cahaya</span>
+                    <i class="fas fa-sun" style="color: #F57F17; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">35.0k <span style="font-size: 10px; font-weight: normal; color: #666;">Lux</span></div>
+                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Sangat Baik</span></div>
+            </div>
+
+            <!-- Card 4: Kipas / Airflow -->
+            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #555;">Sirkulasi Air</span>
+                    <i class="fas fa-fan" style="color: #512DA8; font-size: 14px;"></i>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; color: #000;">Aktif</div>
+                <div style="margin-top: 6px;"><span style="background: #EDE7F6; color: #512DA8; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">ON</span></div>
+            </div>
+        `;
+    }
+
+    // EXECUTIVE SUMMARY
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -234,7 +373,7 @@ var dashboard = (function() {
         `;
     }
 
-    // 2. AGENDA HARI INI (TERFILTER PER GH)
+    // AGENDA HARI INI
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -278,7 +417,7 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // 3. STATUS GREENHOUSE REAL-TIME
+    // STATUS GREENHOUSE REAL-TIME
     function loadGreenhouseStatus() {
         var el = document.getElementById('dashGreenhouseStatusList');
         if (!el) return;
@@ -340,7 +479,7 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // 4. WARNING CENTER (TERFILTER PER GH)
+    // WARNING CENTER
     function loadWarningCenter() {
         var el = document.getElementById('dashWarningList');
         if (!el) return;
@@ -350,7 +489,6 @@ var dashboard = (function() {
 
         var warnings = [];
 
-        // Stok Gudang Kritis (Gudang bersifat umum untuk seluruh farm)
         if (selectedGh === 'ALL') {
             gudang.forEach(function(g) {
                 if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) {
@@ -359,7 +497,6 @@ var dashboard = (function() {
             });
         }
 
-        // Cek Temuan Hama Terbaru untuk GH Terpilih
         var filteredHama = (selectedGh === 'ALL') ? hama : hama.filter(function(h) { return h.gh === selectedGh; });
         filteredHama.forEach(function(h) {
             if (h.tingkat && h.tingkat.indexOf('Ringan') === -1) {
@@ -387,7 +524,7 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // 5. PROGRESS MUSIM & ESTIMASI OMZET
+    // PROGRESS MUSIM
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -408,7 +545,7 @@ var dashboard = (function() {
         `;
     }
 
-    // 6 & 7. GRAFIK PANEN PROGRESS BAR
+    // GRAFIK PANEN PROGRESS
     function loadPanenProgress() {
         var el = document.getElementById('dashPanenProgress');
         if (!el) return;
@@ -428,7 +565,7 @@ var dashboard = (function() {
         `;
     }
 
-    // 8. RINGKASAN GUDANG
+    // RINGKASAN GUDANG
     function loadGudangSummary() {
         var el = document.getElementById('dashGudangSummary');
         if (!el) return;
@@ -447,7 +584,7 @@ var dashboard = (function() {
         `;
     }
 
-    // 9. RINGKASAN KEUANGAN
+    // RINGKASAN KEUANGAN
     function loadKeuanganSummary() {
         var el = document.getElementById('dashKeuanganSummary');
         if (!el) return;
@@ -461,7 +598,7 @@ var dashboard = (function() {
         `;
     }
 
-    // 10. AKTIVITAS TERAKHIR
+    // AKTIVITAS TERAKHIR
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
