@@ -26,7 +26,7 @@
     <!-- App Wrapper -->
     <div class="app-wrapper">
         
-        <!-- Header / Top Navigation (BADGE OWNER VIEW DI SAMPING LONCENG & DOUBLE-CLICK TOGGLE NOTIF) -->
+        <!-- Header / Top Navigation -->
         <header class="app-header" style="background: #2E7D32; color: #fff; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;">
             <div class="header-brand" style="display: flex; align-items: center; gap: 8px;">
                 <!-- Tombol Pemicu Sidebar -->
@@ -46,12 +46,12 @@
             </div>
 
             <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
-                <!-- BADGE OWNER VIEW (RAPAT & HARMONIS DENGAN HEADER GREEN) -->
+                <!-- BADGE OWNER VIEW -->
                 <span style="font-size: 10px; background: #1B5E20; color: #E8F5E9; padding: 3px 8px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.3px;">
                     Owner View
                 </span>
 
-                <!-- Tombol Ikon Notifikasi / Alarm (Bisa Di-klik / Double Click untuk Buka-Tutup) -->
+                <!-- Tombol Ikon Notifikasi / Alarm -->
                 <button class="header-notif-btn" id="btnHeaderNotif" title="Klik 2x / Klik untuk Buka/Tutup Notifikasi" style="background: transparent; border: none; color: #fff; font-size: 17px; cursor: pointer; position: relative; padding: 2px;">
                     <i class="fas fa-bell"></i>
                     <span class="notif-badge"></span>
@@ -180,9 +180,9 @@
 
         function toggleNotifikasiPage() {
             if (currentPage === 'notifikasi') {
-                navigateTo('dashboard'); // Tutup notifikasi -> Kembali ke Dashboard
+                navigateTo('dashboard');
             } else {
-                navigateTo('notifikasi'); // Buka halaman notifikasi
+                navigateTo('notifikasi');
             }
         }
 
@@ -212,7 +212,6 @@
 
             navigateTo('dashboard');
 
-            // Handler Klik & Double Click pada Ikon Lonceng Notifikasi untuk Buka/Tutup
             var btnNotif = document.getElementById('btnHeaderNotif');
             if (btnNotif) {
                 btnNotif.addEventListener('click', function() {
@@ -272,6 +271,109 @@
                 });
             });
         });
+    </script>
+
+    <!-- Service Worker Registration & PWA In-App Update Toast -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            let newWorker;
+
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(function(reg) {
+                    
+                    // 1. Cek jika sudah ada Service Worker baru yang menunggu dipasang
+                    if (reg.waiting) {
+                        newWorker = reg.waiting;
+                        showUpdateToast(newWorker);
+                    }
+
+                    // 2. Cek saat ada Service Worker baru yang sedang diinstal dari server
+                    reg.addEventListener('updatefound', function() {
+                        newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', function() {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(newWorker);
+                            }
+                        });
+                    });
+
+                }).catch(function(err) {
+                    console.log('[ServiceWorker] Registrasi gagal:', err);
+                });
+
+                // 3. Reload otomatis halaman saat pengguna mengklik tombol PERBARUI
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', function() {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            });
+
+            // Menampilkan Toast Update melayang di atas Bottom Navigation Bar (bottom: 75px)
+            function showUpdateToast(worker) {
+                if (document.getElementById('pwaUpdateToast')) return;
+
+                var toastHtml = `
+                    <div id="pwaUpdateToast" style="
+                        position: fixed;
+                        bottom: 75px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: #1B5E20;
+                        color: #ffffff;
+                        padding: 10px 16px;
+                        border-radius: 30px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        z-index: 999999;
+                        font-family: sans-serif;
+                        font-size: 12px;
+                        font-weight: 600;
+                        width: calc(100% - 40px);
+                        max-width: 380px;
+                        justify-content: space-between;
+                        border: 1px solid #4CAF50;
+                        animation: slideUpPwa 0.3s ease-out;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-sync-alt fa-spin" style="color: #A5D6A7;"></i>
+                            <span>Versi baru Cozycs Farm tersedia!</span>
+                        </div>
+                        <button id="btnReloadPwa" style="
+                            background: #ffffff;
+                            color: #1B5E20;
+                            border: none;
+                            padding: 6px 14px;
+                            border-radius: 20px;
+                            font-size: 11px;
+                            font-weight: 800;
+                            cursor: pointer;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                        ">
+                            PERBARUI
+                        </button>
+                    </div>
+                    <style>
+                        @keyframes slideUpPwa {
+                            from { transform: translate(-50%, 100%); opacity: 0; }
+                            to { transform: translate(-50%, 0); opacity: 1; }
+                        }
+                    </style>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+                document.getElementById('btnReloadPwa').addEventListener('click', function() {
+                    if (worker) {
+                        worker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html>
