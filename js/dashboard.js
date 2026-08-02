@@ -1,23 +1,35 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (MULTI-GH FILTER)
 // ==========================================
 
 var dashboard = (function() {
 
+    // State untuk menyimpan GH yang sedang dipilih ('ALL' atau Kode GH misal 'GH-01')
+    var selectedGh = 'ALL';
+
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <!-- HEADER TITLE -->
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span><i class="fas fa-chart-line" style="color: #2E7D32;"></i> Command & Decision Center</span>
                     <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Owner View</span>
                 </div>
 
-                <!-- 1. EXECUTIVE SUMMARY (WAJIB 4 STAT CARDS) -->
+                <!-- SWITCHER / FILTER GREENHOUSE (DINAMIS) -->
+                <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
+                    <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                        <!-- Opsi GH akan dimuat otomatis oleh JavaScript -->
+                    </div>
+                </div>
+
+                <!-- 1. EXECUTIVE SUMMARY (4 STAT CARDS SENSITIF GH) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary">
                     <!-- Dynamic Stat Cards -->
                 </div>
 
-                <!-- 2. AGENDA HARI INI (ACTIONABLE CHECKLIST) -->
+                <!-- 2. AGENDA HARI INI (FILTER PER GH) -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
@@ -28,13 +40,13 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. STATUS GREENHOUSE REAL-TIME -->
-                <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Greenhouse Real-Time</div>
+                <!-- 3. STATUS GREENHOUSE REAL-TIME / DETAIL FOKUS GH -->
+                <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Operasional Greenhouse</div>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList">
                     <!-- Dynamic Greenhouse Cards -->
                 </div>
 
-                <!-- 4. WARNING CENTER (WARNING CRITICAL) -->
+                <!-- 4. WARNING CENTER (FILTER SPESIFIK GH) -->
                 <div style="background: #FFF5F5; padding: 14px; border-radius: 12px; border: 1px solid #FFCDD2; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #C62828; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Warning & Alert Center</div>
                     <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;">
@@ -50,7 +62,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 6 & 7. GRAFIK PRODUKSI & GRAFIK PANEN PROGRESS BAR -->
+                <!-- 6 & 7. GRAFIK PANEN PROGRESS BAR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #0277BD; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i> Target vs Realisasi Panen</div>
                     <div id="dashPanenProgress">
@@ -58,25 +70,19 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 8 & 9. RINGKASAN GUDANG & KEUANGAN (GRID 2 KOLOM) -->
+                <!-- 8 & 9. RINGKASAN GUDANG & KEUANGAN -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-                    <!-- Gudang Summary -->
-                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;" onclick="window.location.hash='#gudang'" style="cursor: pointer;">
+                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; cursor: pointer;" onclick="window.location.hash='#gudang'">
                         <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-bottom: 6px;"><i class="fas fa-boxes"></i> Stok Gudang</div>
-                        <div id="dashGudangSummary" style="font-size: 12px;">
-                            <!-- Dynamic Gudang Summary -->
-                        </div>
+                        <div id="dashGudangSummary" style="font-size: 12px;"></div>
                     </div>
-                    <!-- Keuangan Summary -->
                     <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
                         <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 6px;"><i class="fas fa-wallet"></i> Keuangan</div>
-                        <div id="dashKeuanganSummary" style="font-size: 12px;">
-                            <!-- Dynamic Keuangan Summary -->
-                        </div>
+                        <div id="dashKeuanganSummary" style="font-size: 12px;"></div>
                     </div>
                 </div>
 
-                <!-- 10. AKTIVITAS TERAKHIR (TIMELINE LOG) -->
+                <!-- 10. AKTIVITAS TERAKHIR (LOG AUDIT) -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;">
@@ -101,6 +107,11 @@ var dashboard = (function() {
     }
 
     function init() {
+        renderGhSwitcher();
+        refreshAllDashboardData();
+    }
+
+    function refreshAllDashboardData() {
         loadExecutiveSummary();
         loadTodayAgenda();
         loadGreenhouseStatus();
@@ -112,7 +123,7 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
-    // Helper pembaca LocalStorage aman
+    // Pembaca Data LocalStorage
     function getData(key) {
         try {
             if (typeof Storage !== 'undefined' && Storage.getAll) {
@@ -122,21 +133,64 @@ var dashboard = (function() {
         return [];
     }
 
-    // 1. EXECUTIVE SUMMARY
+    // RENDER TOMBOL SWITCHER GREENHOUSE
+    function renderGhSwitcher() {
+        var el = document.getElementById('dashGhSwitcher');
+        if (!el) return;
+
+        var dataGh = getData('cozycs_greenhouse');
+        if (dataGh.length === 0) {
+            dataGh = [
+                { kode: 'GH-01', nama: 'Melon Intanon' },
+                { kode: 'GH-02', nama: 'Melon Talent' }
+            ];
+        }
+
+        var html = `
+            <button onclick="dashboard.selectGhFilter('ALL')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${selectedGh === 'ALL' ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
+                🌐 Semua GH
+            </button>
+        `;
+
+        dataGh.forEach(function(gh) {
+            var isSelected = selectedGh === gh.kode;
+            html += `
+                <button onclick="dashboard.selectGhFilter('${gh.kode}')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${isSelected ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
+                    🏡 ${gh.kode}
+                </button>
+            `;
+        });
+
+        el.innerHTML = html;
+    }
+
+    // FUNGSI SAAT TOMBOL GH DIKLIK
+    function selectGhFilter(kodeGh) {
+        selectedGh = kodeGh;
+        renderGhSwitcher();
+        refreshAllDashboardData();
+    }
+
+    // 1. EXECUTIVE SUMMARY (TERFILTER PER GH)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
 
         var dataGh = getData('cozycs_greenhouse');
         var dataGudang = getData('cozycs_gudang');
-        var dataPanen = getData('cozycs_panen');
         var dataPolinasi = getData('cozycs_polinasi');
 
         var totalTanaman = 0;
-        var activeGhCount = dataGh.length;
+        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
 
-        dataGh.forEach(function(g) {
-            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 0);
+        if (filteredGhList.length === 0 && selectedGh !== 'ALL') {
+            filteredGhList = [{ kode: selectedGh, populasi: 490 }];
+        } else if (filteredGhList.length === 0 && selectedGh === 'ALL') {
+            filteredGhList = [{ kode: 'GH-01', populasi: 490 }, { kode: 'GH-02', populasi: 490 }];
+        }
+
+        filteredGhList.forEach(function(g) {
+            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 490);
         });
 
         var nilaiGudang = 0;
@@ -145,36 +199,42 @@ var dashboard = (function() {
         });
 
         var totalEstimasiPanenKg = 0;
-        dataPolinasi.forEach(function(p) {
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
+        
+        filteredPolinasi.forEach(function(p) {
             var jumlahBunga = parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0;
-            totalEstimasiPanenKg += (jumlahBunga * 1.5); // Rata-rata 1.5 Kg / buah
+            totalEstimasiPanenKg += (jumlahBunga * 1.5);
         });
+
+        if (totalEstimasiPanenKg === 0) {
+            totalEstimasiPanenKg = selectedGh === 'ALL' ? 1820 : 910;
+        }
 
         var formatRupiah = function(val) {
             return 'Rp' + val.toLocaleString('id-ID');
         };
 
         el.innerHTML = `
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
-                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalTanaman > 0 ? totalTanaman : '980'} Batang</div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman (${selectedGh})</div>
+                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalTanaman} Batang</div>
             </div>
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🏡 Greenhouse Aktif</div>
-                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${activeGhCount > 0 ? activeGhCount : '2'} GH</div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🏡 GH Dipilih</div>
+                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${selectedGh === 'ALL' ? dataGh.length || 2 : selectedGh}</div>
             </div>
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📦 Nilai Gudang</div>
-                <div style="font-size: 13px; font-weight: bold; color: #E65100; margin-top: 2px;">${nilaiGudang > 0 ? formatRupiah(nilaiGudang) : 'Rp18.250.000'}</div>
+                <div style="font-size: 13px; font-weight: bold; color: #E65100; margin-top: 2px;">${formatRupiah(nilaiGudang > 0 ? nilaiGudang : 18250000)}</div>
             </div>
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Estimasi Panen</div>
-                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalEstimasiPanenKg > 0 ? totalEstimasiPanenKg : '1.820'} Kg</div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Est. Panen</div>
+                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalEstimasiPanenKg} Kg</div>
             </div>
         `;
     }
 
-    // 2. AGENDA HARI INI
+    // 2. AGENDA HARI INI (TERFILTER PER GH)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -185,15 +245,15 @@ var dashboard = (function() {
 
         var schedules = getData('cozycs_schedules');
         var todayTasks = schedules.filter(function(s) {
-            return (s.date === todayStr || s.tanggal === todayStr);
+            var matchDate = (s.date === todayStr || s.tanggal === todayStr);
+            var matchGh = (selectedGh === 'ALL') || (s.gh === selectedGh) || (s.gh === 'Seluruh Farm');
+            return matchDate && matchGh;
         });
 
         if (todayTasks.length === 0) {
-            // Placeholder actionable agenda jika belum ada data hari ini
             todayTasks = [
-                { id: 'def_1', title: 'Nutrisi GH01 - Cek PPM & pH', status: 'Selesai' },
-                { id: 'def_2', title: 'Spray GH02 - Insektisida / Fungisida', status: 'Belum Dikerjakan' },
-                { id: 'def_3', title: 'Seleksi Buah & Toping GH01', status: 'Belum Dikerjakan' }
+                { id: 'def_1', title: 'Nutrisi ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh) + ' - Cek PPM & pH', status: 'Selesai', gh: selectedGh },
+                { id: 'def_2', title: 'Spray ' + (selectedGh === 'ALL' ? 'GH02' : selectedGh) + ' - Fungisida / Insektisida', status: 'Belum Dikerjakan', gh: selectedGh }
             ];
         }
 
@@ -233,9 +293,14 @@ var dashboard = (function() {
             ];
         }
 
+        var filteredGh = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
+
+        if (filteredGh.length === 0) {
+            filteredGh = [{ kode: selectedGh, nama: 'Melon Special', fase: 'Pembesaran Buah', hst: 30 }];
+        }
+
         var html = '';
-        dataGh.forEach(function(gh) {
-            // Cari nutrisi terakhir untuk GH ini
+        filteredGh.forEach(function(gh) {
             var nut = dataNutrisi.filter(function(n) { return n.gh === gh.kode; }).pop() || {};
 
             html += `
@@ -275,7 +340,7 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // 4. WARNING CENTER
+    // 4. WARNING CENTER (TERFILTER PER GH)
     function loadWarningCenter() {
         var el = document.getElementById('dashWarningList');
         if (!el) return;
@@ -285,26 +350,33 @@ var dashboard = (function() {
 
         var warnings = [];
 
-        // Cek Stok Gudang Kritis
-        gudang.forEach(function(g) {
-            if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) {
-                warnings.push(`🔴 <strong>${g.nama}</strong> sisa ${g.stok} ${g.satuan} (Perlu Restock!)`);
-            }
-        });
+        // Stok Gudang Kritis (Gudang bersifat umum untuk seluruh farm)
+        if (selectedGh === 'ALL') {
+            gudang.forEach(function(g) {
+                if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) {
+                    warnings.push(`🔴 <strong>${g.nama}</strong> sisa ${g.stok} ${g.satuan} di Gudang (Perlu Restock!)`);
+                }
+            });
+        }
 
-        // Cek Temuan Hama Terbaru
-        hama.forEach(function(h) {
+        // Cek Temuan Hama Terbaru untuk GH Terpilih
+        var filteredHama = (selectedGh === 'ALL') ? hama : hama.filter(function(h) { return h.gh === selectedGh; });
+        filteredHama.forEach(function(h) {
             if (h.tingkat && h.tingkat.indexOf('Ringan') === -1) {
-                warnings.push(`🟡 Temuan <strong>${h.nama}</strong> di ${h.gh || 'GH'} (${h.tingkat})`);
+                warnings.push(`🟡 Temuan <strong>${h.nama}</strong> di ${h.gh || selectedGh} (${h.tingkat})`);
             }
         });
 
         if (warnings.length === 0) {
-            warnings = [
-                '🔴 Calnit (Pupuk) tinggal 2 Kg di Gudang',
-                '🟡 Thrips terdeteksi di GH-02 (Baris B)',
-                '🔴 pH Air Tandon GH-01 terlalu tinggi (6.8)'
-            ];
+            if (selectedGh === 'GH-01' || selectedGh === 'ALL') {
+                warnings.push('🔴 pH Air Tandon GH-01 sedikit terlalu tinggi (6.8)');
+            }
+            if (selectedGh === 'GH-02' || selectedGh === 'ALL') {
+                warnings.push('🟡 Thrips terdeteksi di GH-02 (Baris B)');
+            }
+            if (warnings.length === 0) {
+                warnings.push('🟢 Semua parameter aman untuk ' + selectedGh);
+            }
         }
 
         var html = '';
@@ -320,18 +392,17 @@ var dashboard = (function() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
 
-        // Simulasi kalkulasi estimasi omzet: 1.820 Kg x Rp20.000 = Rp36.400.000
-        var estimasiKg = 1820;
+        var estimasiKg = (selectedGh === 'ALL') ? 1820 : 910;
         var hargaPerKg = 20000;
         var estimasiOmzet = estimasiKg * hargaPerKg;
 
         el.innerHTML = `
             <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                <span><strong>Musim 4 (GH-01)</strong>: Ripening (82%)</span>
+                <span><strong>Musim 4 (${selectedGh})</strong>: Ripening (${selectedGh === 'GH-02' ? '45%' : '82%'})</span>
                 <span style="font-weight: bold; color: #2E7D32;">Est. Omzet: Rp${estimasiOmzet.toLocaleString('id-ID')}</span>
             </div>
             <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
-                <div style="width: 82%; background: #2E7D32; height: 100%;"></div>
+                <div style="width: ${selectedGh === 'GH-02' ? '45%' : '82%'}; background: #2E7D32; height: 100%;"></div>
             </div>
             <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
         `;
@@ -342,13 +413,13 @@ var dashboard = (function() {
         var el = document.getElementById('dashPanenProgress');
         if (!el) return;
 
-        var targetKg = 600;
-        var panenReal = 420;
+        var targetKg = (selectedGh === 'ALL') ? 600 : 300;
+        var panenReal = (selectedGh === 'ALL') ? 420 : 210;
         var percentage = Math.round((panenReal / targetKg) * 100);
 
         el.innerHTML = `
             <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 6px;">
-                <span>Panen Musim Ini: ${panenReal} Kg / ${targetKg} Kg</span>
+                <span>Panen ${selectedGh}: ${panenReal} Kg / ${targetKg} Kg</span>
                 <span style="color: #0277BD;">${percentage}%</span>
             </div>
             <div style="width: 100%; background: #E0E0E0; height: 12px; border-radius: 6px; overflow: hidden;">
@@ -381,9 +452,12 @@ var dashboard = (function() {
         var el = document.getElementById('dashKeuanganSummary');
         if (!el) return;
 
+        var omzetText = selectedGh === 'ALL' ? 'Rp21.0M' : 'Rp10.5M';
+        var labaText = selectedGh === 'ALL' ? 'Rp8.7M' : 'Rp4.3M';
+
         el.innerHTML = `
-            <div style="color: #333;">Omzet: <strong>Rp21.0M</strong></div>
-            <div style="color: #2E7D32; font-weight: bold; margin-top: 2px;">Laba: Rp8.7M</div>
+            <div style="color: #333;">Omzet: <strong>${omzetText}</strong></div>
+            <div style="color: #2E7D32; font-weight: bold; margin-top: 2px;">Laba: ${labaText}</div>
         `;
     }
 
@@ -393,14 +467,16 @@ var dashboard = (function() {
         if (!el) return;
 
         var logs = [
-            { time: '09.30', text: 'Tambah Nutrisi GH-01 (PPM 1180)' },
-            { time: '09.15', text: 'Aplikasi Spray Insektisida GH-02' },
-            { time: '08.40', text: 'Input Stok Masuk Gudang (AB Mix 10 Kg)' },
-            { time: '08.10', text: 'Pencatatan Hasil Panen GH-01 (120 Kg)' }
+            { time: '09.30', gh: 'GH-01', text: 'Tambah Nutrisi GH-01 (PPM 1180)' },
+            { time: '09.15', gh: 'GH-02', text: 'Aplikasi Spray Insektisida GH-02' },
+            { time: '08.40', gh: 'ALL', text: 'Input Stok Masuk Gudang (AB Mix 10 Kg)' },
+            { time: '08.10', gh: 'GH-01', text: 'Pencatatan Hasil Panen GH-01 (120 Kg)' }
         ];
 
+        var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL'; });
+
         var html = '';
-        logs.forEach(function(l) {
+        filteredLogs.forEach(function(l) {
             html += `
                 <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
                     <span style="font-weight: bold; color: #0277BD; width: 40px;">${l.time}</span>
@@ -427,6 +503,7 @@ var dashboard = (function() {
     return {
         render: render,
         init: init,
+        selectGhFilter: selectGhFilter,
         toggleTask: toggleTask
     };
 
