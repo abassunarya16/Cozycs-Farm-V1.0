@@ -2,6 +2,9 @@
 // COZYCS FARM - HELPER & UTILITY FUNCTIONS
 // ==========================================
 
+// Pusat Konfigurasi Versi Aplikasi Cozycs Farm (Single Source of Truth)
+var APP_VERSION = '1.5';
+
 var Helper = (function() {
 
     // Format tanggal menjadi format Indonesia (Contoh: 01 Agu 2026)
@@ -56,6 +59,7 @@ var Helper = (function() {
     }
 
     return {
+        VERSION: APP_VERSION,
         formatDate: formatDate,
         formatRupiah: formatRupiah,
         showToast: showToast,
