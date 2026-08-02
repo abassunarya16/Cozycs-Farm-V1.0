@@ -281,6 +281,9 @@
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js').then(function(reg) {
                     
+                    // Paksa Service Worker untuk langsung mengecek update file ke server setiap kali app dibuka
+                    reg.update();
+
                     // 1. Cek jika sudah ada Service Worker baru yang menunggu dipasang
                     if (reg.waiting) {
                         newWorker = reg.waiting;
