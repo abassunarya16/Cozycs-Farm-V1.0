@@ -25,12 +25,12 @@ var dashboard = (function() {
                 </div>
 
                 <!-- ========================================== -->
-                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN) -->
+                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN - ICON BESAR 28PX) -->
                 <!-- ========================================== -->
                 
                 <!-- 1. MONITORING AIR & NUTRISI TANDON -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 6px;"></i> Monitoring Air & Nutrisi</span>
                         <span style="font-size: 10px; background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-wifi"></i> IoT Sensor</span>
                     </div>
@@ -42,7 +42,7 @@ var dashboard = (function() {
 
                 <!-- 2. MONITORING LINGKUNGAN GREENHOUSE -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <span style="font-size: 13px; font-weight: 700; color: #E65100;"><i class="fas fa-sun" style="margin-right: 6px;"></i> Monitoring Lingkungan GH</span>
                         <span style="font-size: 10px; background: #FFF3E0; color: #E65100; padding: 2px 8px; border-radius: 10px; font-weight: bold;"><i class="fas fa-microchip"></i> Real-time</span>
                     </div>
@@ -200,7 +200,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // FUNGSI IOT: MONITORING AIR & NUTRISI (STYLE HABIBI GARDEN)
+    // FUNGSI IOT: MONITORING AIR & NUTRISI (ICON BESAR 28PX + BG BOX)
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         if (!el) return;
@@ -215,43 +215,59 @@ var dashboard = (function() {
 
         el.innerHTML = `
             <!-- Card 1: Nutrisi PPM -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Nutrisi</span>
-                    <i class="fas fa-seedling" style="color: #2E7D32; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #E8F5E9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-seedling" style="color: #2E7D32; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Nutrisi</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #888;">ppm</span></div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">${valPpm} <span style="font-size: 10px; font-weight: normal; color: #666;">ppm</span></div>
-                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Baik</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Baik</span></div>
             </div>
 
             <!-- Card 2: pH Air -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">pH Air</span>
-                    <i class="fas fa-vial" style="color: #E65100; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-vial" style="color: #0288D1; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">pH Air</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valPh} <span style="font-size: 10px; font-weight: 600; color: #888;">pH</span></div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">${valPh} <span style="font-size: 10px; font-weight: normal; color: #666;">pH</span></div>
-                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Optimal</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Optimal</span></div>
             </div>
 
             <!-- Card 3: Suhu Air -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Suhu Air</span>
-                    <i class="fas fa-thermometer-half" style="color: #0288D1; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #E0F7FA; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-thermometer-half" style="color: #00838F; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Suhu Air</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valWaterTemp}</div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">${valWaterTemp}</div>
-                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Sejuk</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sejuk</span></div>
             </div>
 
             <!-- Card 4: Level Air Tandon -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Level Tandon</span>
-                    <i class="fas fa-water" style="color: #0277BD; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-water" style="color: #0277BD; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Tandon Air</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">85 <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">85 <span style="font-size: 10px; font-weight: normal; color: #666;">%</span></div>
-                <div style="margin-top: 6px;"><span style="background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Cukup</span></div>
+                <div><span style="background: #E1F5FE; color: #0277BD; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Cukup</span></div>
             </div>
         `;
     }
@@ -268,44 +284,60 @@ var dashboard = (function() {
         var valRoomTemp = latest.roomTemp || (selectedGh === 'GH-02' ? '32.0°C' : '29.5°C');
 
         el.innerHTML = `
-            <!-- Card 1: Suhu Ruangan -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Suhu Udara</span>
-                    <i class="fas fa-temperature-high" style="color: #E65100; font-size: 14px;"></i>
+            <!-- Card 1: Suhu Udara -->
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFF3E0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-temperature-high" style="color: #E65100; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Suhu Udara</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valRoomTemp}</div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">${valRoomTemp}</div>
-                <div style="margin-top: 6px;"><span style="background: #FFF3E0; color: #E65100; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Hangat</span></div>
+                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Hangat</span></div>
             </div>
 
             <!-- Card 2: Kelembaban Udara (RH) -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Kelembaban</span>
-                    <i class="fas fa-humidity" style="color: #0288D1; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #E3F2FD; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-tint-slash" style="color: #1E88E5; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Kelembaban</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">68 <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">68 <span style="font-size: 10px; font-weight: normal; color: #666;">%</span></div>
-                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Ideal</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Ideal</span></div>
             </div>
 
             <!-- Card 3: Intensitas Cahaya -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Cahaya</span>
-                    <i class="fas fa-sun" style="color: #F57F17; font-size: 14px;"></i>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFFDE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-sun" style="color: #F57F17; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Cahaya</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">35k <span style="font-size: 10px; font-weight: 600; color: #888;">Lux</span></div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">35.0k <span style="font-size: 10px; font-weight: normal; color: #666;">Lux</span></div>
-                <div style="margin-top: 6px;"><span style="background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">Sangat Baik</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
             </div>
 
-            <!-- Card 4: Kipas / Airflow -->
-            <div style="background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #555;">Sirkulasi Air</span>
-                    <i class="fas fa-fan" style="color: #512DA8; font-size: 14px;"></i>
+            <!-- Card 4: Sirkulasi Kipas -->
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #EDE7F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-fan" style="color: #512DA8; font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">Airflow</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">Aktif</div>
+                    </div>
                 </div>
-                <div style="font-size: 16px; font-weight: bold; color: #000;">Aktif</div>
-                <div style="margin-top: 6px;"><span style="background: #EDE7F6; color: #512DA8; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">ON</span></div>
+                <div><span style="background: #EDE7F6; color: #512DA8; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">ON</span></div>
             </div>
         `;
     }
