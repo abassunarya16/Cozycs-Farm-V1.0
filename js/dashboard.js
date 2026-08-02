@@ -1,17 +1,18 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI CLEAN & UNIFIED FONT GRID)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI BANNERS & TOGGLE AIRFLOW)
 // ==========================================
 
 var dashboard = (function() {
 
     var selectedGh = 'ALL';
     var isIotCollapsed = false;
+    var isAirflowOn = true; // State toggle switch Airflow Fan
 
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 1. SWITCHER / FILTER GREENHOUSE (SEKARANG PALING ATAS DI DASHBOARD) -->
+                <!-- 1. SWITCHER / FILTER GREENHOUSE -->
                 <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
                     <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
@@ -42,7 +43,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 4. EXECUTIVE SUMMARY (4 GRID DENGAN SERAGAM FONT & UKURAN) -->
+                <!-- 4. EXECUTIVE SUMMARY -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
                 <!-- 5. AGENDA HARI INI -->
@@ -106,6 +107,12 @@ var dashboard = (function() {
         if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
 
+    // Toggle Airflow Fan (Klik Switch tanpa teks ON/OFF)
+    function toggleAirflow() {
+        isAirflowOn = !isAirflowOn;
+        loadIotEnvData();
+    }
+
     function getData(key) {
         try {
             if (typeof Storage !== 'undefined' && Storage.getAll) {
@@ -151,6 +158,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
+    // REVISI POIN 2 & 3: HST FORMAT & TANPA ICON DI TULISAN FASE/STATUS
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -164,20 +172,20 @@ var dashboard = (function() {
         var titleZona = selectedGh === 'ALL' ? 'Cozycs Farm (Semua GH)' : (selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'GH') : 'Greenhouse'));
         
         var varietasText = 'Melon Premium';
-        var hstText = '45';
+        var hstText = '45 HST';
         var statusText = 'Saatnya Pembesaran Buah';
         
         if (selectedGh === 'GH-01') {
             varietasText = 'Melon Diva 099';
-            hstText = '65';
-            statusText = 'Saatnya Panen 🍈';
+            hstText = '65 HST';
+            statusText = 'Saatnya Panen';
         } else if (selectedGh === 'GH-02') {
             varietasText = 'Melon Diva 095';
-            hstText = '30';
-            statusText = 'Saatnya Polinasi 🌸';
+            hstText = '30 HST';
+            statusText = 'Saatnya Polinasi';
         } else if (currentTanaman) {
             varietasText = currentTanaman.varietas || 'Melon Premium';
-            hstText = currentTanaman.hst || '30';
+            hstText = (currentTanaman.hst || '30') + ' HST';
             statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
         }
 
@@ -191,7 +199,8 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">${titleZona}</div>
-                        <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText} hari)</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText})</div>
+                        <!-- MURNI TULISAN TANPA EMOJI / ICON -->
                         <div style="font-size: 12px; font-weight: 700; color: #00897B;">${statusText}</div>
                     </div>
                 </div>
@@ -275,6 +284,7 @@ var dashboard = (function() {
         `;
     }
 
+    // REVISI POIN 4: TOGGLE SWITCH PADA AIRFLOW FAN (TANPA TULISAN ON/OFF)
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -325,22 +335,29 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
             </div>
 
+            <!-- TOGGLE SWITCH INTERAKTIF TANPA TULISAN ON/OFF -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #EDE7F6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <i class="fas fa-fan" style="color: #512DA8; font-size: 24px;"></i>
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: ${isAirflowOn ? '#EDE7F6' : '#F5F5F5'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
+                        <i class="fas fa-fan" style="color: ${isAirflowOn ? '#512DA8' : '#9E9E9E'}; font-size: 24px;"></i>
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Airflow</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">Aktif</div>
+                        <div style="font-size: 15px; font-weight: 800; color: ${isAirflowOn ? '#111' : '#888'};">Kipas GH</div>
                     </div>
                 </div>
-                <div><span style="background: #EDE7F6; color: #512DA8; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">ON</span></div>
+                
+                <!-- STYLING TOGGLE PILL MINIMALIS (KLIKABLE) -->
+                <div style="display: flex; align-items: center;">
+                    <div onclick="dashboard.toggleAirflow()" title="Klik untuk saklar Airflow" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
+                        <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
+                    </div>
+                </div>
             </div>
         `;
     }
 
-    // EXECUTIVE SUMMARY (REVISI POIN 3: SERAGAM KELAS & UKURAN TYPOGRAPHY)
+    // REVISI POIN 1: TEKS "Kapasitas Awal"
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -389,16 +406,12 @@ var dashboard = (function() {
             totalEstimasiKg = (selectedGh === 'ALL') ? 1420 : 710;
         }
 
-        // SERAGAM UNTUK SEMUA GRID:
-        // Title: font-size 10px, uppercase, color #777, weight 700
-        // Value: font-size 15px, weight 800, color #2E7D32 / #0277BD / #E65100
-        // SubText: font-size 10px, weight 600, color #555
         el.innerHTML = `
-            <!-- Grid 1: Tanaman Aktif -->
+            <!-- Grid 1: Tanaman Aktif (Kapasitas Awal) -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
                 <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} Batang</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Kapasitas Mula</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Kapasitas Awal</div>
             </div>
 
             <!-- Grid 2: Tanaman Hidup -->
@@ -534,6 +547,7 @@ var dashboard = (function() {
         init: init,
         selectGhFilter: selectGhFilter,
         toggleIotSection: toggleIotSection,
+        toggleAirflow: toggleAirflow,
         toggleTask: toggleTask
     };
 
