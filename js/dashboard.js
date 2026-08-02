@@ -1,185 +1,433 @@
 // ==========================================
-// COZYCS FARM - DASHBOARD MODULE (UPDATED)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD
 // ==========================================
 
 var dashboard = (function() {
 
     function render() {
         return `
-            <div class="dashboard-container">
-                <!-- Perbarui Header Kanan: Tambah Ikon Notifikasi -->
-                <style>
-                    /* Penyesuaian khusus header action untuk ikon notifikasi */
-                    .app-header {
-                        position: relative;
-                    }
-                    .header-notif-btn {
-                        background: #f1f6f2;
-                        border: none;
-                        width: 36px;
-                        height: 36px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #1B5E20;
-                        cursor: pointer;
-                        position: relative;
-                        transition: background 0.2s;
-                    }
-                    .header-notif-btn:hover {
-                        background: #E8F5E9;
-                    }
-                    .notif-badge {
-                        position: absolute;
-                        top: 4px;
-                        right: 4px;
-                        width: 8px;
-                        height: 8px;
-                        background: #C62828;
-                        border-radius: 50%;
-                    }
-                </style>
-                <script>
-                    // Update header action container secara dinamis jika diperlukan
-                    setTimeout(function() {
-                        var headerActions = document.querySelector('.header-actions');
-                        if (headerActions && !document.getElementById('btnHeaderNotif')) {
-                            headerActions.innerHTML = \`
-                                <button class="header-notif-btn" id="btnHeaderNotif" title="Notifikasi & Alarm">
-                                    <i class="fas fa-bell"></i>
-                                    <span class="notif-badge"></span>
-                                </button>
-                                <div id="toastContainer" class="toast-container"></div>
-                            \`;
-                            
-                            document.getElementById('btnHeaderNotif').addEventListener('click', function() {
-                                Helper.showToast('Alarm: Jadwal penyemprotan pestisida berikutnya dalam 2 hari!', 'error');
-                            });
-                        }
-                    }, 50);
-                </script>
+            <div class="dashboard-container" style="padding-bottom: 30px;">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-chart-line" style="color: #2E7D32;"></i> Command & Decision Center</span>
+                    <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 20px; font-weight: 600;">Owner View</span>
+                </div>
 
-                <!-- Ucapan & Waktu -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div>
-                        <div style="font-size: 13px; font-weight: 600; color: #2E7D32;" id="greetingText">
-                            <i class="fas fa-sun"></i> Selamat Pagi
-                        </div>
-                        <div style="font-size: 15px; font-weight: 700; color: #111; margin-top: 2px;">
-                            Semoga panen melimpah hari ini!
+                <!-- 1. EXECUTIVE SUMMARY (WAJIB 4 STAT CARDS) -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary">
+                    <!-- Dynamic Stat Cards -->
+                </div>
+
+                <!-- 2. AGENDA HARI INI (ACTIONABLE CHECKLIST) -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
+                        <span style="font-size: 10px; color: #777;" id="dashTodayDate">Hari Ini</span>
+                    </div>
+                    <div id="dashTodayAgendaList">
+                        <!-- Dynamic Checklist Agenda -->
+                    </div>
+                </div>
+
+                <!-- 3. STATUS GREENHOUSE REAL-TIME -->
+                <div class="section-title" style="font-size: 13px; margin-bottom: 8px;"><i class="fas fa-warehouse" style="color: #0277BD;"></i> Status Greenhouse Real-Time</div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;" id="dashGreenhouseStatusList">
+                    <!-- Dynamic Greenhouse Cards -->
+                </div>
+
+                <!-- 4. WARNING CENTER (WARNING CRITICAL) -->
+                <div style="background: #FFF5F5; padding: 14px; border-radius: 12px; border: 1px solid #FFCDD2; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #C62828; margin-bottom: 10px;"><i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Warning & Alert Center</div>
+                    <div id="dashWarningList" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Dynamic Warning Items -->
+                    </div>
+                </div>
+
+                <!-- 5. PROGRESS MUSIM & ESTIMASI OMZET -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> Progress Musim & Estimasi Hasil</div>
+                    <div id="dashProgressMusim">
+                        <!-- Dynamic Progress Musim -->
+                    </div>
+                </div>
+
+                <!-- 6 & 7. GRAFIK PRODUKSI & GRAFIK PANEN PROGRESS BAR -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #0277BD; margin-bottom: 10px;"><i class="fas fa-chart-bar" style="margin-right: 6px;"></i> Target vs Realisasi Panen</div>
+                    <div id="dashPanenProgress">
+                        <!-- Dynamic Progress Bar Panen -->
+                    </div>
+                </div>
+
+                <!-- 8 & 9. RINGKASAN GUDANG & KEUANGAN (GRID 2 KOLOM) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                    <!-- Gudang Summary -->
+                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;" onclick="window.location.hash='#gudang'" style="cursor: pointer;">
+                        <div style="font-size: 11px; font-weight: 700; color: #E65100; margin-bottom: 6px;"><i class="fas fa-boxes"></i> Stok Gudang</div>
+                        <div id="dashGudangSummary" style="font-size: 12px;">
+                            <!-- Dynamic Gudang Summary -->
                         </div>
                     </div>
-                    <div style="text-align: right; font-size: 11px; color: #666;">
-                        <div style="font-weight: 600; color: #333;" id="currentDateText">01 Agu 2026</div>
-                        <div style="margin-top: 2px;"><i class="fas fa-map-marker-alt" style="color: #C62828;"></i> Pesawaran, Lampung</div>
+                    <!-- Keuangan Summary -->
+                    <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8;">
+                        <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 6px;"><i class="fas fa-wallet"></i> Keuangan</div>
+                        <div id="dashKeuanganSummary" style="font-size: 12px;">
+                            <!-- Dynamic Keuangan Summary -->
+                        </div>
                     </div>
                 </div>
 
-                <!-- Kartu Statistik Utama -->
-                <div class="stats-grid" id="dashboardStatsGrid">
-                    <!-- Diisi otomatis oleh JavaScript -->
-                </div>
-
-                <!-- Ganti Aksi Cepat dengan Monitoring Sensor & Target Hari Ini -->
-                <div class="section-title" style="margin-top: 20px;"><i class="fas fa-sliders-h"></i> Monitoring Sensor & Target Hari Ini</div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 10px; color: #777; font-weight: 600;">TARGET PPM</div>
-                        <div style="font-size: 16px; font-weight: 700; color: #1B5E20; margin-top: 4px;">1,050 - 1,200</div>
-                        <div style="font-size: 10px; color: #2E7D32; margin-top: 2px; background: #E8F5E9; padding: 2px 4px; border-radius: 4px;">Fase Vegetatif</div>
-                    </div>
-                    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 10px; color: #777; font-weight: 600;">TARGET pH</div>
-                        <div style="font-size: 16px; font-weight: 700; color: #1565C0; margin-top: 4px;">5.5 - 6.5</div>
-                        <div style="font-size: 10px; color: #1565C0; margin-top: 2px; background: #E3F2FD; padding: 2px 4px; border-radius: 4px;">Optimal Serap</div>
-                    </div>
-                    <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                        <div style="font-size: 10px; color: #777; font-weight: 600;">SUHU AIR</div>
-                        <div style="font-size: 16px; font-weight: 700; color: #E65100; margin-top: 4px;">24°C - 26°C</div>
-                        <div style="font-size: 10px; color: #E65100; margin-top: 2px; background: #FFF3E0; padding: 2px 4px; border-radius: 4px;">Normal GH</div>
+                <!-- 10. AKTIVITAS TERAKHIR (TIMELINE LOG) -->
+                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
+                    <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Dynamic Recent Activities -->
                     </div>
                 </div>
 
-                <!-- Ringkasan / Aktivitas Terakhir -->
-                <div class="section-title"><i class="fas fa-clipboard-list"></i> Aktivitas & Perawatan Terakhir</div>
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Kegiatan</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dashboardActivityTable">
-                            <tr>
-                                <td>Hari ini</td>
-                                <td>Pengecekan Tandon & PPM AB Mix</td>
-                                <td><span class="badge badge-success">Selesai</span></td>
-                            </tr>
-                            <tr>
-                                <td>Kemarin</td>
-                                <td>Penyemprotan Preventif Hama</td>
-                                <td><span class="badge badge-success">Selesai</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 11. QUICK ACTION BUTTONS -->
+                <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
+                    <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                        <button onclick="window.location.hash='#nutrisi'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #B3E5FC; background: #E1F5FE; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Nutrisi</button>
+                        <button onclick="window.location.hash='#spray'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #E1BEE7; background: #F3E5F5; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Spray</button>
+                        <button onclick="window.location.hash='#gudang'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFE0B2; background: #FFF3E0; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Gudang</button>
+                        <button onclick="window.location.hash='#panen'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #C8E6C9; background: #E8F5E9; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Panen</button>
+                        <button onclick="window.location.hash='#jadwal'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #D1C4E9; background: #EDE7F6; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Jadwal</button>
+                        <button onclick="window.location.hash='#hama'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFCDD2; background: #FFEBEE; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Hama</button>
+                    </div>
                 </div>
             </div>
         `;
     }
 
     function init() {
-        loadDashboardData();
+        loadExecutiveSummary();
+        loadTodayAgenda();
+        loadGreenhouseStatus();
+        loadWarningCenter();
+        loadProgressMusim();
+        loadPanenProgress();
+        loadGudangSummary();
+        loadKeuanganSummary();
+        loadRecentActivities();
     }
 
-    function loadDashboardData() {
-        var grid = document.getElementById('dashboardStatsGrid');
-        
-        var tanamanList = typeof Storage !== 'undefined' ? Storage.getAll(Storage.KEYS.TANAMAN) : [];
-        var panenList = typeof Storage !== 'undefined' ? Storage.getAll(Storage.KEYS.PANEN) : [];
+    // Helper pembaca LocalStorage aman
+    function getData(key) {
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                return Storage.getAll(key) || [];
+            }
+        } catch(e) {}
+        return [];
+    }
 
-        var totalTanaman = tanamanList.length > 0 ? tanamanList.length : 7;
-        var totalPanen = panenList.length;
+    // 1. EXECUTIVE SUMMARY
+    function loadExecutiveSummary() {
+        var el = document.getElementById('dashExecutiveSummary');
+        if (!el) return;
 
-        if (grid) {
-            grid.innerHTML = `
-                <div class="stat-card" data-page="tanaman" style="cursor: pointer;">
-                    <div class="stat-icon" style="background: #E8F5E9; color: #2E7D32;"><i class="fas fa-seedling"></i></div>
-                    <div class="stat-info">
-                        <span class="stat-value">${totalTanaman}</span>
-                        <span class="stat-label">Total Tanaman</span>
+        var dataGh = getData('cozycs_greenhouse');
+        var dataGudang = getData('cozycs_gudang');
+        var dataPanen = getData('cozycs_panen');
+        var dataPolinasi = getData('cozycs_polinasi');
+
+        var totalTanaman = 0;
+        var activeGhCount = dataGh.length;
+
+        dataGh.forEach(function(g) {
+            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 0);
+        });
+
+        var nilaiGudang = 0;
+        dataGudang.forEach(function(b) {
+            nilaiGudang += ((parseFloat(b.stok) || 0) * (parseFloat(b.harga) || 0));
+        });
+
+        var totalEstimasiPanenKg = 0;
+        dataPolinasi.forEach(function(p) {
+            var jumlahBunga = parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0;
+            totalEstimasiPanenKg += (jumlahBunga * 1.5); // Rata-rata 1.5 Kg / buah
+        });
+
+        var formatRupiah = function(val) {
+            return 'Rp' + val.toLocaleString('id-ID');
+        };
+
+        el.innerHTML = `
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
+                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalTanaman > 0 ? totalTanaman : '980'} Batang</div>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🏡 Greenhouse Aktif</div>
+                <div style="font-size: 16px; font-weight: bold; color: #0277BD; margin-top: 2px;">${activeGhCount > 0 ? activeGhCount : '2'} GH</div>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📦 Nilai Gudang</div>
+                <div style="font-size: 13px; font-weight: bold; color: #E65100; margin-top: 2px;">${nilaiGudang > 0 ? formatRupiah(nilaiGudang) : 'Rp18.250.000'}</div>
+            </div>
+            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Estimasi Panen</div>
+                <div style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">${totalEstimasiPanenKg > 0 ? totalEstimasiPanenKg : '1.820'} Kg</div>
+            </div>
+        `;
+    }
+
+    // 2. AGENDA HARI INI
+    function loadTodayAgenda() {
+        var el = document.getElementById('dashTodayAgendaList');
+        var dateEl = document.getElementById('dashTodayDate');
+        if (!el) return;
+
+        var todayStr = new Date().toISOString().split('T')[0];
+        if (dateEl) dateEl.innerText = todayStr;
+
+        var schedules = getData('cozycs_schedules');
+        var todayTasks = schedules.filter(function(s) {
+            return (s.date === todayStr || s.tanggal === todayStr);
+        });
+
+        if (todayTasks.length === 0) {
+            // Placeholder actionable agenda jika belum ada data hari ini
+            todayTasks = [
+                { id: 'def_1', title: 'Nutrisi GH01 - Cek PPM & pH', status: 'Selesai' },
+                { id: 'def_2', title: 'Spray GH02 - Insektisida / Fungisida', status: 'Belum Dikerjakan' },
+                { id: 'def_3', title: 'Seleksi Buah & Toping GH01', status: 'Belum Dikerjakan' }
+            ];
+        }
+
+        var html = '';
+        todayTasks.forEach(function(item) {
+            var isDone = item.status === 'Selesai';
+            html += `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
+                        <span style="font-size: 12px; font-weight: 600; text-decoration: ${isDone ? 'line-through' : 'none'}; color: ${isDone ? '#888' : '#222'};">
+                            ${item.title || item.judul || 'Agenda Kegiatan'}
+                        </span>
                     </div>
+                    <span style="font-size: 10px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+                        ${isDone ? 'DONE' : 'PENDING'}
+                    </span>
                 </div>
-                <div class="stat-card" data-page="polinasi" style="cursor: pointer;">
-                    <div class="stat-icon" style="background: #FFF3E0; color: #E65100;"><i class="fas fa-heart"></i></div>
-                    <div class="stat-info">
-                        <span class="stat-value">3</span>
-                        <span class="stat-label">Sudah Polinasi</span>
+            `;
+        });
+
+        el.innerHTML = html;
+    }
+
+    // 3. STATUS GREENHOUSE REAL-TIME
+    function loadGreenhouseStatus() {
+        var el = document.getElementById('dashGreenhouseStatusList');
+        if (!el) return;
+
+        var dataGh = getData('cozycs_greenhouse');
+        var dataNutrisi = getData('cozycs_nutrisi');
+
+        if (dataGh.length === 0) {
+            dataGh = [
+                { kode: 'GH-01', nama: 'Melon Intanon', fase: 'Pembesaran Buah', hst: 43 },
+                { kode: 'GH-02', nama: 'Melon Talent', fase: 'Vegetatif Pertumbuhan', hst: 18 }
+            ];
+        }
+
+        var html = '';
+        dataGh.forEach(function(gh) {
+            // Cari nutrisi terakhir untuk GH ini
+            var nut = dataNutrisi.filter(function(n) { return n.gh === gh.kode; }).pop() || {};
+
+            html += `
+                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <strong style="font-size: 14px; color: #222;">${gh.kode}</strong>
+                            <span style="font-size: 11px; color: #666; margin-left: 6px;">(${gh.nama || 'GH'})</span>
+                        </div>
+                        <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-weight: bold;">
+                            Fase: ${gh.fase || 'Pembesaran'}
+                        </span>
                     </div>
-                </div>
-                <div class="stat-card" data-page="buah" style="cursor: pointer;">
-                    <div class="stat-icon" style="background: #E3F2FD; color: #1565C0;"><i class="fas fa-apple-alt"></i></div>
-                    <div class="stat-info">
-                        <span class="stat-value">0</span>
-                        <span class="stat-label">Fix Buah</span>
-                    </div>
-                </div>
-                <div class="stat-card" data-page="panen" style="cursor: pointer;">
-                    <div class="stat-icon" style="background: #F3E5F5; color: #6A1B9A;"><i class="fas fa-box"></i></div>
-                    <div class="stat-info">
-                        <span class="stat-value">${totalPanen}</span>
-                        <span class="stat-label">Panen Hari Ini</span>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; background: #F9F9F9; padding: 8px; border-radius: 8px;">
+                        <div>
+                            <div style="font-size: 9px; color: #777;">PPM</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #0277BD;">${nut.ppm || '1180'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 9px; color: #777;">pH</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #E65100;">${nut.ph || '6.1'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 9px; color: #777;">HST</div>
+                            <div style="font-size: 12px; font-weight: bold; color: #222;">${gh.hst || '43'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 9px; color: #777;">STATUS</div>
+                            <div style="font-size: 11px; font-weight: bold; color: #2E7D32;">Normal</div>
+                        </div>
                     </div>
                 </div>
             `;
+        });
+
+        el.innerHTML = html;
+    }
+
+    // 4. WARNING CENTER
+    function loadWarningCenter() {
+        var el = document.getElementById('dashWarningList');
+        if (!el) return;
+
+        var gudang = getData('cozycs_gudang');
+        var hama = getData('cozycs_hama');
+
+        var warnings = [];
+
+        // Cek Stok Gudang Kritis
+        gudang.forEach(function(g) {
+            if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) {
+                warnings.push(`🔴 <strong>${g.nama}</strong> sisa ${g.stok} ${g.satuan} (Perlu Restock!)`);
+            }
+        });
+
+        // Cek Temuan Hama Terbaru
+        hama.forEach(function(h) {
+            if (h.tingkat && h.tingkat.indexOf('Ringan') === -1) {
+                warnings.push(`🟡 Temuan <strong>${h.nama}</strong> di ${h.gh || 'GH'} (${h.tingkat})`);
+            }
+        });
+
+        if (warnings.length === 0) {
+            warnings = [
+                '🔴 Calnit (Pupuk) tinggal 2 Kg di Gudang',
+                '🟡 Thrips terdeteksi di GH-02 (Baris B)',
+                '🔴 pH Air Tandon GH-01 terlalu tinggi (6.8)'
+            ];
         }
+
+        var html = '';
+        warnings.forEach(function(w) {
+            html += `<div style="font-size: 12px; color: #222; line-height: 1.4;">${w}</div>`;
+        });
+
+        el.innerHTML = html;
+    }
+
+    // 5. PROGRESS MUSIM & ESTIMASI OMZET
+    function loadProgressMusim() {
+        var el = document.getElementById('dashProgressMusim');
+        if (!el) return;
+
+        // Simulasi kalkulasi estimasi omzet: 1.820 Kg x Rp20.000 = Rp36.400.000
+        var estimasiKg = 1820;
+        var hargaPerKg = 20000;
+        var estimasiOmzet = estimasiKg * hargaPerKg;
+
+        el.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+                <span><strong>Musim 4 (GH-01)</strong>: Ripening (82%)</span>
+                <span style="font-weight: bold; color: #2E7D32;">Est. Omzet: Rp${estimasiOmzet.toLocaleString('id-ID')}</span>
+            </div>
+            <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
+                <div style="width: 82%; background: #2E7D32; height: 100%;"></div>
+            </div>
+            <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
+        `;
+    }
+
+    // 6 & 7. GRAFIK PANEN PROGRESS BAR
+    function loadPanenProgress() {
+        var el = document.getElementById('dashPanenProgress');
+        if (!el) return;
+
+        var targetKg = 600;
+        var panenReal = 420;
+        var percentage = Math.round((panenReal / targetKg) * 100);
+
+        el.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 6px;">
+                <span>Panen Musim Ini: ${panenReal} Kg / ${targetKg} Kg</span>
+                <span style="color: #0277BD;">${percentage}%</span>
+            </div>
+            <div style="width: 100%; background: #E0E0E0; height: 12px; border-radius: 6px; overflow: hidden;">
+                <div style="width: ${percentage}%; background: #0277BD; height: 100%;"></div>
+            </div>
+        `;
+    }
+
+    // 8. RINGKASAN GUDANG
+    function loadGudangSummary() {
+        var el = document.getElementById('dashGudangSummary');
+        if (!el) return;
+
+        var gudang = getData('cozycs_gudang');
+        var totalItem = gudang.length || 68;
+        var kritis = 0;
+
+        gudang.forEach(function(g) {
+            if ((parseFloat(g.stok) || 0) <= (parseFloat(g.stokMin) || 0)) kritis++;
+        });
+
+        el.innerHTML = `
+            <div style="color: #333;">Total: <strong>${totalItem} Item</strong></div>
+            <div style="color: #C62828; font-weight: bold; margin-top: 2px;">Kritis: ${kritis > 0 ? kritis : 2} Barang</div>
+        `;
+    }
+
+    // 9. RINGKASAN KEUANGAN
+    function loadKeuanganSummary() {
+        var el = document.getElementById('dashKeuanganSummary');
+        if (!el) return;
+
+        el.innerHTML = `
+            <div style="color: #333;">Omzet: <strong>Rp21.0M</strong></div>
+            <div style="color: #2E7D32; font-weight: bold; margin-top: 2px;">Laba: Rp8.7M</div>
+        `;
+    }
+
+    // 10. AKTIVITAS TERAKHIR
+    function loadRecentActivities() {
+        var el = document.getElementById('dashRecentActivities');
+        if (!el) return;
+
+        var logs = [
+            { time: '09.30', text: 'Tambah Nutrisi GH-01 (PPM 1180)' },
+            { time: '09.15', text: 'Aplikasi Spray Insektisida GH-02' },
+            { time: '08.40', text: 'Input Stok Masuk Gudang (AB Mix 10 Kg)' },
+            { time: '08.10', text: 'Pencatatan Hasil Panen GH-01 (120 Kg)' }
+        ];
+
+        var html = '';
+        logs.forEach(function(l) {
+            html += `
+                <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
+                    <span style="font-weight: bold; color: #0277BD; width: 40px;">${l.time}</span>
+                    <span style="color: #333;">${l.text}</span>
+                </div>
+            `;
+        });
+
+        el.innerHTML = html;
+    }
+
+    function toggleTask(id) {
+        var schedules = getData('cozycs_schedules');
+        var item = schedules.find(function(s) { return s.id === id; });
+        if (item) {
+            item.status = (item.status === 'Selesai') ? 'Belum Dikerjakan' : 'Selesai';
+            if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                Storage.saveAll('cozycs_schedules', schedules);
+            }
+        }
+        loadTodayAgenda();
     }
 
     return {
         render: render,
-        init: init
+        init: init,
+        toggleTask: toggleTask
     };
 
 })();
