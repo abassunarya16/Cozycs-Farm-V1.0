@@ -212,6 +212,25 @@ var spray = (function() {
                         syncToSchedules(added);
                     }
 
+                    // --- AUTOCUT STOK GUDANG OTOMATIS ---
+                    if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
+                        var ghVal = (ghEl && ghEl.value) ? ghEl.value : '-';
+
+                        // 1. Potong Produk Bubuk jika diisi
+                        var produkBubuk = (productBubukEl && productBubukEl.value) ? productBubukEl.value.trim() : '';
+                        var dosisGram = parseFloat(doseGramEl ? doseGramEl.value : 0) || 0;
+                        if (produkBubuk && produkBubuk !== '-') {
+                            gudang.potongStokOtomatis(produkBubuk, dosisGram || 1, 'Spray', ghVal, 'Operator');
+                        }
+
+                        // 2. Potong Produk Cairan jika diisi
+                        var produkCairan = (productCairanEl && productCairanEl.value) ? productCairanEl.value.trim() : '';
+                        var dosisMl = parseFloat(doseMlEl ? doseMlEl.value : 0) || 0;
+                        if (produkCairan && produkCairan !== '-') {
+                            gudang.potongStokOtomatis(produkCairan, dosisMl || 1, 'Spray', ghVal, 'Operator');
+                        }
+                    }
+
                     if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                         Helper.showToast('Jadwal spray berhasil ditambahkan!', 'success');
                     }
