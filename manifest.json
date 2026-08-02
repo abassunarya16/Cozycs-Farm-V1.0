@@ -1,21 +1,31 @@
 {
   "name": "Cozycs Farm - Melon Hidroponik",
   "short_name": "Cozycs Farm",
-  "description": "Aplikasi Manajemen Pertanian Melon Hidroponik Premium",
+  "description": "Sistem Manajemen dan Monitoring Greenhouse Melon Hidroponik Cozycs Farm",
   "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1B5E20",
+  "orientation": "portrait",
+  "background_color": "#2E7D32",
+  "theme_color": "#2E7D32",
   "icons": [
     {
-      "src": "img/favicon.png",
+      "src": "img/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "img/logo-cozycs.png",
+      "src": "img/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
