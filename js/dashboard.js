@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & MULTI-GH)
+// COZYCS FARM - EXECUTIVE DECISION DASHBOARD (IoT & MULTI-GH BANNER)
 // ==========================================
 
 var dashboard = (function() {
@@ -17,7 +17,7 @@ var dashboard = (function() {
                 </div>
 
                 <!-- SWITCHER / FILTER GREENHOUSE (DINAMIS) -->
-                <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
                     <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
                         <!-- Opsi GH akan dimuat otomatis -->
@@ -25,7 +25,14 @@ var dashboard = (function() {
                 </div>
 
                 <!-- ========================================== -->
-                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN - ICON BESAR 28PX) -->
+                <!-- KARTU INFORMASI GH (STYLE REFERENSI GAMBAR) -->
+                <!-- ========================================== -->
+                <div id="dashGhInfoBanner" style="margin-bottom: 16px;">
+                    <!-- Dynamic Info Banner -->
+                </div>
+
+                <!-- ========================================== -->
+                <!-- IOT MONITORING: AIR & LINGKUNGAN (STYLE HABIBI GARDEN) -->
                 <!-- ========================================== -->
                 
                 <!-- 1. MONITORING AIR & NUTRISI TANDON -->
@@ -140,6 +147,7 @@ var dashboard = (function() {
     }
 
     function refreshAllDashboardData() {
+        loadGhInfoBanner();
         loadIotWaterData();
         loadIotEnvData();
         loadExecutiveSummary();
@@ -198,6 +206,70 @@ var dashboard = (function() {
         selectedGh = kodeGh;
         renderGhSwitcher();
         refreshAllDashboardData();
+    }
+
+    // FUNGSI RENDER BANNER KARTU GH (STYLE REFERENSI GAMBAR)
+    function loadGhInfoBanner() {
+        var el = document.getElementById('dashGhInfoBanner');
+        if (!el) return;
+
+        var dataGh = getData('cozycs_greenhouse');
+        var dataTanaman = getData('cozycs_tanaman');
+
+        var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
+        var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh; });
+
+        var titleZona = selectedGh === 'ALL' ? 'Cozycs Farm (Semua GH)' : (selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'GH') : 'Greenhouse'));
+        
+        // Data Varietas, Umur, dan Status
+        var varietasText = 'Melon Premium';
+        var hstText = '45';
+        var statusText = 'Saatnya Pembesaran Buah';
+        
+        if (selectedGh === 'GH-01') {
+            varietasText = 'Melon Diva 099';
+            hstText = '65';
+            statusText = 'Saatnya Panen 🍈';
+        } else if (selectedGh === 'GH-02') {
+            varietasText = 'Melon Diva 095';
+            hstText = '30';
+            statusText = 'Saatnya Polinasi 🌸';
+        } else if (currentTanaman) {
+            varietasText = currentTanaman.varietas || 'Melon Premium';
+            hstText = currentTanaman.hst || '30';
+            statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
+        }
+
+        // Gambar Melon SVG / Image Placeholder jika belum ada URL
+        var melonImgUrl = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
+
+        el.innerHTML = `
+            <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
+                
+                <!-- Foto Melon & Info Teks -->
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
+                        <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">${titleZona}</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText} hari)</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #00897B;">${statusText}</div>
+                    </div>
+                </div>
+
+                <!-- Tombol Pintas Sebelah Kanan -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <i class="fas fa-seedling" style="font-size: 15px;"></i>
+                    </button>
+                    <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
+                    </button>
+                </div>
+
+            </div>
+        `;
     }
 
     // FUNGSI IOT: MONITORING AIR & NUTRISI (ICON BESAR 28PX + BG BOX)
