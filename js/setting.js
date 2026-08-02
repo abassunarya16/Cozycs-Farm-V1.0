@@ -30,7 +30,7 @@ var setting = (function() {
                 <div style="background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e8e8e8;">
                     <div style="font-size: 13px; font-weight: 700; color: #1B5E20; margin-bottom: 8px;">Tentang Aplikasi</div>
                     <div style="font-size: 12px; color: #555; line-height: 1.5;">
-                        <strong>Cozycs Farm v1.3</strong><br>
+                        <strong>Cozycs Farm v1.5</strong><br>
                         Sistem Manajemen Melon Hidroponik Premium berbasis PWA (Offline-First).<br>
                         Lokasi Greenhouse: Pesawaran, Lampung.
                     </div>
