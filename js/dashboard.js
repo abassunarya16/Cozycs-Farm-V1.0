@@ -1,19 +1,26 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI ALL GH BANNER, AIRFLOW STATUS & WELCOME CARD)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REAL-TIME WEATHER PESAWARAN)
 // ==========================================
 
 var dashboard = (function() {
 
     var selectedGh = 'ALL';
     var isIotCollapsed = false;
-    var isAirflowOn = true; // State toggle switch Airflow Fan
-    var clockInterval = null; // Timer interval jam real-time
+    var isAirflowOn = true;
+    var clockInterval = null;
+
+    // Data cuaca awal (fallback jika offline)
+    var pesawaranWeather = {
+        temp: '32°C',
+        humidity: '56%',
+        icon: '⛅'
+    };
 
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. KARTU UCAPAN WELCOME, WAKTU & CUACA -->
+                <!-- 0. KARTU UCAPAN WELCOME, WAKTU & CUACA REAL-TIME -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
                 <!-- 1. SWITCHER / FILTER GREENHOUSE -->
@@ -91,13 +98,12 @@ var dashboard = (function() {
         renderGhSwitcher();
         refreshAllDashboardData();
         startLiveClock();
+        fetchPesawaranWeather();
     }
 
     function startLiveClock() {
-        // Hentikan timer sebelumnya jika ada
         if (clockInterval) clearInterval(clockInterval);
 
-        // Update interval waktu real-time tiap 10 detik
         clockInterval = setInterval(function() {
             var dateTimeEl = document.getElementById('liveDateTime');
             var greetingEl = document.getElementById('liveGreetingText');
@@ -111,6 +117,45 @@ var dashboard = (function() {
         }, 10000);
     }
 
+    // Mengambil Data Cuaca Real-Time Pesawaran (Tanpa Izin GPS)
+    function fetchPesawaranWeather() {
+        var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-5.4287&longitude=105.1800&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
+
+        fetch(apiUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.current) {
+                    var temp = Math.round(data.current.temperature_2m) + '°C';
+                    var humidity = Math.round(data.current.relative_humidity_2m) + '%';
+                    var code = data.current.weather_code;
+                    var icon = parseWeatherIcon(code);
+
+                    pesawaranWeather = { temp: temp, humidity: humidity, icon: icon };
+
+                    var tempEl = document.getElementById('liveWeatherTemp');
+                    var humEl = document.getElementById('liveWeatherHumidity');
+                    var iconEl = document.getElementById('liveWeatherIcon');
+
+                    if (tempEl) tempEl.textContent = temp;
+                    if (humEl) humEl.textContent = humidity;
+                    if (iconEl) iconEl.textContent = icon;
+                }
+            })
+            .catch(function(err) {
+                // Abaikan error jaringan (tetap pakai data fallback)
+            });
+    }
+
+    // Konversi Kode Cuaca Open-Meteo ke Emoji Cuaca
+    function parseWeatherIcon(code) {
+        if (code === 0) return '☀️'; // Cerah
+        if (code >= 1 && code <= 3) return '⛅'; // Berawan
+        if (code === 45 || code === 48) return '🌫️'; // Kabut
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️'; // Hujan
+        if (code >= 95 && code <= 99) return '⛈️'; // Badai / Petir
+        return '⛅';
+    }
+
     function refreshAllDashboardData() {
         loadWelcomeBanner();
         loadGhInfoBanner();
@@ -122,7 +167,6 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
-    // KARTU UCAPAN WELCOME, CUACA & WAKTU REALTIME
     function loadWelcomeBanner() {
         var el = document.getElementById('dashWelcomeBanner');
         if (!el) return;
@@ -151,14 +195,14 @@ var dashboard = (function() {
                         </div>
                     </div>
 
-                    <!-- Kanan: Indikator Cuaca -->
+                    <!-- Kanan: Indikator Cuaca Real-Time Pesawaran -->
                     <div style="text-align: right; flex-shrink: 0;">
-                        <div style="font-size: 22px; line-height: 1;">⛅</div>
-                        <div style="font-size: 15px; font-weight: 800; color: #222; margin-top: 2px;">
-                            32°C
+                        <div id="liveWeatherIcon" style="font-size: 22px; line-height: 1;">${pesawaranWeather.icon}</div>
+                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #222; margin-top: 2px;">
+                            ${pesawaranWeather.temp}
                         </div>
-                        <div style="font-size: 10px; color: #888; font-weight: 600;">
-                            56%
+                        <div id="liveWeatherHumidity" style="font-size: 10px; color: #888; font-weight: 600;">
+                            ${pesawaranWeather.humidity}
                         </div>
                     </div>
 
@@ -463,7 +507,6 @@ var dashboard = (function() {
                 <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
             </div>
 
-            <!-- CARD AIRFLOW DENGAN STATUS TEKS "Aktif" ATAU "Tidak Aktif" -->
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: ${isAirflowOn ? '#EDE7F6' : '#F5F5F5'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
