@@ -58,12 +58,39 @@ var Helper = (function() {
         return year + '-' + month + '-' + day;
     }
 
+    // Menentukan salam otomatis berdasarkan jam
+    function getGreeting() {
+        var hour = new Date().getHours();
+        if (hour >= 3 && hour < 11) return { text: 'Selamat Pagi', icon: '🌅' };
+        if (hour >= 11 && hour < 15) return { text: 'Selamat Siang', icon: '☀️' };
+        if (hour >= 15 && hour < 19) return { text: 'Selamat Sore', icon: '⛅' };
+        return { text: 'Selamat Malam', icon: '🌙' };
+    }
+
+    // Format tanggal dan waktu lengkap (Contoh: Senin, 03 Agu 2026 | 15:29 WIB)
+    function getFullDateTime() {
+        var now = new Date();
+        var days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+        var dayName = days[now.getDay()];
+        var dateNum = ('0' + now.getDate()).slice(-2);
+        var monthName = months[now.getMonth()];
+        var year = now.getFullYear();
+        var hours = ('0' + now.getHours()).slice(-2);
+        var minutes = ('0' + now.getMinutes()).slice(-2);
+
+        return dayName + ', ' + dateNum + ' ' + monthName + ' ' + year + ' | ' + hours + ':' + minutes + ' WIB';
+    }
+
     return {
         VERSION: APP_VERSION,
         formatDate: formatDate,
         formatRupiah: formatRupiah,
         showToast: showToast,
-        getTodayDate: getTodayDate
+        getTodayDate: getTodayDate,
+        getGreeting: getGreeting,
+        getFullDateTime: getFullDateTime
     };
 
 })();
