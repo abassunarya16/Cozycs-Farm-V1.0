@@ -106,37 +106,56 @@ var setting = (function() {
                 }
 
                 var icon = document.getElementById('iconCheckUpdate');
-                if (icon) icon.classList.add('fa-spin'); // Efek ikon berputar
+                if (icon) icon.classList.add('fa-spin');
 
                 Helper.showToast('Memeriksa pembaruan ke server...', 'success');
 
                 navigator.serviceWorker.ready.then(function(reg) {
-                    // Cek jika sudah ada SW baru yang gantung (waiting)
-                    if (reg.waiting) {
-                        if (icon) icon.classList.remove('fa-spin');
-                        if (typeof showUpdateToast === 'function') {
-                            showUpdateToast(reg.waiting);
+                    // Helper internal untuk memanggil fungsi toast pembaruan global
+                    var triggerToast = function(worker) {
+                        var fn = window.showUpdateToast || (typeof showUpdateToast !== 'undefined' ? showUpdateToast : null);
+                        if (typeof fn === 'function') {
+                            fn(worker);
                         } else {
                             Helper.showToast('Pembaruan tersedia! Silakan muat ulang aplikasi.', 'success');
                         }
+                    };
+
+                    // A. Jika SW baru sudah menunggu (waiting)
+                    if (reg.waiting) {
+                        if (icon) icon.classList.remove('fa-spin');
+                        triggerToast(reg.waiting);
                         return;
                     }
 
-                    // Paksa browser cek berkas sw.js di server
+                    var isUpdated = false;
+
+                    // B. Pasang pendengar event saat berkas SW baru terdeteksi di server
+                    var onUpdateFound = function() {
+                        isUpdated = true;
+                        var newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    if (icon) icon.classList.remove('fa-spin');
+                                    Helper.showToast('Versi baru ditemukan!', 'success');
+                                    triggerToast(newWorker);
+                                }
+                            });
+                        }
+                    };
+
+                    reg.addEventListener('updatefound', onUpdateFound, { once: true });
+
+                    // C. Paksa browser mengecek file sw.js di server GitHub
                     reg.update().then(function() {
                         setTimeout(function() {
-                            if (icon) icon.classList.remove('fa-spin');
-
-                            if (reg.waiting || reg.installing) {
-                                Helper.showToast('Versi baru ditemukan! Menyiapkan pembaruan...', 'success');
-                                if (reg.waiting && typeof showUpdateToast === 'function') {
-                                    showUpdateToast(reg.waiting);
-                                }
-                            } else {
+                            if (!isUpdated && !reg.waiting && !reg.installing) {
+                                if (icon) icon.classList.remove('fa-spin');
                                 var currentVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.0';
                                 Helper.showToast('Cozycs Farm sudah versi terbaru (v' + currentVer + ')', 'success');
                             }
-                        }, 1500);
+                        }, 2500);
                     }).catch(function(err) {
                         if (icon) icon.classList.remove('fa-spin');
                         Helper.showToast('Gagal memeriksa pembaruan. Cek koneksi internet.', 'error');
