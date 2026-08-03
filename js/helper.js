@@ -3,7 +3,7 @@
 // ==========================================
 
 // Pusat Konfigurasi Versi Aplikasi Cozycs Farm (Single Source of Truth)
-var APP_VERSION = '1.5';
+var APP_VERSION = '1.5.0';
 
 var Helper = (function() {
 
