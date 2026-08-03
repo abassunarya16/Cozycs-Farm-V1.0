@@ -66,7 +66,6 @@
     <!-- Sidebar Drawer -->
     <nav class="app-sidebar" id="appSidebar">
         <div class="sidebar-header">
-            <!-- ID sidebarTitle ditambahkan agar judul versi bisa di-update dinamis -->
             <div class="sidebar-title" id="sidebarTitle"><i class="fas fa-seedling"></i> Cozycs Farm</div>
             <button class="sidebar-close-btn" id="btnCloseSidebar"><i class="fas fa-times"></i></button>
         </div>
@@ -279,7 +278,7 @@ if ('serviceWorker' in navigator) {
             
             // Cek apakah sudah ada SW waiting
             if (reg.waiting && navigator.serviceWorker.controller) {
-                showUpdateToast(reg.waiting);
+                window.showUpdateToast(reg.waiting);
             }
             
             // Deteksi update baru
@@ -290,7 +289,7 @@ if ('serviceWorker' in navigator) {
                 newWorker.addEventListener('statechange', function() {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                         console.log('🔄 Update tersedia!');
-                        showUpdateToast(newWorker);
+                        window.showUpdateToast(newWorker);
                     }
                 });
             });
@@ -317,9 +316,9 @@ if ('serviceWorker' in navigator) {
     });
     
     // ========================================
-    // TOAST UPDATE
+    // TOAST UPDATE (DI-EXPOSE KE WINDOW GLOBAL)
     // ========================================
-    function showUpdateToast(worker) {
+    window.showUpdateToast = function(worker) {
         if (document.getElementById('pwaUpdateToast')) return;
         
         var toastHtml = 
@@ -366,7 +365,7 @@ if ('serviceWorker' in navigator) {
             var toast = document.getElementById('pwaUpdateToast');
             if (toast) toast.remove();
         });
-    }
+    };
 }
 </script>
 
