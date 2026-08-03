@@ -134,12 +134,12 @@
 <script src="js/setting.js"></script>
 
 <!-- ======================================== -->
-<!-- APP ROUTER & NAVIGATION (DOUBLE PRESS BACK TO EXIT) -->
+<!-- APP ROUTER & NAVIGATION (ROBUST BACK TO EXIT) -->
 <!-- ======================================== -->
 <script>
 var pages = {};
 var currentPage = 'dashboard';
-var lastBackPressTime = 0; // Timer hitung jeda pencetan tombol Back
+var lastBackPressTime = 0;
 
 /**
  * Fungsi Navigasi Utama Aplikasi
@@ -182,47 +182,44 @@ function navigateTo(pageName, isBackNav) {
 
 function toggleNotifikasiPage() {
     if (currentPage === 'notifikasi') {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            navigateTo('dashboard');
-        }
+        window.history.back();
     } else {
         navigateTo('notifikasi');
     }
 }
 
 // ----------------------------------------------------
-// EVENT LISTENER TOMBOL BACK HP (DOUBLE PRESS TO EXIT)
+// EVENT LISTENER TOMBOL BACK HP (ROOT ANCHOR TRAP)
 // ----------------------------------------------------
 window.addEventListener('popstate', function(event) {
-    var pageFromHash = window.location.hash.replace('#', '');
+    var state = event.state;
 
-    // JIKA POSISI SAAT INI DI DASHBOARD
-    if (currentPage === 'dashboard' && (!pageFromHash || pageFromHash === 'dashboard')) {
+    // Jika pengguna kembali menyentuh titik paling dasar (Root Anchor) dari Dasbor
+    if (state && state.page === 'root') {
         var now = Date.now();
 
-        // Cek apakah pencetan kedua dilakukan dalam jeda kurang dari 2 detik (2000 ms)
         if (now - lastBackPressTime < 2000) {
-            // Tekan ke-2: Izinkan browser/HP keluar dari aplikasi
-            history.back();
+            // Ketukan ke-2 dalam 2 detik: Biarkan keluar aplikasi
+            return;
         } else {
-            // Tekan ke-1: Tahan aplikasi, tampilkan toast peringatan, & dorong ulang history
+            // Ketukan ke-1: Tahan, beri peringatan toast, dan dorong ulang Dasbor ke tumpukan atas
             lastBackPressTime = now;
             
             if (typeof Helper !== 'undefined' && Helper.showToast) {
                 Helper.showToast('Tekan sekali lagi untuk keluar aplikasi', 'error');
             }
             
-            // Pertahankan posisi di #dashboard agar tidak langsung keluar
+            // Kembalikan posisi history ke status dashboard
             history.pushState({ page: 'dashboard' }, '', '#dashboard');
+            currentPage = 'dashboard';
+            return;
         }
-        return;
     }
 
-    // JIKA MUNDUR DARI MODUL LAIN (MISAL: NUTRISI -> DASHBOARD)
-    if (pageFromHash && pages[pageFromHash]) {
-        navigateTo(pageFromHash, true);
+    // Navigasi normal antar modul saat tombol Back ditekan
+    var targetPage = (state && state.page) ? state.page : (window.location.hash.replace('#', '') || 'dashboard');
+    if (pages[targetPage]) {
+        navigateTo(targetPage, true);
     } else {
         navigateTo('dashboard', true);
     }
@@ -259,17 +256,13 @@ document.addEventListener('DOMContentLoaded', function() {
         'setting': setting
     };
     
-    // Deteksi halaman awal dari URL Hash
-    var initialPage = window.location.hash.replace('#', '') || 'dashboard';
-    if (!pages[initialPage]) initialPage = 'dashboard';
-    
-    // Inisialisasi History State
-    history.replaceState({ page: initialPage }, '', '#' + initialPage);
-    if (initialPage === 'dashboard') {
+    // INISIALISASI HISTORY STACK (Jangkar Root + Dashboard)
+    if (!history.state || history.state.page !== 'root') {
+        history.replaceState({ page: 'root' }, '', '#');
         history.pushState({ page: 'dashboard' }, '', '#dashboard');
     }
     
-    navigateTo(initialPage, true);
+    navigateTo('dashboard', true);
     
     var btnNotif = document.getElementById('btnHeaderNotif');
     if (btnNotif) {
