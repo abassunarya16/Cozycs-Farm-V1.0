@@ -134,13 +134,18 @@
 <script src="js/setting.js"></script>
 
 <!-- ======================================== -->
-<!-- APP ROUTER & NAVIGATION -->
+<!-- APP ROUTER & NAVIGATION (SUPPORT BACK BUTTON) -->
 <!-- ======================================== -->
 <script>
 var pages = {};
 var currentPage = 'dashboard';
 
-function navigateTo(pageName) {
+/**
+ * Fungsi Navigasi Utama Aplikasi
+ * @param {string} pageName - Nama modul tujuan
+ * @param {boolean} isBackNav - Flag penanda jika dipicu oleh tombol Back HP
+ */
+function navigateTo(pageName, isBackNav) {
     var targetModule = pages[pageName];
     var mainContent = document.getElementById('mainContent');
     
@@ -152,6 +157,7 @@ function navigateTo(pageName) {
             targetModule.init();
         }
         
+        // Update status tombol aktif di Bottom Nav
         var navItems = document.querySelectorAll('.bottom-nav .nav-item');
         navItems.forEach(function(item) {
             if (item.getAttribute('data-page') === pageName) {
@@ -162,16 +168,43 @@ function navigateTo(pageName) {
         });
         
         window.scrollTo(0, 0);
+
+        // Rekam jejak ke History Browser jika bukan navigasi Back HP
+        if (!isBackNav) {
+            var newHash = '#' + pageName;
+            if (window.location.hash !== newHash) {
+                history.pushState({ page: pageName }, '', newHash);
+            }
+        }
     }
 }
 
 function toggleNotifikasiPage() {
     if (currentPage === 'notifikasi') {
-        navigateTo('dashboard');
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            navigateTo('dashboard');
+        }
     } else {
         navigateTo('notifikasi');
     }
 }
+
+// ----------------------------------------------------
+// EVENT LISTENER TOMBOL BACK FAKTOR HP / BROWSER
+// ----------------------------------------------------
+window.addEventListener('popstate', function(event) {
+    var pageFromHash = window.location.hash.replace('#', '');
+    
+    // Jika ada jejak hash modul, buka modul tersebut tanpa menambah history baru
+    if (pageFromHash && pages[pageFromHash]) {
+        navigateTo(pageFromHash, true);
+    } else {
+        // Jika kembali ke paling awal, buka Dashboard
+        navigateTo('dashboard', true);
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
@@ -204,7 +237,13 @@ document.addEventListener('DOMContentLoaded', function() {
         'setting': setting
     };
     
-    navigateTo('dashboard');
+    // Deteksi halaman awal dari URL Hash jika ada saat aplikasi dibuka
+    var initialPage = window.location.hash.replace('#', '') || 'dashboard';
+    if (!pages[initialPage]) initialPage = 'dashboard';
+    
+    // Set status history awal
+    history.replaceState({ page: initialPage }, '', '#' + initialPage);
+    navigateTo(initialPage, true);
     
     var btnNotif = document.getElementById('btnHeaderNotif');
     if (btnNotif) {
