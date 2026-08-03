@@ -1,18 +1,18 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REAL-TIME WEATHER PESAWARAN)
+// COZYCS FARM - EXECUTIVE DASHBOARD (FULL DYNAMIC & ZERO MOCK)
 // ==========================================
 
 var dashboard = (function() {
 
     var selectedGh = 'ALL';
     var isIotCollapsed = false;
-    var isAirflowOn = true;
+    var isAirflowOn = false;
     var clockInterval = null;
 
-    // Data cuaca awal (fallback jika offline)
+    // Default Cuaca Pesawaran (Diisi otomatis oleh API Open-Meteo)
     var pesawaranWeather = {
-        temp: '32°C',
-        humidity: '56%',
+        temp: '-°C',
+        humidity: '-%',
         icon: '⛅'
     };
 
@@ -20,7 +20,7 @@ var dashboard = (function() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. KARTU UCAPAN WELCOME, WAKTU & CUACA REAL-TIME -->
+                <!-- 0. WELCOME BANNER, REAL-TIME CLOCK & WEATHER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
                 <!-- 1. SWITCHER / FILTER GREENHOUSE -->
@@ -32,12 +32,12 @@ var dashboard = (function() {
                 <!-- 2. KARTU INFORMASI GH BANNER -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
 
-                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 3. MONITORING AIR DAN LINGKUNGAN (SENSOR LOG) -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 4px;"></i> Monitoring Air Dan Lingkungan</span>
-                            <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Real-time</span>
+                            <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Terbaru</span>
                         </div>
                         
                         <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
@@ -54,7 +54,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 4. EXECUTIVE SUMMARY -->
+                <!-- 4. EXECUTIVE SUMMARY (POPULASI & EST. PANEN) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
                 <!-- 5. AGENDA HARI INI -->
@@ -72,7 +72,7 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 7. AKTIVITAS TERAKHIR -->
+                <!-- 7. AKTIVITAS TERAKHIR (LOG) -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -101,6 +101,15 @@ var dashboard = (function() {
         fetchPesawaranWeather();
     }
 
+    function getData(key) {
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                return Storage.getAll(key) || [];
+            }
+        } catch(e) {}
+        return [];
+    }
+
     function startLiveClock() {
         if (clockInterval) clearInterval(clockInterval);
 
@@ -117,7 +126,6 @@ var dashboard = (function() {
         }, 10000);
     }
 
-    // Mengambil Data Cuaca Real-Time Pesawaran (Tanpa Izin GPS)
     function fetchPesawaranWeather() {
         var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-5.4287&longitude=105.1800&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
 
@@ -127,8 +135,7 @@ var dashboard = (function() {
                 if (data && data.current) {
                     var temp = Math.round(data.current.temperature_2m) + '°C';
                     var humidity = Math.round(data.current.relative_humidity_2m) + '%';
-                    var code = data.current.weather_code;
-                    var icon = parseWeatherIcon(code);
+                    var icon = parseWeatherIcon(data.current.weather_code);
 
                     pesawaranWeather = { temp: temp, humidity: humidity, icon: icon };
 
@@ -141,18 +148,15 @@ var dashboard = (function() {
                     if (iconEl) iconEl.textContent = icon;
                 }
             })
-            .catch(function(err) {
-                // Abaikan error jaringan (tetap pakai data fallback)
-            });
+            .catch(function(err) {});
     }
 
-    // Konversi Kode Cuaca Open-Meteo ke Emoji Cuaca
     function parseWeatherIcon(code) {
-        if (code === 0) return '☀️'; // Cerah
-        if (code >= 1 && code <= 3) return '⛅'; // Berawan
-        if (code === 45 || code === 48) return '🌫️'; // Kabut
-        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️'; // Hujan
-        if (code >= 95 && code <= 99) return '⛈️'; // Badai / Petir
+        if (code === 0) return '☀️';
+        if (code >= 1 && code <= 3) return '⛅';
+        if (code === 45 || code === 48) return '🌫️';
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
+        if (code >= 95 && code <= 99) return '⛈️';
         return '⛅';
     }
 
@@ -176,11 +180,7 @@ var dashboard = (function() {
 
         el.innerHTML = `
             <div style="background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid #e8e8e8; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                
-                <!-- Baris Atas: Profil/Ucapan & Cuaca -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    
-                    <!-- Kiri: Avatar & Ucapan -->
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="width: 46px; height: 46px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid #C8E6C9;">
                             👨‍🌾
@@ -195,7 +195,6 @@ var dashboard = (function() {
                         </div>
                     </div>
 
-                    <!-- Kanan: Indikator Cuaca Real-Time Pesawaran -->
                     <div style="text-align: right; flex-shrink: 0;">
                         <div id="liveWeatherIcon" style="font-size: 22px; line-height: 1;">${pesawaranWeather.icon}</div>
                         <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #222; margin-top: 2px;">
@@ -205,13 +204,10 @@ var dashboard = (function() {
                             ${pesawaranWeather.humidity}
                         </div>
                     </div>
-
                 </div>
 
-                <!-- Garis Pembatas Halus -->
                 <div style="border-top: 1px dashed #E0E0E0; margin-bottom: 10px;"></div>
 
-                <!-- Baris Bawah: Tanggal, Waktu & Lokasi -->
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #555;">
                     <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
                         <i class="far fa-calendar-alt" style="color: #2E7D32; font-size: 12px;"></i>
@@ -222,32 +218,8 @@ var dashboard = (function() {
                         <span>Pesawaran</span>
                     </div>
                 </div>
-
             </div>
         `;
-    }
-
-    function toggleIotSection() {
-        isIotCollapsed = !isIotCollapsed;
-        var contentEl = document.getElementById('wrapperIotContent');
-        var iconEl = document.getElementById('iconToggleIot');
-
-        if (contentEl) contentEl.style.display = isIotCollapsed ? 'none' : 'block';
-        if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-    }
-
-    function toggleAirflow() {
-        isAirflowOn = !isAirflowOn;
-        loadIotEnvData();
-    }
-
-    function getData(key) {
-        try {
-            if (typeof Storage !== 'undefined' && Storage.getAll) {
-                return Storage.getAll(key) || [];
-            }
-        } catch(e) {}
-        return [];
     }
 
     function renderGhSwitcher() {
@@ -255,12 +227,6 @@ var dashboard = (function() {
         if (!el) return;
 
         var dataGh = getData('cozycs_greenhouse');
-        if (dataGh.length === 0) {
-            dataGh = [
-                { kode: 'GH-01', nama: 'Melon Diva 099', hst: '65' },
-                { kode: 'GH-02', nama: 'Melon Diva 095', hst: '55' }
-            ];
-        }
 
         var html = `
             <button onclick="dashboard.selectGhFilter('ALL')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${selectedGh === 'ALL' ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
@@ -268,14 +234,16 @@ var dashboard = (function() {
             </button>
         `;
 
-        dataGh.forEach(function(gh) {
-            var isSelected = selectedGh === gh.kode;
-            html += `
-                <button onclick="dashboard.selectGhFilter('${gh.kode}')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${isSelected ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
-                    🏡 ${gh.kode}
-                </button>
-            `;
-        });
+        if (dataGh.length > 0) {
+            dataGh.forEach(function(gh) {
+                var isSelected = selectedGh === gh.kode;
+                html += `
+                    <button onclick="dashboard.selectGhFilter('${gh.kode}')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${isSelected ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
+                        🏡 ${gh.kode || gh.nama}
+                    </button>
+                `;
+            });
+        }
 
         el.innerHTML = html;
     }
@@ -286,33 +254,36 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
+    // BANNER DATA GREENHOUSE DINAMIS
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
 
         var dataGh = getData('cozycs_greenhouse');
         var dataTanaman = getData('cozycs_tanaman');
+        var melonImgUrl = 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
 
         if (dataGh.length === 0) {
-            dataGh = [
-                { kode: 'GH-01', nama: 'Melon Diva 099', hst: '65' },
-                { kode: 'GH-02', nama: 'Melon Diva 095', hst: '55' }
-            ];
+            el.innerHTML = `
+                <div style="background: #F5F5F5; border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
+                    <i class="fas fa-warehouse" style="font-size: 20px; color: #888; margin-bottom: 6px; display: block;"></i>
+                    Belum ada Greenhouse terdaftar. Silakan tambahkan data di modul <strong>Greenhouse</strong>.
+                </div>
+            `;
+            return;
         }
-
-        var melonImgUrl = 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
 
         if (selectedGh === 'ALL') {
             var listGhHtml = '';
             dataGh.forEach(function(g) {
-                var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode; });
-                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || 'Melon Premium');
-                var hst = (currentTanaman && currentTanaman.hst) ? currentTanaman.hst : (g.hst || (g.kode === 'GH-01' ? '65' : '55'));
-                
+                var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode || t.ghId === g.id; });
+                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || 'Tanpa Varietas');
+                var hst = (currentTanaman && (currentTanaman.hst !== undefined)) ? currentTanaman.hst + ' HST' : '0 HST';
+
                 listGhHtml += `
                     <div style="font-size: 12px; font-weight: 600; color: #2E7D32; display: flex; align-items: center; gap: 6px; margin-top: 3px;">
                         <span>🏡</span>
-                        <span>${varietas} (${hst} HST)</span>
+                        <span>${g.kode || g.nama}: ${varietas} (${hst})</span>
                     </div>
                 `;
             });
@@ -330,10 +301,10 @@ var dashboard = (function() {
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-seedling" style="font-size: 15px;"></i>
                         </button>
-                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
                         </button>
                     </div>
@@ -341,27 +312,12 @@ var dashboard = (function() {
             `;
         } else {
             var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
-            var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh; });
+            var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh || t.ghId === (currentGh ? currentGh.id : ''); });
 
             var titleZona = selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'Greenhouse') : 'Greenhouse');
-            var varietasText = 'Melon Premium';
-            var hstText = '45 HST';
-            var statusText = 'Saatnya Pembesaran Buah';
-            
-            if (selectedGh === 'GH-01') {
-                varietasText = 'Melon Diva 099';
-                hstText = '65 HST';
-                statusText = 'Saatnya Panen';
-            } else if (selectedGh === 'GH-02') {
-                varietasText = 'Melon Diva 095';
-                hstText = '55 HST';
-                statusText = 'Saatnya Polinasi';
-            } else if (currentTanaman) {
-                varietasText = currentTanaman.varietas || 'Melon Premium';
-                hstText = (currentTanaman.hst || '30') + ' HST';
-                statusText = currentTanaman.status || 'Saatnya Pemeliharaan';
-            }
-
+            var varietasText = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : 'Belum Ada Tanaman';
+            var hstText = (currentTanaman && currentTanaman.hst !== undefined) ? currentTanaman.hst + ' HST' : '0 HST';
+            var statusText = (currentTanaman && currentTanaman.status) ? currentTanaman.status : 'Fase Pertumbuhan';
             var singleMelonImg = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : melonImgUrl;
 
             el.innerHTML = `
@@ -378,10 +334,10 @@ var dashboard = (function() {
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-seedling" style="font-size: 15px;"></i>
                         </button>
-                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
                         </button>
                     </div>
@@ -390,17 +346,22 @@ var dashboard = (function() {
         }
     }
 
+    // SENSOR PARAMETER AIR TANDON DINAMIS (DARI MODUL NUTRISI)
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         if (!el) return;
 
         var dataNutrisi = getData('cozycs_nutrisi');
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
-        var latest = filteredNutrisi.pop() || {};
+        var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
-        var valPpm = latest.ppm || (selectedGh === 'GH-02' ? '950' : '1180');
-        var valPh = latest.ph || '6.1';
-        var valWaterTemp = latest.waterTemp || '26.5°C';
+        var valPpm = (latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
+        var valPh = (latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
+        var valWaterTemp = (latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : '0°C';
+        var valTandon = (latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
+
+        var statusPpm = (valPpm > 0) ? 'Tercatat' : 'Belum Ada';
+        var statusPh = (valPh > 0) ? 'Tercatat' : 'Belum Ada';
 
         el.innerHTML = `
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -413,7 +374,7 @@ var dashboard = (function() {
                         <div style="font-size: 18px; font-weight: 800; color: #111;">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #888;">ppm</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Baik</span></div>
+                <div><span style="background: ${valPpm > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPpm > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -426,7 +387,7 @@ var dashboard = (function() {
                         <div style="font-size: 18px; font-weight: 800; color: #111;">${valPh} <span style="font-size: 10px; font-weight: 600; color: #888;">pH</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Optimal</span></div>
+                <div><span style="background: ${valPh > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPh > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPh}</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -439,7 +400,7 @@ var dashboard = (function() {
                         <div style="font-size: 18px; font-weight: 800; color: #111;">${valWaterTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sejuk</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Tercatat</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -449,23 +410,26 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Tandon Air</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">85 <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valTandon} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E1F5FE; color: #0277BD; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Cukup</span></div>
+                <div><span style="background: #E1F5FE; color: #0277BD; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Level Air</span></div>
             </div>
         `;
     }
 
+    // PARAMETER LINGKUNGAN DINAMIS
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
 
         var dataNutrisi = getData('cozycs_nutrisi');
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
-        var latest = filteredNutrisi.pop() || {};
+        var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
-        var valRoomTemp = latest.roomTemp || (selectedGh === 'GH-02' ? '32.0°C' : '29.5°C');
+        var valRoomTemp = (latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : '0°C';
+        var valHumidity = (latest.humidity !== undefined && latest.humidity !== '') ? latest.humidity : '0';
+        var valLux = (latest.lux !== undefined && latest.lux !== '') ? latest.lux : '0';
 
         el.innerHTML = `
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -478,7 +442,7 @@ var dashboard = (function() {
                         <div style="font-size: 18px; font-weight: 800; color: #111;">${valRoomTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Hangat</span></div>
+                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Suhu Ruang</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -488,10 +452,10 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Kelembaban</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">68 <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valHumidity} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Ideal</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">RH GH</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -501,10 +465,10 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Cahaya</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">35k <span style="font-size: 10px; font-weight: 600; color: #888;">Lux</span></div>
+                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valLux} <span style="font-size: 10px; font-weight: 600; color: #888;">Lux</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Sangat Baik</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Intensitas</span></div>
             </div>
 
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
@@ -529,6 +493,7 @@ var dashboard = (function() {
         `;
     }
 
+    // EXECUTIVE SUMMARY (PERHITUNGAN REAL DARI MODUL LAIN)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -538,40 +503,37 @@ var dashboard = (function() {
         var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
+        // 1. Total Kapasitas Awal Tanaman
         var totalTanaman = 0;
         var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
         filteredGhList.forEach(function(g) {
-            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 490);
+            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 0);
         });
-        if (totalTanaman === 0) totalTanaman = (selectedGh === 'ALL') ? 980 : 490;
 
+        // 2. Total Tanaman Hidup
         var tanamanHidup = 0;
         var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
         filteredTanaman.forEach(function(t) {
             tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
         });
-        if (tanamanHidup === 0) tanamanHidup = Math.round(totalTanaman * 0.98);
 
+        // 3. Total Buah Fix
         var buahFix = 0;
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh; });
         filteredBuah.forEach(function(b) {
             buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0);
         });
-        if (buahFix === 0) buahFix = Math.round(tanamanHidup * 0.95);
 
-        var tglPanenStr = '20 Ags 2026';
+        // 4. Estimasi Tanggal & Bobot Panen
+        var tglPanenStr = '-';
         var totalEstimasiKg = 0;
         var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
         
         filteredPolinasi.forEach(function(p) {
             var jumlahBunga = parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0;
-            totalEstimasiKg += (jumlahBunga * 1.5);
+            totalEstimasiKg += (jumlahBunga * 1.5); // Asumsi rata-rata 1.5kg/buah
             if (p.tglPanen) tglPanenStr = p.tglPanen;
         });
-
-        if (totalEstimasiKg === 0) {
-            totalEstimasiKg = (selectedGh === 'ALL') ? 1420 : 710;
-        }
 
         el.innerHTML = `
             <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
@@ -600,13 +562,15 @@ var dashboard = (function() {
         `;
     }
 
+    // AGENDA HARI INI DINAMIS (DARI MODUL JADWAL)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
         if (!el) return;
 
-        var todayStr = new Date().toISOString().split('T')[0];
-        if (dateEl) dateEl.innerText = todayStr;
+        var now = new Date();
+        var todayStr = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2);
+        if (dateEl) dateEl.innerText = (typeof Helper !== 'undefined' && Helper.formatDate) ? Helper.formatDate(todayStr) : todayStr;
 
         var schedules = getData('cozycs_schedules');
         
@@ -617,23 +581,23 @@ var dashboard = (function() {
         });
 
         if (todayTasks.length === 0) {
-            todayTasks = [
-                { id: 'def_1', title: 'Nutrisi ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh) + ' - Cek PPM & pH', status: 'Selesai', date: todayStr },
-                { id: 'def_2', title: 'Spray ' + (selectedGh === 'ALL' ? 'GH02' : selectedGh) + ' - Fungisida / Insektisida', status: 'Belum Dikerjakan', date: todayStr },
-                { id: 'def_3', title: 'Seleksi Buah & Binding Tali ' + (selectedGh === 'ALL' ? 'GH01' : selectedGh), status: 'Belum Dikerjakan', date: todayStr }
-            ];
+            el.innerHTML = `
+                <div style="text-align: center; padding: 12px; color: #888; font-size: 12px;">
+                    <i class="far fa-calendar-check" style="font-size: 18px; color: #2E7D32; margin-bottom: 4px; display: block;"></i>
+                    Tidak ada agenda kegiatan untuk hari ini.
+                </div>
+            `;
+            return;
         }
 
-        var limitedTasks = todayTasks.slice(0, 10);
-
         var html = '';
-        limitedTasks.forEach(function(item) {
+        todayTasks.slice(0, 10).forEach(function(item) {
             var isDone = item.status === 'Selesai';
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'};">
+                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'}; text-decoration: ${isDone ? 'line-through' : 'none'};">
                             ${item.title || item.judul || 'Agenda Kegiatan'}
                         </span>
                     </div>
@@ -647,50 +611,86 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
+    // PROGRESS MUSIM & ESTIMASI OMZET DINAMIS
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
 
-        var estimasiKg = (selectedGh === 'ALL') ? 1820 : 910;
+        var dataTanaman = getData('cozycs_tanaman');
+        var dataPolinasi = getData('cozycs_polinasi');
+
+        var totalBatang = 0;
+        var maxHst = 0;
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
+        
+        filteredTanaman.forEach(function(t) {
+            totalBatang += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
+            var hstVal = parseFloat(t.hst) || 0;
+            if (hstVal > maxHst) maxHst = hstVal;
+        });
+
+        var totalPolinasi = 0;
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
+        filteredPolinasi.forEach(function(p) {
+            totalPolinasi += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0);
+        });
+
+        // Kalkulasi persentase HST (Target Panen = 80 HST)
+        var percentHst = Math.min(Math.round((maxHst / 80) * 100), 100);
+        var estimasiKg = totalPolinasi > 0 ? (totalPolinasi * 1.5) : (totalBatang * 1.5);
         var hargaPerKg = 20000;
         var estimasiOmzet = estimasiKg * hargaPerKg;
 
         el.innerHTML = `
             <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                <span><strong>Musim 4 (${selectedGh})</strong>: Ripening (${selectedGh === 'GH-02' ? '45%' : '82%'})</span>
-                <span style="font-weight: bold; color: #2E7D32;">Est. Omzet: Rp${estimasiOmzet.toLocaleString('id-ID')}</span>
+                <span><strong>Progress Musim (${selectedGh})</strong>: ${percentHst}% (${maxHst} HST)</span>
+                <span style="font-weight: bold; color: #2E7D32;">Est. Omzet: Rp ${estimasiOmzet.toLocaleString('id-ID')}</span>
             </div>
             <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
-                <div style="width: ${selectedGh === 'GH-02' ? '45%' : '82%'}; background: #2E7D32; height: 100%;"></div>
+                <div style="width: ${percentHst}%; background: #2E7D32; height: 100%; transition: width 0.3s ease;"></div>
             </div>
-            <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
+            <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp ${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
         `;
     }
 
+    // AUDIT LOG ACTIVITAS TERAKHIR DINAMIS
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
 
-        var logs = [
-            { time: '09.30', gh: 'GH-01', text: 'Tambah Nutrisi GH-01 (PPM 1180)' },
-            { time: '09.15', gh: 'GH-02', text: 'Aplikasi Spray Insektisida GH-02' },
-            { time: '08.40', gh: 'ALL', text: 'Input Stok Masuk Gudang (AB Mix 10 Kg)' },
-            { time: '08.10', gh: 'GH-01', text: 'Pencatatan Hasil Panen GH-01 (120 Kg)' }
-        ];
-
+        var logs = getData('cozycs_logs');
         var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL'; });
 
+        if (filteredLogs.length === 0) {
+            el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">Belum ada riwayat aktivitas tercatat.</div>`;
+            return;
+        }
+
         var html = '';
-        filteredLogs.forEach(function(l) {
+        filteredLogs.slice(-5).reverse().forEach(function(l) {
             html += `
                 <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
-                    <span style="font-weight: bold; color: #0277BD; width: 40px;">${l.time}</span>
-                    <span style="color: #333;">${l.text}</span>
+                    <span style="font-weight: bold; color: #0277BD; width: 45px;">${l.jam || l.time || '-'}</span>
+                    <span style="color: #333;">${l.text || l.kegiatan || '-'}</span>
                 </div>
             `;
         });
 
         el.innerHTML = html;
+    }
+
+    function toggleIotSection() {
+        isIotCollapsed = !isIotCollapsed;
+        var contentEl = document.getElementById('wrapperIotContent');
+        var iconEl = document.getElementById('iconToggleIot');
+
+        if (contentEl) contentEl.style.display = isIotCollapsed ? 'none' : 'block';
+        if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    }
+
+    function toggleAirflow() {
+        isAirflowOn = !isAirflowOn;
+        loadIotEnvData();
     }
 
     function toggleTask(id) {
