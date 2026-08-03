@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (FULL DYNAMIC & ZERO MOCK)
+// COZYCS FARM - EXECUTIVE DASHBOARD (FULL CONNECTED TO ALL MODULES)
 // ==========================================
 
 var dashboard = (function() {
@@ -78,16 +78,16 @@ var dashboard = (function() {
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 8. QUICK ACTION BUTTONS -->
+                <!-- 8. QUICK ACTION BUTTONS (LANGSUNG MEMANGGIL NAVIGATETO) -->
                 <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-                        <button onclick="window.location.hash='#nutrisi'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #B3E5FC; background: #E1F5FE; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Nutrisi</button>
-                        <button onclick="window.location.hash='#spray'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #E1BEE7; background: #F3E5F5; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Spray</button>
-                        <button onclick="window.location.hash='#gudang'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFE0B2; background: #FFF3E0; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Gudang</button>
-                        <button onclick="window.location.hash='#panen'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #C8E6C9; background: #E8F5E9; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Panen</button>
-                        <button onclick="window.location.hash='#jadwal'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #D1C4E9; background: #EDE7F6; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Jadwal</button>
-                        <button onclick="window.location.hash='#hama'" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFCDD2; background: #FFEBEE; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Hama</button>
+                        <button onclick="navigateTo('nutrisi')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #B3E5FC; background: #E1F5FE; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Nutrisi</button>
+                        <button onclick="navigateTo('spray')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #E1BEE7; background: #F3E5F5; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Spray</button>
+                        <button onclick="navigateTo('gudang')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFE0B2; background: #FFF3E0; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Gudang</button>
+                        <button onclick="navigateTo('panen')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #C8E6C9; background: #E8F5E9; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Panen</button>
+                        <button onclick="navigateTo('jadwal')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #D1C4E9; background: #EDE7F6; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Jadwal</button>
+                        <button onclick="navigateTo('hama')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFCDD2; background: #FFEBEE; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Hama</button>
                     </div>
                 </div>
             </div>
@@ -108,6 +108,16 @@ var dashboard = (function() {
             }
         } catch(e) {}
         return [];
+    }
+
+    function saveData(key, data) {
+        try {
+            if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                Storage.saveAll(key, data);
+            } else {
+                localStorage.setItem(key, JSON.stringify(data));
+            }
+        } catch(e) {}
     }
 
     function startLiveClock() {
@@ -254,7 +264,6 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // BANNER DATA GREENHOUSE DINAMIS
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -301,10 +310,10 @@ var dashboard = (function() {
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <button onclick="navigateTo('tanaman')" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-seedling" style="font-size: 15px;"></i>
                         </button>
-                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <button onclick="navigateTo('greenhouse')" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
                         </button>
                     </div>
@@ -334,10 +343,10 @@ var dashboard = (function() {
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="window.location.hash='#tanaman'" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <button onclick="navigateTo('tanaman')" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-seedling" style="font-size: 15px;"></i>
                         </button>
-                        <button onclick="window.location.hash='#greenhouse'" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <button onclick="navigateTo('greenhouse')" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
                         </button>
                     </div>
@@ -346,7 +355,6 @@ var dashboard = (function() {
         }
     }
 
-    // SENSOR PARAMETER AIR TANDON DINAMIS (DARI MODUL NUTRISI)
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         if (!el) return;
@@ -418,7 +426,6 @@ var dashboard = (function() {
         `;
     }
 
-    // PARAMETER LINGKUNGAN DINAMIS
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -493,7 +500,7 @@ var dashboard = (function() {
         `;
     }
 
-    // EXECUTIVE SUMMARY (PERHITUNGAN REAL DARI MODUL LAIN)
+    // EXECUTIVE SUMMARY (MENGAKOMODASI SEMUA MODEL KEY STORAGE)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -503,36 +510,36 @@ var dashboard = (function() {
         var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
-        // 1. Total Kapasitas Awal Tanaman
+        // 1. Tanaman Aktif (Kapasitas Awal dari GH)
         var totalTanaman = 0;
-        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh; });
+        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh || g.id === selectedGh; });
         filteredGhList.forEach(function(g) {
-            totalTanaman += (parseFloat(g.populasi) || parseFloat(g.kapasitas) || 0);
+            totalTanaman += (parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.jumlah) || 0);
         });
 
-        // 2. Total Tanaman Hidup
+        // 2. Tanaman Hidup
         var tanamanHidup = 0;
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh || t.ghId === selectedGh; });
         filteredTanaman.forEach(function(t) {
-            tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
+            tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || parseFloat(t.jumlahHidup) || 0);
         });
 
-        // 3. Total Buah Fix
+        // 3. Buah Fix
         var buahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh; });
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh || b.ghId === selectedGh; });
         filteredBuah.forEach(function(b) {
-            buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0);
+            buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || parseFloat(b.totalBuah) || 0);
         });
 
         // 4. Estimasi Tanggal & Bobot Panen
         var tglPanenStr = '-';
         var totalEstimasiKg = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh || p.ghId === selectedGh; });
         
         filteredPolinasi.forEach(function(p) {
-            var jumlahBunga = parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0;
-            totalEstimasiKg += (jumlahBunga * 1.5); // Asumsi rata-rata 1.5kg/buah
-            if (p.tglPanen) tglPanenStr = p.tglPanen;
+            var jumlahBunga = (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
+            totalEstimasiKg += (jumlahBunga * 1.5);
+            if (p.tglPanen || p.tanggalPanen) tglPanenStr = p.tglPanen || p.tanggalPanen;
         });
 
         el.innerHTML = `
@@ -562,21 +569,25 @@ var dashboard = (function() {
         `;
     }
 
-    // AGENDA HARI INI DINAMIS (DARI MODUL JADWAL)
+    // AGENDA HARI INI (MENCOCOKKAN TANGGAL & STATUS)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
         if (!el) return;
 
-        var now = new Date();
-        var todayStr = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2);
+        var todayStr = (typeof Helper !== 'undefined' && Helper.getTodayDate) ? Helper.getTodayDate() : new Date().toISOString().split('T')[0];
         if (dateEl) dateEl.innerText = (typeof Helper !== 'undefined' && Helper.formatDate) ? Helper.formatDate(todayStr) : todayStr;
 
         var schedules = getData('cozycs_schedules');
-        
+        if (schedules.length === 0) {
+            schedules = getData('cozycs_jadwal');
+        }
+
         var todayTasks = schedules.filter(function(s) {
-            var matchDate = (s.date === todayStr || s.tanggal === todayStr);
-            var matchGh = (selectedGh === 'ALL') || (s.gh === selectedGh) || (s.gh === 'Seluruh Farm');
+            var sDate = s.date || s.tanggal || '';
+            var matchDate = (sDate === todayStr);
+            var sGh = s.gh || s.greenhouse || 'ALL';
+            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'Seluruh Farm') || (sGh === 'ALL');
             return matchDate && matchGh;
         });
 
@@ -591,14 +602,15 @@ var dashboard = (function() {
         }
 
         var html = '';
-        todayTasks.slice(0, 10).forEach(function(item) {
-            var isDone = item.status === 'Selesai';
+        todayTasks.slice(0, 10).forEach(function(item, idx) {
+            var isDone = (item.status === 'Selesai' || item.status === 'DONE' || item.completed === true);
+            var taskId = item.id || idx;
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
+                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer;">
                         <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'}; text-decoration: ${isDone ? 'line-through' : 'none'};">
-                            ${item.title || item.judul || 'Agenda Kegiatan'}
+                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda Kegiatan'}
                         </span>
                     </div>
                     <span style="font-size: 10px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
@@ -621,7 +633,7 @@ var dashboard = (function() {
 
         var totalBatang = 0;
         var maxHst = 0;
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh; });
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh || t.ghId === selectedGh; });
         
         filteredTanaman.forEach(function(t) {
             totalBatang += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
@@ -630,12 +642,11 @@ var dashboard = (function() {
         });
 
         var totalPolinasi = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh; });
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh || p.ghId === selectedGh; });
         filteredPolinasi.forEach(function(p) {
-            totalPolinasi += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0);
+            totalPolinasi += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
         });
 
-        // Kalkulasi persentase HST (Target Panen = 80 HST)
         var percentHst = Math.min(Math.round((maxHst / 80) * 100), 100);
         var estimasiKg = totalPolinasi > 0 ? (totalPolinasi * 1.5) : (totalBatang * 1.5);
         var hargaPerKg = 20000;
@@ -653,13 +664,17 @@ var dashboard = (function() {
         `;
     }
 
-    // AUDIT LOG ACTIVITAS TERAKHIR DINAMIS
+    // ACTIVITAS TERAKHIR (LOG SYSTEM)
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
 
         var logs = getData('cozycs_logs');
-        var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL'; });
+        if (logs.length === 0) {
+            logs = getData('cozycs_activities');
+        }
+
+        var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
 
         if (filteredLogs.length === 0) {
             el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">Belum ada riwayat aktivitas tercatat.</div>`;
@@ -668,10 +683,12 @@ var dashboard = (function() {
 
         var html = '';
         filteredLogs.slice(-5).reverse().forEach(function(l) {
+            var jamStr = l.jam || l.time || l.waktu || '-';
+            var textStr = l.text || l.kegiatan || l.keterangan || l.judul || '-';
             html += `
                 <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
-                    <span style="font-weight: bold; color: #0277BD; width: 45px;">${l.jam || l.time || '-'}</span>
-                    <span style="color: #333;">${l.text || l.kegiatan || '-'}</span>
+                    <span style="font-weight: bold; color: #0277BD; width: 45px; flex-shrink: 0;">${jamStr}</span>
+                    <span style="color: #333;">${textStr}</span>
                 </div>
             `;
         });
@@ -695,12 +712,22 @@ var dashboard = (function() {
 
     function toggleTask(id) {
         var schedules = getData('cozycs_schedules');
-        var item = schedules.find(function(s) { return s.id === id; });
+        var keyName = 'cozycs_schedules';
+        if (schedules.length === 0) {
+            schedules = getData('cozycs_jadwal');
+            keyName = 'cozycs_jadwal';
+        }
+
+        var item = schedules.find(function(s, idx) { return (s.id === id || idx == id); });
         if (item) {
-            item.status = (item.status === 'Selesai') ? 'Belum Dikerjakan' : 'Selesai';
-            if (typeof Storage !== 'undefined' && Storage.saveAll) {
-                Storage.saveAll('cozycs_schedules', schedules);
+            if (item.status === 'Selesai' || item.completed === true) {
+                item.status = 'Belum Dikerjakan';
+                item.completed = false;
+            } else {
+                item.status = 'Selesai';
+                item.completed = true;
             }
+            saveData(keyName, schedules);
         }
         loadTodayAgenda();
     }
