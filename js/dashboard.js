@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI ALL GH BANNER & AIRFLOW STATUS)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REVISI ALL GH BANNER, AIRFLOW STATUS & WELCOME CARD)
 // ==========================================
 
 var dashboard = (function() {
@@ -7,11 +7,15 @@ var dashboard = (function() {
     var selectedGh = 'ALL';
     var isIotCollapsed = false;
     var isAirflowOn = true; // State toggle switch Airflow Fan
+    var clockInterval = null; // Timer interval jam real-time
 
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
+                <!-- 0. KARTU UCAPAN WELCOME, WAKTU & CUACA -->
+                <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
+
                 <!-- 1. SWITCHER / FILTER GREENHOUSE -->
                 <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
@@ -86,9 +90,29 @@ var dashboard = (function() {
     function init() {
         renderGhSwitcher();
         refreshAllDashboardData();
+        startLiveClock();
+    }
+
+    function startLiveClock() {
+        // Hentikan timer sebelumnya jika ada
+        if (clockInterval) clearInterval(clockInterval);
+
+        // Update interval waktu real-time tiap 10 detik
+        clockInterval = setInterval(function() {
+            var dateTimeEl = document.getElementById('liveDateTime');
+            var greetingEl = document.getElementById('liveGreetingText');
+
+            if (dateTimeEl && typeof Helper !== 'undefined' && Helper.getFullDateTime) {
+                dateTimeEl.textContent = Helper.getFullDateTime();
+            }
+            if (greetingEl && typeof Helper !== 'undefined' && Helper.getGreeting) {
+                greetingEl.textContent = Helper.getGreeting().text;
+            }
+        }, 10000);
     }
 
     function refreshAllDashboardData() {
+        loadWelcomeBanner();
         loadGhInfoBanner();
         loadIotWaterData();
         loadIotEnvData();
@@ -96,6 +120,67 @@ var dashboard = (function() {
         loadTodayAgenda();
         loadProgressMusim();
         loadRecentActivities();
+    }
+
+    // KARTU UCAPAN WELCOME, CUACA & WAKTU REALTIME
+    function loadWelcomeBanner() {
+        var el = document.getElementById('dashWelcomeBanner');
+        if (!el) return;
+
+        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Sore', icon: '⛅' };
+        var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : 'Senin, 03 Agu 2026 | 15:29 WIB';
+
+        el.innerHTML = `
+            <div style="background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid #e8e8e8; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                
+                <!-- Baris Atas: Profil/Ucapan & Cuaca -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    
+                    <!-- Kiri: Avatar & Ucapan -->
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 46px; height: 46px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid #C8E6C9;">
+                            👨‍🌾
+                        </div>
+                        <div>
+                            <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #1B5E20; line-height: 1.2;">
+                                ${greeting.text}
+                            </div>
+                            <div style="font-size: 11px; color: #666; margin-top: 3px;">
+                                Semoga panen melimpah hari ini!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kanan: Indikator Cuaca -->
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <div style="font-size: 22px; line-height: 1;">⛅</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #222; margin-top: 2px;">
+                            32°C
+                        </div>
+                        <div style="font-size: 10px; color: #888; font-weight: 600;">
+                            56%
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Garis Pembatas Halus -->
+                <div style="border-top: 1px dashed #E0E0E0; margin-bottom: 10px;"></div>
+
+                <!-- Baris Bawah: Tanggal, Waktu & Lokasi -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #555;">
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        <i class="far fa-calendar-alt" style="color: #2E7D32; font-size: 12px;"></i>
+                        <span id="liveDateTime">${dateTimeStr}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px; color: #D32F2F; font-weight: 700;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Pesawaran</span>
+                    </div>
+                </div>
+
+            </div>
+        `;
     }
 
     function toggleIotSection() {
@@ -157,7 +242,6 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // REVISI POIN 1: TAMPILAN KHUSUS KHUSUS "SEMUA GH" & SPESIFIK GH
     function loadGhInfoBanner() {
         var el = document.getElementById('dashGhInfoBanner');
         if (!el) return;
@@ -175,7 +259,6 @@ var dashboard = (function() {
         var melonImgUrl = 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
 
         if (selectedGh === 'ALL') {
-            // DRAFTING DAFTAR GH UNTUK FILTER SEMUA GH
             var listGhHtml = '';
             dataGh.forEach(function(g) {
                 var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode; });
@@ -213,7 +296,6 @@ var dashboard = (function() {
                 </div>
             `;
         } else {
-            // TAMPILAN JIKA PILIH SPESIFIK GH (GH-01 / GH-02 dst)
             var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
             var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh; });
 
@@ -331,7 +413,6 @@ var dashboard = (function() {
         `;
     }
 
-    // REVISI POIN 2: AIRFLOW STATUS MENGGUNAKAN TEKS "Aktif" ATAU "Tidak Aktif"
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -390,14 +471,12 @@ var dashboard = (function() {
                     </div>
                     <div>
                         <div style="font-size: 11px; font-weight: 600; color: #777;">Airflow</div>
-                        <!-- TEKS BERUBAH DINAMIS: Aktif / Tidak Aktif -->
                         <div style="font-size: 15px; font-weight: 800; color: ${isAirflowOn ? '#2E7D32' : '#C62828'}; transition: color 0.3s ease;">
                             ${isAirflowOn ? 'Aktif' : 'Tidak Aktif'}
                         </div>
                     </div>
                 </div>
                 
-                <!-- TOGGLE PILL KLIKABLE -->
                 <div style="display: flex; align-items: center;">
                     <div onclick="dashboard.toggleAirflow()" title="Klik untuk ubah status Airflow" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
                         <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
