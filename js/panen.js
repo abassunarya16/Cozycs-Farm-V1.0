@@ -1,8 +1,111 @@
 // ==========================================
-// COZYCS FARM - DATA PANEN MODULE (CRUD & ERP CONNECTED)
+// COZYCS FARM - DATA PANEN MODULE (CRUD & ERP CONNECTED - BILINGUAL & DARK MODE)
 // ==========================================
 
 var panen = (function() {
+
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
+    var i18nDict = {
+        'id': {
+            'module_title': 'Pencatatan & Hasil Panen Melon',
+            'form_title_add': 'Catat Hasil Panen Baru',
+            'form_title_edit': 'Edit Data Hasil Panen',
+            'lbl_gh': 'ID GH',
+            'select_gh': '-- Pilih Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Tanggal Panen',
+            'lbl_variety': 'Varietas Melon',
+            'ph_variety': 'Contoh: Intanon',
+            'lbl_petugas': 'Penanggung Jawab',
+            'ph_petugas': 'Contoh: Rizky',
+            'default_petugas': 'Team Panen',
+            'lbl_pcs': 'Jumlah Buah (Pcs/Butir)',
+            'ph_pcs': 'Contoh: 150',
+            'lbl_total_weight': 'Total Berat Panen (Kg)',
+            'ph_total_weight': 'Contoh: 245.5',
+            'lbl_brix': 'Kadar Manis (°Brix)',
+            'ph_brix': 'Contoh: 14.5',
+            'lbl_grade': 'Kategori Grade Dominan',
+            'opt_grade_super': 'Grade A Super',
+            'opt_grade_a': 'Grade A',
+            'opt_grade_b': 'Grade B',
+            'opt_grade_afkir': 'Off-Grade / Afkir',
+            'lbl_grade_a_kg': 'Grade A (Kg)',
+            'lbl_grade_b_kg': 'Grade B (Kg)',
+            'lbl_afkir_kg': 'Afkir (Kg)',
+            'lbl_desc': 'Catatan Kualitas Panen',
+            'ph_desc': 'Catatan fisik net, bentuk buah, cracking, dll...',
+            'btn_save': 'Simpan Data Panen',
+            'btn_cancel': 'Batal',
+            'recap_title': 'Riwayat & Hasil Panen Cozycs Farm',
+            'no_data': 'Belum ada data panen tercatat.',
+            'card_lbl_total_harvest': 'Total Hasil Panen',
+            'card_lbl_quality_brix': 'Kualitas & Manis',
+            'card_lbl_grading_breakdown': 'Rincian Grading',
+            'card_lbl_petugas': 'Penanggung Jawab',
+            'unit_kg': 'Kg',
+            'unit_pcs': 'Buah / Pcs',
+            'lbl_avg_weight': 'Avg:',
+            'unit_kg_per_fruit': 'Kg/buah',
+            'lbl_afkir': 'Afkir:',
+            'lbl_notes': 'Catatan',
+            'toast_saved': 'Data panen berhasil disimpan!',
+            'confirm_delete': 'Apakah kamu yakin ingin menghapus data panen ini?',
+            'toast_deleted': 'Data panen berhasil dihapus'
+        },
+        'en': {
+            'module_title': 'Melon Harvest Recording & Results',
+            'form_title_add': 'Record New Harvest',
+            'form_title_edit': 'Edit Harvest Data',
+            'lbl_gh': 'GH ID',
+            'select_gh': '-- Select Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Harvest Date',
+            'lbl_variety': 'Melon Variety',
+            'ph_variety': 'e.g., Intanon',
+            'lbl_petugas': 'Person in Charge',
+            'ph_petugas': 'e.g., Rizky',
+            'default_petugas': 'Harvest Team',
+            'lbl_pcs': 'Fruit Count (Pcs/Units)',
+            'ph_pcs': 'e.g., 150',
+            'lbl_total_weight': 'Total Harvest Weight (Kg)',
+            'ph_total_weight': 'e.g., 245.5',
+            'lbl_brix': 'Sweetness Level (°Brix)',
+            'ph_brix': 'e.g., 14.5',
+            'lbl_grade': 'Dominant Grade Category',
+            'opt_grade_super': 'Grade A Super',
+            'opt_grade_a': 'Grade A',
+            'opt_grade_b': 'Grade B',
+            'opt_grade_afkir': 'Off-Grade / Reject',
+            'lbl_grade_a_kg': 'Grade A (Kg)',
+            'lbl_grade_b_kg': 'Grade B (Kg)',
+            'lbl_afkir_kg': 'Reject (Kg)',
+            'lbl_desc': 'Harvest Quality Notes',
+            'ph_desc': 'Notes on net condition, fruit shape, cracking, etc...',
+            'btn_save': 'Save Harvest Data',
+            'btn_cancel': 'Cancel',
+            'recap_title': 'Cozycs Farm Harvest History & Yield Results',
+            'no_data': 'No harvest data recorded yet.',
+            'card_lbl_total_harvest': 'Total Harvest Yield',
+            'card_lbl_quality_brix': 'Quality & Sweetness',
+            'card_lbl_grading_breakdown': 'Grading Breakdown',
+            'card_lbl_petugas': 'Person in Charge',
+            'unit_kg': 'Kg',
+            'unit_pcs': 'Fruit / Pcs',
+            'lbl_avg_weight': 'Avg:',
+            'unit_kg_per_fruit': 'Kg/fruit',
+            'lbl_afkir': 'Reject:',
+            'lbl_notes': 'Notes',
+            'toast_saved': 'Harvest data saved successfully!',
+            'confirm_delete': 'Are you sure you want to delete this harvest data?',
+            'toast_deleted': 'Harvest data deleted successfully'
+        }
+    };
+
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
 
     // Helper internal kunci storage aman
     function getKey() {
@@ -38,7 +141,7 @@ var panen = (function() {
             dataGh = [];
         }
 
-        var optionsHtml = '<option value="">-- Pilih Greenhouse --</option>';
+        var optionsHtml = `<option value="">${t('select_gh')}</option>`;
         if (Array.isArray(dataGh) && dataGh.length > 0) {
             dataGh.forEach(function(gh) {
                 if (gh && gh.kode) {
@@ -46,7 +149,7 @@ var panen = (function() {
                 }
             });
         } else {
-            optionsHtml += '<option value="GH-01">GH-01 (Default)</option>';
+            optionsHtml += `<option value="GH-01">${t('gh_default')}</option>`;
         }
 
         selectEl.innerHTML = optionsHtml;
@@ -55,66 +158,65 @@ var panen = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-shopping-basket" style="color: #2E7D32;"></i> Pencatatan & Hasil Panen Melon</div>
+                <div class="section-title"><i class="fas fa-shopping-basket" style="color: #2E7D32;"></i> ${t('module_title')}</div>
                 
                 <!-- Form Input / Edit Data Panen -->
-                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitlePanen">Catat Hasil Panen Baru</div>
+                <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitlePanen">${t('form_title_add')}</div>
                     <form id="formPanen">
                         <input type="hidden" id="panenId">
                         
                         <!-- ID GH & Tanggal Panen -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
-                                <select id="panenGh" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="">-- Pilih Greenhouse --</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
+                                <select id="panenGh" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="">${t('select_gh')}</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Panen</label>
-                                <input type="date" id="panenTanggal" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
+                                <input type="date" id="panenTanggal" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Varietas Melon & Penanggung Jawab -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-    <div>
-        <label style="font-size: 12px; font-weight: 600; color: #555;">Varietas Melon</label>
-        <input type="text" id="panenVarietas" required placeholder="Contoh: Intanon" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-    </div>
-    <div>
-        <label style="font-size: 12px; font-weight: 600; color: #555;">Penanggung Jawab</label>
-        <input type="text" id="panenPetugas" placeholder="Contoh: Rizky" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
-    </div>
-</div>
-
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_variety')}</label>
+                                <input type="text" id="panenVarietas" required placeholder="${t('ph_variety')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_petugas')}</label>
+                                <input type="text" id="panenPetugas" placeholder="${t('ph_petugas')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                        </div>
 
                         <!-- Jumlah Buah & Total Berat -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Jumlah Buah (Pcs/Butir)</label>
-                                <input type="number" id="panenJumlahPcs" required placeholder="Contoh: 150" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_pcs')}</label>
+                                <input type="number" id="panenJumlahPcs" required placeholder="${t('ph_pcs')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Total Berat Panen (Kg)</label>
-                                <input type="number" step="any" id="panenBeratTotal" required placeholder="Contoh: 245.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_total_weight')}</label>
+                                <input type="number" step="any" id="panenBeratTotal" required placeholder="${t('ph_total_weight')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Tingkat Kemanisan (°Brix) & Grade Utama -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Kadar Manis (°Brix)</label>
-                                <input type="number" step="any" id="panenBrix" placeholder="Contoh: 14.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_brix')}</label>
+                                <input type="number" step="any" id="panenBrix" placeholder="${t('ph_brix')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Kategori Grade Dominan</label>
-                                <select id="panenGrade" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Grade A Super">Grade A Super</option>
-                                    <option value="Grade A">Grade A</option>
-                                    <option value="Grade B">Grade B</option>
-                                    <option value="Off-Grade / Afkir">Off-Grade / Afkir</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_grade')}</label>
+                                <select id="panenGrade" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="Grade A Super">${t('opt_grade_super')}</option>
+                                    <option value="Grade A">${t('opt_grade_a')}</option>
+                                    <option value="Grade B">${t('opt_grade_b')}</option>
+                                    <option value="Off-Grade / Afkir">${t('opt_grade_afkir')}</option>
                                 </select>
                             </div>
                         </div>
@@ -122,34 +224,34 @@ var panen = (function() {
                         <!-- Detail Hasil Grading (Kg) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">Grade A (Kg)</label>
-                                <input type="number" step="any" id="panenGradeAKg" placeholder="200" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_grade_a_kg')}</label>
+                                <input type="number" step="any" id="panenGradeAKg" placeholder="200" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">Grade B (Kg)</label>
-                                <input type="number" step="any" id="panenGradeBKg" placeholder="35" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_grade_b_kg')}</label>
+                                <input type="number" step="any" id="panenGradeBKg" placeholder="35" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">Afkir (Kg)</label>
-                                <input type="number" step="any" id="panenAfkirKg" placeholder="10.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_afkir_kg')}</label>
+                                <input type="number" step="any" id="panenAfkirKg" placeholder="10.5" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Kualitas Panen</label>
-                            <textarea id="panenDesc" rows="2" placeholder="Catatan fisik net, bentuk buah, cracking, dll..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
+                            <textarea id="panenDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> Simpan Data Panen</button>
-                            <button type="button" id="btnCancelPanenEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
+                            <button type="button" id="btnCancelPanenEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #333;">${t('btn_cancel')}</button>
                         </div>
                     </form>
                 </div>
 
                 <!-- Rekap Data Panen Grid 2x2 -->
-                <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> Riwayat & Hasil Panen Cozycs Farm</div>
+                <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 <div id="containerPanenCards"></div>
             </div>
         `;
@@ -184,7 +286,7 @@ var panen = (function() {
                     gh: gh || '-',
                     tanggal: tanggal,
                     varietas: varietas || '-',
-                    petugas: petugas || 'Team Panen',
+                    petugas: petugas || t('default_petugas'),
                     pcs: pcs,
                     beratTotal: beratTotal,
                     brix: brix || '-',
@@ -242,7 +344,7 @@ var panen = (function() {
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
-                        Helper.showToast('Data panen berhasil disimpan!', 'success');
+                        Helper.showToast(t('toast_saved'), 'success');
                     }
                 } catch(err) {
                     console.error("Storage Error:", err);
@@ -251,7 +353,7 @@ var panen = (function() {
                 form.reset();
                 setVal('panenId', '');
                 var titleEl = document.getElementById('formTitlePanen');
-                if (titleEl) titleEl.innerText = 'Catat Hasil Panen Baru';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
@@ -263,7 +365,7 @@ var panen = (function() {
                 if (form) form.reset();
                 setVal('panenId', '');
                 var titleEl = document.getElementById('formTitlePanen');
-                if (titleEl) titleEl.innerText = 'Catat Hasil Panen Baru';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
             });
         }
@@ -284,7 +386,7 @@ var panen = (function() {
         }
 
         if (!Array.isArray(data) || data.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada data panen tercatat.</div>';
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             return;
         }
 
@@ -310,11 +412,11 @@ var panen = (function() {
             var avgWeight = (parseFloat(item.beratTotal) > 0 && parseFloat(item.pcs) > 0) ? (item.beratTotal / item.pcs).toFixed(2) : '-';
 
             html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <!-- Header Card: Tanggal, ID GH & Varietas -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
-                            <strong style="font-size: 14px; color: #222;">${item.tanggal || '-'}</strong>
+                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
                             <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
                             <span style="background: #E8F5E9; color: #2E7D32; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${valVarietas}</span>
                         </div>
@@ -325,47 +427,47 @@ var panen = (function() {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         
                         <!-- 1. Total Hasil Panen -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Total Hasil Panen</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-weight" style="color: #2E7D32; width: 14px;"></i> <strong>${valBerat} Kg</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-cubes" style="color: #0277BD; width: 14px;"></i> <strong>${valPcs} Buah / Pcs</strong></div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_total_harvest')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
+                                <div><i class="fas fa-weight" style="color: #2E7D32; width: 14px;"></i> <strong>${valBerat} ${t('unit_kg')}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-cubes" style="color: #0277BD; width: 14px;"></i> <strong>${valPcs} ${t('unit_pcs')}</strong></div>
                             </div>
                         </div>
 
                         <!-- 2. Kualitas Buah -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Kualitas & Manis</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_quality_brix')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-fire" style="color: #E65100; width: 14px;"></i> <strong>${valBrix} °Brix</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-balance-scale" style="color: #6A1B9A; width: 14px;"></i> <strong>Avg: ${avgWeight} Kg/buah</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-balance-scale" style="color: #6A1B9A; width: 14px;"></i> <strong>${t('lbl_avg_weight')} ${avgWeight} ${t('unit_kg_per_fruit')}</strong></div>
                             </div>
                         </div>
 
                         <!-- 3. Rincian Grading (Kg) -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Rincian Grading</div>
-                            <div style="font-size: 11px; font-weight: bold; color: #333; line-height: 1.4;">
-                                <div>A: <strong>${item.gradeAKg || 0} Kg</strong> | B: <strong>${item.gradeBKg || 0} Kg</strong></div>
-                                <div style="margin-top: 3px; color: #C62828;">Afkir: <strong>${item.afkirKg || 0} Kg</strong></div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_grading_breakdown')}</div>
+                            <div style="font-size: 11px; font-weight: bold; color: var(--text-color, #333); line-height: 1.4;">
+                                <div>A: <strong>${item.gradeAKg || 0} ${t('unit_kg')}</strong> | B: <strong>${item.gradeBKg || 0} ${t('unit_kg')}</strong></div>
+                                <div style="margin-top: 3px; color: #C62828;">${t('lbl_afkir')} <strong>${item.afkirKg || 0} ${t('unit_kg')}</strong></div>
                             </div>
                         </div>
 
                         <!-- 4. Penanggung Jawab -->
-<div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-    <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Penanggung Jawab</div>
-    <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-        <div><i class="fas fa-user-check" style="color: #0288D1; width: 14px;"></i> <strong>${item.petugas || 'Penanggung Jawab'}</strong></div>
-    </div>
-</div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_petugas')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
+                                <div><i class="fas fa-user-check" style="color: #0288D1; width: 14px;"></i> <strong>${item.petugas || t('default_petugas')}</strong></div>
+                            </div>
+                        </div>
 
                     </div>
 
                     <!-- Catatan Tambahan -->
-                    ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${valDesc}</div>` : ''}
+                    ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${valDesc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="panen.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="panen.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
                     </div>
@@ -393,7 +495,7 @@ var panen = (function() {
         setVal('panenGh', item.gh === '-' ? '' : (item.gh || ''));
         setVal('panenTanggal', item.tanggal || '');
         setVal('panenVarietas', item.varietas === '-' ? '' : (item.varietas || ''));
-        setVal('panenPetugas', item.petugas === 'Team Panen' ? '' : (item.petugas || ''));
+        setVal('panenPetugas', item.petugas === t('default_petugas') ? '' : (item.petugas || ''));
         setVal('panenJumlahPcs', item.pcs || '');
         setVal('panenBeratTotal', item.beratTotal || '');
         setVal('panenBrix', item.brix === '-' ? '' : (item.brix || ''));
@@ -404,7 +506,7 @@ var panen = (function() {
         setVal('panenDesc', item.desc || '');
 
         var titleEl = document.getElementById('formTitlePanen');
-        if (titleEl) titleEl.innerText = 'Edit Data Hasil Panen';
+        if (titleEl) titleEl.innerText = t('form_title_edit');
         
         var btnCancel = document.getElementById('btnCancelPanenEdit');
         if (btnCancel) btnCancel.style.display = 'block';
@@ -413,7 +515,7 @@ var panen = (function() {
     }
 
     function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus data panen ini?')) {
+        if (confirm(t('confirm_delete'))) {
             try {
                 var storageKey = getKey();
                 if (typeof Storage !== 'undefined' && Storage.remove) {
@@ -421,6 +523,9 @@ var panen = (function() {
                 }
             } catch(e) {}
             loadTable();
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast(t('toast_deleted'), 'error');
+            }
         }
     }
 
@@ -432,3 +537,5 @@ var panen = (function() {
     };
 
 })();
+
+window.panen = panen;
