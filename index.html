@@ -22,44 +22,78 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- ======================================== -->
-<!-- GLOBAL DARK MODE OVERRIDES (PERFECTION FIX) -->
+<!-- GLOBAL DARK MODE OVERRIDES (FIX SIDEBAR & DASBOR) -->
 <!-- ======================================== -->
 <style>
-/* 1. LAYOUT UTAMA & CONTAINER APLIKASI */
+/* 1. DUAL THEME VARIABLES */
+body.dark-theme {
+    --card-bg: #1e1e1e !important;
+    --inner-card-bg: #282828 !important;
+    --border-color: #333333 !important;
+    --text-color: #ffffff !important;
+    background-color: #121212 !important;
+    color: #ffffff !important;
+}
+
+/* 2. BASE CONTAINER APLIKASI */
 body.dark-theme,
 body.dark-theme .app-wrapper,
 body.dark-theme .app-main,
+body.dark-theme #mainContent,
 body.dark-theme .dashboard-container,
 body.dark-theme main {
     background-color: #121212 !important;
-    color: #e0e0e0 !important;
+    color: #ffffff !important;
 }
 
-/* 2. HEADER ATAS & SIDEBAR */
+/* 3. SIDEBAR FIX (TULISAN MENU PUTIH BERSIH & JUDUL HIJAU CERAH) */
+body.dark-theme .app-sidebar,
+body.dark-theme #appSidebar {
+    background-color: #181818 !important;
+    border-right: 1px solid #2d2d2d !important;
+}
+body.dark-theme .sidebar-header {
+    background-color: #0d1b0f !important;
+    border-bottom: 1px solid #2d2d2d !important;
+    color: #ffffff !important;
+}
+body.dark-theme .sidebar-title,
+body.dark-theme .sidebar-close-btn {
+    color: #ffffff !important;
+}
+body.dark-theme .sidebar-group-title {
+    color: #81C784 !important; /* HIJAU CERAH AGAR TEGAS */
+    font-weight: 800 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+body.dark-theme .sidebar-item,
+body.dark-theme .sidebar-item span {
+    color: #ffffff !important; /* PUTIH BERSIH SANGAT JELAS */
+    font-weight: 600 !important;
+}
+body.dark-theme .sidebar-item i {
+    font-size: 16px !important;
+}
+body.dark-theme .sidebar-item:hover,
+body.dark-theme .sidebar-item.active {
+    background-color: #282828 !important;
+    color: #4CAF50 !important;
+}
+
+/* 4. HEADER ATAS & BOTTOM NAV */
 body.dark-theme .app-header,
 body.dark-theme header {
     background-color: #0d1b0f !important;
     border-bottom: 1px solid #1c3821 !important;
     color: #ffffff !important;
 }
-body.dark-theme .app-sidebar,
-body.dark-theme #appSidebar {
-    background-color: #181818 !important;
-    border-right: 1px solid #2d2d2d !important;
-    color: #e0e0e0 !important;
-}
-body.dark-theme .sidebar-header {
-    background-color: #0d1b0f !important;
-    border-bottom: 1px solid #2d2d2d !important;
-}
-
-/* 3. NAVIGATION BAR BAWAH */
 body.dark-theme .bottom-nav {
     background-color: #181818 !important;
     border-top: 1px solid #2b2b2b !important;
 }
-body.dark-theme .bottom-nav .nav-item {
-    color: #888888 !important;
+body.dark-theme .bottom-nav .nav-item,
+body.dark-theme .bottom-nav .nav-item span {
+    color: #a0a0a0 !important;
 }
 body.dark-theme .bottom-nav .nav-item.active,
 body.dark-theme .bottom-nav .nav-item.active i,
@@ -67,7 +101,10 @@ body.dark-theme .bottom-nav .nav-item.active span {
     color: #4CAF50 !important;
 }
 
-/* 4. OVERRIDE SEMUA KARTU / CONTAINER DASAR MENJADI GELAP */
+/* 5. DASBOR & SEMUA KARTU (KUNCI TOTAL BACKGROUND GELAP #1E1E1E) */
+body.dark-theme .dashboard-container > div,
+body.dark-theme #dashWelcomeBanner > div,
+body.dark-theme #dashGhInfoBanner > div,
 body.dark-theme [style*="background: #fff"],
 body.dark-theme [style*="background:#fff"],
 body.dark-theme [style*="background: #ffffff"],
@@ -81,148 +118,97 @@ body.dark-theme [style*="background: #f5f5f5"],
 body.dark-theme [style*="background: #f0f0f0"],
 body.dark-theme [style*="background:#f0f0f0"],
 body.dark-theme [style*="background: #f9f9f9"],
-body.dark-theme [style*="background:#f9f9f9"] {
+body.dark-theme [style*="background:#f9f9f9"],
+body.dark-theme [style*="background: var(--card-bg"] {
     background-color: #1e1e1e !important;
-    border-color: #2e2e2e !important;
-    color: #e0e0e0 !important;
+    border-color: #333333 !important;
+    color: #ffffff !important;
 }
 
-/* 5. OVERRIDE KARTU & GRID BERWARNA PASTEL (KEUANGAN, JADWAL, QUICK ACTION, LAPORAN) */
+/* Sub-card/grid di dalam section */
+body.dark-theme #dashIotWaterCards > div,
+body.dark-theme #dashIotEnvCards > div,
+body.dark-theme #dashExecutiveSummary > div {
+    background-color: #1e1e1e !important;
+    border-color: #333333 !important;
+    color: #ffffff !important;
+}
 
-/* Kategori Hijau (Pemasukan, Total Tanaman, Selesai, +Panen) */
+/* Transparansi box di dalam kartu */
+body.dark-theme #dashIotWaterCards > div > div,
+body.dark-theme #dashIotEnvCards > div > div {
+    background-color: transparent !important;
+}
+
+/* 6. TEKS DI MODE GELAP */
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
+body.dark-theme h4, body.dark-theme h5, body.dark-theme h6,
+body.dark-theme span, body.dark-theme div, body.dark-theme p, body.dark-theme strong {
+    color: #ffffff;
+}
+
+/* Teks Sekunder / Keterangan */
+body.dark-theme [style*="color: #666"],
+body.dark-theme [style*="color:#666"],
+body.dark-theme [style*="color: #777"],
+body.dark-theme [style*="color:#777"],
+body.dark-theme [style*="color: #888"],
+body.dark-theme [style*="color:#888"],
+body.dark-theme [style*="color: #555"],
+body.dark-theme [style*="color:#555"] {
+    color: #b0b0b0 !important;
+}
+
+/* Judul Hijau & Aksesibilitas */
+body.dark-theme [style*="color: #1B5E20"],
+body.dark-theme [style*="color:#1B5E20"],
+body.dark-theme [style*="color: #2E7D32"],
+body.dark-theme [style*="color:#2E7D32"] {
+    color: #81C784 !important;
+}
+body.dark-theme [style*="color: #0277BD"],
+body.dark-theme [style*="color:#0277BD"] {
+    color: #64B5F6 !important;
+}
+
+/* 7. KARTU Aksen Warna (Keuangan, Jadwal, Quick Action) */
 body.dark-theme [style*="background: #E8F5E9"],
-body.dark-theme [style*="background:#E8F5E9"],
 body.dark-theme [style*="background: #e8f5e9"],
 body.dark-theme [style*="background: #C8E6C9"] {
     background-color: #1b3320 !important;
     border-color: #2d5434 !important;
     color: #81c784 !important;
 }
-
-/* Kategori Merah/Pink (Pengeluaran, Mendesak, +Hama) */
 body.dark-theme [style*="background: #FFEBEE"],
-body.dark-theme [style*="background:#FFEBEE"],
 body.dark-theme [style*="background: #ffebee"],
 body.dark-theme [style*="background: #FFCDD2"] {
     background-color: #381a1c !important;
     border-color: #5c2c30 !important;
     color: #e57373 !important;
 }
-
-/* Kategori Biru (Laba Bersih, Nutrisi, +Nutrisi) */
 body.dark-theme [style*="background: #E1F5FE"],
-body.dark-theme [style*="background:#E1F5FE"],
 body.dark-theme [style*="background: #e1f5fe"],
 body.dark-theme [style*="background: #B3E5FC"] {
     background-color: #122b3b !important;
     border-color: #1f4761 !important;
     color: #64b5f6 !important;
 }
-
-/* Kategori Oranye/Kuning (Pending, Gudang, Suhu, +Gudang) */
 body.dark-theme [style*="background: #FFF3E0"],
-body.dark-theme [style*="background:#FFF3E0"],
 body.dark-theme [style*="background: #fff3e0"],
-body.dark-theme [style*="background: #FFE0B2"],
-body.dark-theme [style*="background: #FFFDE7"] {
+body.dark-theme [style*="background: #FFE0B2"] {
     background-color: #382816 !important;
     border-color: #5c4224 !important;
     color: #ffb74d !important;
 }
-
-/* Kategori Ungu (Jadwal, Spray, +Spray, +Jadwal) */
 body.dark-theme [style*="background: #F3E5F5"],
-body.dark-theme [style*="background:#F3E5F5"],
-body.dark-theme [style*="background: #f3e5f5"],
 body.dark-theme [style*="background: #EDE7F6"],
-body.dark-theme [style*="background: #E1BEE7"],
-body.dark-theme [style*="background: #D1C4E9"] {
+body.dark-theme [style*="background: #E1BEE7"] {
     background-color: #281a38 !important;
     border-color: #432c5e !important;
     color: #ba68c8 !important;
 }
 
-/* Kategori Cyan/Suhu Air */
-body.dark-theme [style*="background: #E0F7FA"],
-body.dark-theme [style*="background:#E0F7FA"] {
-    background-color: #123336 !important;
-    border-color: #1e5257 !important;
-    color: #4dd0e1 !important;
-}
-
-/* 6. OVERRIDE WARNA TEKS AGAR KONTRAS DI MODE GELAP */
-
-/* Teks Hitam / Gelap -> Putih Terang */
-body.dark-theme [style*="color: #111"],
-body.dark-theme [style*="color:#111"],
-body.dark-theme [style*="color: #222"],
-body.dark-theme [style*="color:#222"],
-body.dark-theme [style*="color: #333"],
-body.dark-theme [style*="color:#333"],
-body.dark-theme [style*="color: #000"],
-body.dark-theme [style*="color:#000"],
-body.dark-theme [style*="color: #111111"],
-body.dark-theme [style*="color: #222222"],
-body.dark-theme [style*="color: #333333"] {
-    color: #ffffff !important;
-}
-
-/* Teks Subtitle / Abu-abu Gelap -> Abu-abu Terang */
-body.dark-theme [style*="color: #424242"],
-body.dark-theme [style*="color: #555"],
-body.dark-theme [style*="color:#555"],
-body.dark-theme [style*="color: #666"],
-body.dark-theme [style*="color:#666"],
-body.dark-theme [style*="color: #777"],
-body.dark-theme [style*="color:#777"],
-body.dark-theme [style*="color: #888"],
-body.dark-theme [style*="color:#888"] {
-    color: #bbbbbb !important;
-}
-
-/* Teks Hijau Pekat -> Hijau Terang Cerah */
-body.dark-theme [style*="color: #2E7D32"],
-body.dark-theme [style*="color:#2E7D32"],
-body.dark-theme [style*="color: #1B5E20"],
-body.dark-theme [style*="color:#1B5E20"] {
-    color: #81c784 !important;
-}
-
-/* Teks Biru Pekat -> Biru Terang Cerah */
-body.dark-theme [style*="color: #0277BD"],
-body.dark-theme [style*="color:#0277BD"],
-body.dark-theme [style*="color: #0288D1"],
-body.dark-theme [style*="color:#0288D1"],
-body.dark-theme [style*="color: #1565C0"],
-body.dark-theme [style*="color:#1565C0"] {
-    color: #64b5f6 !important;
-}
-
-/* Teks Merah Pekat -> Merah Muda Cerah */
-body.dark-theme [style*="color: #C62828"],
-body.dark-theme [style*="color:#C62828"],
-body.dark-theme [style*="color: #D32F2F"],
-body.dark-theme [style*="color:#D32F2F"] {
-    color: #e57373 !important;
-}
-
-/* Teks Ungu Pekat -> Ungu Lavender Cerah */
-body.dark-theme [style*="color: #6A1B9A"],
-body.dark-theme [style*="color:#6A1B9A"],
-body.dark-theme [style*="color: #512DA8"],
-body.dark-theme [style*="color:#512DA8"] {
-    color: #ba68c8 !important;
-}
-
-/* Teks Oranye Pekat -> Oranye Terang Cerah */
-body.dark-theme [style*="color: #E65100"],
-body.dark-theme [style*="color:#E65100"],
-body.dark-theme [style*="color: #EF6C00"],
-body.dark-theme [style*="color:#EF6C00"] {
-    color: #ffb74d !important;
-}
-
-/* 7. FORM INPUTS & SELECT BOX */
+/* 8. FORM INPUTS & BUTTONS */
 body.dark-theme input,
 body.dark-theme select,
 body.dark-theme textarea {
@@ -230,11 +216,11 @@ body.dark-theme textarea {
     color: #ffffff !important;
     border-color: #404040 !important;
 }
-body.dark-theme input::placeholder,
-body.dark-theme textarea::placeholder {
-    color: #777777 !important;
+body.dark-theme button[style*="background: #f0f0f0"] {
+    background-color: #333333 !important;
+    color: #ffffff !important;
 }
-    </style>
+</style>
     
     
 </head>
