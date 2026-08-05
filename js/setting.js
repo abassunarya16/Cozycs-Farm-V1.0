@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - SETTINGS MODULE (REVISED & SYNCED WITH HELPER.JS)
+// COZYCS FARM - SETTINGS MODULE (WITH AUTO-BACKUP, BACKUP INFO & RESET DATA)
 // ==========================================
 
 var setting = (function() {
@@ -20,12 +20,27 @@ var setting = (function() {
             'backup_title': 'Penyimpanan & Data',
             'backup_data': 'Cadangkan Data (Backup)',
             'restore_data': 'Pulihkan Data (Restore)',
+            'auto_backup_label': 'Pencadangan Otomatis',
+            'auto_off': 'Mati',
+            'auto_daily': 'Harian',
+            'auto_weekly': 'Mingguan',
+            'auto_monthly': 'Bulanan',
+            'last_backup': 'Cadangan terakhir',
+            'backup_size': 'Ukuran',
+            'never': 'Belum pernah',
+            'reset_title': 'Zona Bahaya & Reset',
+            'reset_data': 'Reset Semua Data',
             'account_title': 'Akun',
             'logout': 'Keluar',
             'lang_name': 'Indonesia',
             'toast_backup': 'Backup seluruh data berhasil diunduh!',
             'toast_restore': 'Data berhasil direstore! Memuat ulang...',
-            'error_restore': 'Gagal memulihkan data. Format file JSON tidak valid.'
+            'error_restore': 'Gagal memulihkan data. Format file JSON tidak valid.',
+            'toast_reset': 'Semua data berhasil direset ke awal!',
+            'confirm_reset_title': 'Peringatan Reset Data',
+            'confirm_reset_body': 'Tindakan ini akan menghapus seluruh data pencatatan kebun secara permanen. Apakah Anda yakin?',
+            'btn_cancel': 'Batal',
+            'btn_yes_reset': 'Ya, Reset Sekarang'
         },
         'en': {
             'title': 'Settings',
@@ -41,12 +56,27 @@ var setting = (function() {
             'backup_title': 'Storage & Data',
             'backup_data': 'Backup Data',
             'restore_data': 'Restore Data',
+            'auto_backup_label': 'Auto Backup',
+            'auto_off': 'Off',
+            'auto_daily': 'Daily',
+            'auto_weekly': 'Weekly',
+            'auto_monthly': 'Monthly',
+            'last_backup': 'Last backup',
+            'backup_size': 'Size',
+            'never': 'Never',
+            'reset_title': 'Danger Zone & Reset',
+            'reset_data': 'Reset All Data',
             'account_title': 'Account',
             'logout': 'Sign Out',
             'lang_name': 'English',
             'toast_backup': 'All data backup downloaded successfully!',
             'toast_restore': 'Data restored successfully! Reloading...',
-            'error_restore': 'Failed to restore data. Invalid JSON format.'
+            'error_restore': 'Failed to restore data. Invalid JSON format.',
+            'toast_reset': 'All data has been reset successfully!',
+            'confirm_reset_title': 'Reset Data Warning',
+            'confirm_reset_body': 'This action will permanently delete all farm records. Are you sure?',
+            'btn_cancel': 'Cancel',
+            'btn_yes_reset': 'Yes, Reset Now'
         }
     };
 
@@ -54,12 +84,34 @@ var setting = (function() {
         return localStorage.getItem('cozycs_lang') || 'id';
     }
 
+    // Helper Hitung Ukuran Data LocalStorage & Waktu Cadangan Terakhir
+    function getBackupMetadata() {
+        var totalBytes = 0;
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key.startsWith('cozycs_')) {
+                var val = localStorage.getItem(key) || '';
+                totalBytes += key.length + val.length;
+            }
+        }
+        // Konversi ke KB atau Bytes
+        var sizeStr = totalBytes < 1024 ? totalBytes + ' B' : (totalBytes / 1024).toFixed(1) + ' KB';
+        var lastTime = localStorage.getItem('cozycs_last_backup_time') || null;
+        
+        return {
+            size: totalBytes === 0 ? '0 KB' : sizeStr,
+            time: lastTime ? lastTime : null
+        };
+    }
+
     function render() {
         var isDarkMode = localStorage.getItem('cozycs_dark_mode') === 'true';
-        // Mengambil versi secara dinamis dari Helper.js
         var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.0.0';
         var currentLangKey = getLang();
         var t = translations[currentLangKey] || translations['id'];
+        
+        var meta = getBackupMetadata();
+        var autoBackupFreq = localStorage.getItem('cozycs_auto_backup_freq') || 'off';
 
         return `
             <div class="dashboard-container" style="padding-bottom: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
@@ -107,6 +159,12 @@ var setting = (function() {
 
                     <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
                         
+                        <!-- Informasi Detail Cadangan & Ukuran -->
+                        <div style="padding: 12px 16px; background: var(--inner-card-bg, #f9f9f9); border-bottom: 1px solid var(--border-color, #f0f0f0); font-size: 12px; color: #666; display: flex; justify-content: space-between;">
+                            <div><i class="far fa-clock"></i> ${t.last_backup}: <strong style="color: var(--text-color, #333);">${meta.time ? meta.time : t.never}</strong></div>
+                            <div><i class="fas fa-database"></i> ${t.backup_size}: <strong style="color: var(--text-color, #333);">${meta.size}</strong></div>
+                        </div>
+
                         <!-- Item: Backup Data -->
                         <div onclick="setting.backupAllData()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
@@ -117,15 +175,30 @@ var setting = (function() {
                         </div>
 
                         <!-- Item: Restore Data -->
-                        <div onclick="document.getElementById('fileRestoreInput').click()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                        <div onclick="document.getElementById('fileRestoreInput').click()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-cloud-upload-alt" style="font-size: 18px; width: 22px; text-align: center; color: #0277BD;"></i>
                                 <span style="font-size: 14px; font-weight: 600;">${t.restore_data}</span>
                             </div>
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
-                        <!-- Hidden File Input untuk Restore -->
                         <input type="file" id="fileRestoreInput" accept=".json" style="display: none;" onchange="setting.restoreAllData(event)">
+
+                        <!-- Item: Pencadangan Otomatis (Auto-Backup ala WhatsApp) -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-sync-alt" style="font-size: 18px; width: 22px; text-align: center; color: #F59E0B;"></i>
+                                <div>
+                                    <span style="font-size: 14px; font-weight: 600; display: block;">${t.auto_backup_label}</span>
+                                </div>
+                            </div>
+                            <select id="selectAutoBackup" onchange="setting.changeAutoBackupFreq(this.value)" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #fff); color: var(--text-color, #333); font-size: 12px; font-weight: 600;">
+                                <option value="off" ${autoBackupFreq === 'off' ? 'selected' : ''}>${t.auto_off}</option>
+                                <option value="daily" ${autoBackupFreq === 'daily' ? 'selected' : ''}>${t.auto_daily}</option>
+                                <option value="weekly" ${autoBackupFreq === 'weekly' ? 'selected' : ''}>${t.auto_weekly}</option>
+                                <option value="monthly" ${autoBackupFreq === 'monthly' ? 'selected' : ''}>${t.auto_monthly}</option>
+                            </select>
+                        </div>
 
                     </div>
                 </div>
@@ -138,7 +211,6 @@ var setting = (function() {
 
                     <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
                         
-                        <!-- Item: Notifikasi -->
                         <div onclick="navigateTo('notifikasi')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="far fa-bell" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -147,7 +219,6 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Tentang Cozycs Farm -->
                         <div onclick="setting.openCustomInfoModal('${t.about_farm}', 'Cozycs Farm adalah usaha perkebunan melon hidroponik premium berbasis green house yang berlokasi di Pesawaran, Lampung.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="far fa-building" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -156,7 +227,6 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Bantuan & FAQ -->
                         <div onclick="setting.openCustomInfoModal('${t.faq}', 'Aplikasi Cozycs Farm membantu mengelola nutrisi (PPM/pH), jadwal spray, populasi tanaman, seleksi buah, dan penjualan hasil panen secara otomatis.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="far fa-question-circle" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -165,7 +235,6 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Tentang Aplikasi (Sinkron Otomatis ke Helper.VERSION) -->
                         <div onclick="setting.checkAppUpdate()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-mobile-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -174,7 +243,6 @@ var setting = (function() {
                             <span style="font-size: 13px; font-weight: 600; color: #777;">v ${appVer}</span>
                         </div>
 
-                        <!-- Item: Ketentuan Layanan -->
                         <div onclick="setting.openCustomInfoModal('${t.terms}', 'Seluruh data operasional Cozycs Farm disimpan secara aman di perangkat lokal pengguna. Harap lakukan sinkronisasi secara berkala.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="far fa-file-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -183,7 +251,6 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Kebijakan Privasi -->
                         <div onclick="setting.openCustomInfoModal('${t.privacy}', 'Sistem menjamin kerahasiaan data internal farm dan tidak akan membagikan data operasional ke pihak ketiga tanpa izin pengguna.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-shield-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -195,15 +262,30 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 4: AKUN -->
+                <!-- GRUP 4: ZONA BAHAYA & RESET DATA -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #D32F2F; letter-spacing: 0.3px;">
+                        ${t.reset_title}
+                    </div>
+
+                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid #ffcccc; overflow: hidden;">
+                        <div onclick="setting.openResetModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: #D32F2F;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 18px; width: 22px; text-align: center;"></i>
+                                <span style="font-size: 14px; font-weight: 700;">${t.reset_data}</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRUP 5: AKUN -->
                 <div>
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.account_title}
                     </div>
 
                     <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
-                        
-                        <!-- Item: Keluar -->
                         <div onclick="setting.openLogoutModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: #D32F2F;">
                                 <i class="fas fa-sign-out-alt" style="font-size: 18px; width: 22px; text-align: center;"></i>
@@ -211,7 +293,6 @@ var setting = (function() {
                             </div>
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
-
                     </div>
                 </div>
 
@@ -272,6 +353,7 @@ var setting = (function() {
     function init() {
         var isDarkMode = localStorage.getItem('cozycs_dark_mode') === 'true';
         applyDarkModeStyle(isDarkMode);
+        checkAutoBackupTrigger();
     }
 
     function applyDarkModeStyle(isDark) {
@@ -301,6 +383,7 @@ var setting = (function() {
         }
     }
 
+    // FUNGSI BACKUP SEMUA DATA KE FILE JSON + CATAT METADATA WAKTU
     function backupAllData() {
         var allData = {};
         for (var i = 0; i < localStorage.length; i++) {
@@ -317,14 +400,62 @@ var setting = (function() {
         downloadAnchor.click();
         downloadAnchor.remove();
 
+        // Simpan waktu backup terakhir agar tampil di informasi
+        var nowStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        localStorage.setItem('cozycs_last_backup_time', nowStr);
+
         var currentLangKey = getLang();
         var t = translations[currentLangKey] || translations['id'];
 
         if (typeof Helper !== 'undefined' && Helper.showToast) {
             Helper.showToast(t.toast_backup, 'success');
         }
+        
+        // Refresh tampilan agar info backup terakhir langsung ter-update
+        if (typeof navigateTo === 'function') {
+            navigateTo('setting');
+        }
     }
 
+    // PENGATURAN FREKUENSI PENCADANGAN OTOMATIS (ALA WHATSAPP)
+    function changeAutoBackupFreq(freq) {
+        localStorage.setItem('cozycs_auto_backup_freq', freq);
+        localStorage.setItem('cozycs_last_auto_backup_check', new Date().getTime());
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast('Pengaturan pencadangan otomatis diperbarui', 'success');
+        }
+    }
+
+    // CEK TRIGGER PENCADANGAN OTOMATIS DI BACKGROUND
+    function checkAutoBackupTrigger() {
+        var freq = localStorage.getItem('cozycs_auto_backup_freq');
+        if (!freq || freq === 'off') return;
+
+        var lastCheck = parseInt(localStorage.getItem('cozycs_last_auto_backup_check') || '0', 10);
+        var now = new Date().getTime();
+        var intervalMs = 0;
+
+        if (freq === 'daily') intervalMs = 24 * 60 * 60 * 1000;
+        else if (freq === 'weekly') intervalMs = 7 * 24 * 60 * 60 * 1000;
+        else if (freq === 'monthly') intervalMs = 30 * 24 * 60 * 60 * 1000;
+
+        if (intervalMs > 0 && (now - lastCheck) > intervalMs) {
+            // Jalankan backup otomatis (menyimpan metadata waktu)
+            var allData = {};
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key.startsWith('cozycs_')) {
+                    allData[key] = localStorage.getItem(key);
+                }
+            }
+            localStorage.setItem('cozycs_auto_backup_storage_cache', JSON.stringify(allData));
+            var nowStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            localStorage.setItem('cozycs_last_backup_time', nowStr + ' (Auto)');
+            localStorage.setItem('cozycs_last_auto_backup_check', now);
+        }
+    }
+
+    // FUNGSI RESTORE DATA DARI FILE JSON
     function restoreAllData(event) {
         var file = event.target.files[0];
         if (!file) return;
@@ -352,6 +483,44 @@ var setting = (function() {
             }
         };
         reader.readAsText(file);
+    }
+
+    // OPSI RESET DATA KEBUN
+    function openResetModal() {
+        var currentLangKey = getLang();
+        var t = translations[currentLangKey] || translations['id'];
+        var title = t.confirm_reset_title;
+        var body = t.confirm_reset_body;
+        var actions = `
+            <button onclick="setting.closeModal()" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #555; font-weight: bold; font-size: 13px; cursor: pointer;">${t.btn_cancel}</button>
+            <button onclick="setting.confirmResetData()" style="flex: 1; padding: 10px; border-radius: 10px; border: none; background: #D32F2F; color: #fff; font-weight: bold; font-size: 13px; cursor: pointer;">${t.btn_yes_reset}</button>
+        `;
+        showModal(title, body, actions);
+    }
+
+    function confirmResetData() {
+        closeModal();
+        var currentLangKey = getLang();
+        var t = translations[currentLangKey] || translations['id'];
+
+        // Hapus hanya key yang berawalan cozycs_
+        var keysToRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.startsWith('cozycs_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(function(k) {
+            localStorage.removeItem(k);
+        });
+
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast(t.toast_reset, 'success');
+        }
+        setTimeout(function() {
+            location.reload();
+        }, 1000);
     }
 
     function openLanguageModal() {
@@ -464,9 +633,12 @@ var setting = (function() {
         toggleDarkMode: toggleDarkMode,
         backupAllData: backupAllData,
         restoreAllData: restoreAllData,
+        changeAutoBackupFreq: changeAutoBackupFreq,
         openLanguageModal: openLanguageModal,
         setLanguage: setLanguage,
         openCustomInfoModal: openCustomInfoModal,
+        openResetModal: openResetModal,
+        confirmResetData: confirmResetData,
         openLogoutModal: openLogoutModal,
         confirmLogout: confirmLogout,
         checkAppUpdate: checkAppUpdate,
