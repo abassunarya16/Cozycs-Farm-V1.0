@@ -4,13 +4,31 @@
 
 var cctv = (function() {
 
+    var activeCam = 'Kamera Utama';
+
     function render() {
         var streamUrl = localStorage.getItem('cozycs_cctv_url') || '';
+
+        var camList = [
+            'Kamera Utama',
+            'Lorong 1',
+            'Lorong 2'
+        ];
+
+        var camButtonsHtml = '';
+        camList.forEach(function(camName) {
+            var isActive = activeCam === camName;
+            camButtonsHtml += `
+                <button onclick="cctv.selectCam('${camName}')" class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; ${isActive ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'} border: none; white-space: nowrap; cursor: pointer;">
+                    📹 ${camName}
+                </button>
+            `;
+        });
 
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 <div class="section-title" style="font-size: 15px; font-weight: 800; color: #1B5E20; margin-bottom: 4px;">
-                    <i class="fas fa-video" style="color: #C62828;"></i> Live CCTV GH Pesawaran
+                    <i class="fas fa-video" style="color: #C62828;"></i> Live CCTV
                 </div>
                 <div style="font-size: 12px; color: #666; margin-bottom: 14px;">
                     Pantau kondisi fisik tanaman dan situasi greenhouse secara real-time.
@@ -22,7 +40,7 @@ var cctv = (function() {
                     <!-- Overlay Badge Live -->
                     <div style="position: absolute; top: 12px; left: 12px; z-index: 10; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: #E53935; display: inline-block; animation: pulseCctv 1.5s infinite;"></span>
-                        <span style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.5px;">LIVE GH-01</span>
+                        <span style="font-size: 10px; font-weight: 800; color: #fff; letter-spacing: 0.5px;">LIVE - ${activeCam.toUpperCase()}</span>
                     </div>
 
                     <!-- Video / Stream Player Area -->
@@ -31,7 +49,7 @@ var cctv = (function() {
                             <iframe src="${streamUrl}" style="width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
                         ` : `
                             <i class="fas fa-camera-retro" style="font-size: 36px; color: #555; margin-bottom: 10px;"></i>
-                            <div style="font-size: 13px; font-weight: 700; color: #ddd; margin-bottom: 4px;">Mode Standby (Siap Dipasang)</div>
+                            <div style="font-size: 13px; font-weight: 700; color: #ddd; margin-bottom: 4px;">Mode Standby (${activeCam})</div>
                             <div style="font-size: 11px; color: #888; max-width: 260px;">Kamera CCTV belum terhubung. Tautan IP Cam/WebRTC dapat diatur pada menu konfigurasi di bawah.</div>
                         `}
                     </div>
@@ -43,19 +61,11 @@ var cctv = (function() {
                     </div>
                 </div>
 
-                <!-- SELEKSI ZONA KAMERA -->
+                <!-- SELEKSI ZONA KAMERA DINAMIS -->
                 <div style="background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #e8e8e8; margin-bottom: 14px;">
                     <div style="font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 8px;">Pilih Sudut Kamera:</div>
                     <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px;">
-                        <button class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #2E7D32; color: #fff; border: none; white-space: nowrap;">
-                            📹 GH-01 Utama
-                        </button>
-                        <button class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #f0f0f0; color: #555; border: none; white-space: nowrap;">
-                            📹 GH-01 Lorong 2
-                        </button>
-                        <button class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #f0f0f0; color: #555; border: none; white-space: nowrap;">
-                            📹 GH-02 Utama
-                        </button>
+                        ${camButtonsHtml}
                     </div>
                 </div>
 
@@ -65,10 +75,10 @@ var cctv = (function() {
                         <i class="fas fa-cog"></i> Pengaturan Tautan CCTV
                     </div>
                     <div style="font-size: 11px; color: #666; margin-bottom: 10px;">
-                        Masukkan URL IP Camera / WebRTC / Web Embed bila CCTV sudah terpasang di lokasi Pesawaran:
+                        Masukkan URL IP Camera / WebRTC / Web Embed bila CCTV sudah terpasang:
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="inputCctvUrl" value="${streamUrl}" placeholder="https://stream.cozycsfarm.com/gh01" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 12px;">
+                        <input type="text" id="inputCctvUrl" value="${streamUrl}" placeholder="https://stream.cozycsfarm.com/cctv" style="flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 12px;">
                         <button id="btnSaveCctvUrl" class="btn" style="background: #2E7D32; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; border: none; cursor: pointer;">
                             Simpan
                         </button>
@@ -84,6 +94,16 @@ var cctv = (function() {
                 }
             </style>
         `;
+    }
+
+    function selectCam(camName) {
+        activeCam = camName;
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast('Memindahkan tampilan ke ' + camName, 'success');
+        }
+        if (typeof navigateTo === 'function') {
+            navigateTo('cctv');
+        }
     }
 
     function init() {
@@ -111,7 +131,8 @@ var cctv = (function() {
 
     return {
         render: render,
-        init: init
+        init: init,
+        selectCam: selectCam
     };
 
 })();
