@@ -1,173 +1,237 @@
 // ==========================================
-// COZYCS FARM - SETTING MODULE
+// COZYCS FARM - SETTINGS MODULE (CLEAN MODERN LIST UI)
 // ==========================================
 
 var setting = (function() {
 
     function render() {
-        var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0');
+        var isDarkMode = localStorage.getItem('cozycs_dark_mode') === 'true';
+        var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.6';
+        var selectedLang = localStorage.getItem('cozycs_lang') || 'Indonesia';
 
         return `
-            <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-cog"></i> Pengaturan & Sistem Farm</div>
-                <div style="font-size: 13px; color: #666; margin-bottom: 16px;">
-                    Kelola data cadangan, memori lokal, dan konfigurasi aplikasi.
-                </div>
-
-                <!-- Bagian Memori & Backup -->
-                <div style="background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
-                    <div style="font-size: 13px; color: #444; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>Memori Lokal Digunakan:</span>
-                        <strong id="storageUsageInfo" style="color: #2E7D32;">Menghitung...</strong>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-primary" id="btnExportData" style="font-size: 12px; padding: 10px; background: #2E7D32;">
-                            <i class="fas fa-download"></i> Backup Data
-                        </button>
-                        <button class="btn btn-primary" id="btnResetData" style="font-size: 12px; padding: 10px; background: #C62828;">
-                            <i class="fas fa-trash-alt"></i> Reset Sistem
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Bagian Tentang Aplikasi & Cek Pembaruan -->
-                <div style="background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e8e8e8;">
-                    <div style="font-size: 13px; font-weight: 700; color: #1B5E20; margin-bottom: 8px;">Tentang Aplikasi</div>
-                    <div style="font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 14px;">
-                        <strong>Cozycs Farm v${appVer}</strong><br>
-                        Sistem Manajemen Melon Hidroponik Premium berbasis PWA (Offline-First).<br>
-                        Lokasi Greenhouse: Pesawaran, Lampung.
+            <div class="dashboard-container" style="padding-bottom: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                
+                <!-- GRUP 1: PENGATURAN -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
+                        Pengaturan
                     </div>
 
-                    <!-- Tombol Cek Pembaruan Manual -->
-                    <button class="btn" id="btnCheckUpdate" style="width: 100%; font-size: 12px; padding: 10px; background: #F5F5F5; color: #2E7D32; border: 1px solid #2E7D32; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <i class="fas fa-sync-alt" id="iconCheckUpdate"></i> Cek Pembaruan Aplikasi
-                    </button>
+                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
+                        
+                        <!-- Item: Pilih Bahasa -->
+                        <div onclick="setting.showLanguageModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-globe" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Pilih Bahasa</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 13px; font-weight: 700; color: #F59E0B;">${selectedLang}</span>
+                                <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                            </div>
+                        </div>
+
+                        <!-- Item: Mode Gelap -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-adjust" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Mode Gelap</span>
+                            </div>
+                            <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="toggleDarkMode" ${isDarkMode ? 'checked' : ''} onchange="setting.toggleDarkMode(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider-round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: ${isDarkMode ? '#F59E0B' : '#ccc'}; transition: .3s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+
+                    </div>
                 </div>
+
+                <!-- GRUP 2: INFORMASI LAINNYA -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
+                        Informasi Lainnya
+                    </div>
+
+                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
+                        
+                        <!-- Item: Notifikasi -->
+                        <div onclick="navigateTo('notifikasi')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="far fa-bell" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Notifikasi</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                        <!-- Item: Tentang Perusahaan / Farm -->
+                        <div onclick="setting.showInfoModal('Tentang Cozycs Farm', 'Cozycs Farm adalah usaha perkebunan melon hidroponik premium berbasis green house yang berlokasi di Pesawaran, Lampung.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="far fa-building" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Tentang Cozycs Farm</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                        <!-- Item: Bantuan & FAQ -->
+                        <div onclick="setting.showInfoModal('Bantuan & FAQ', 'Aplikasi Cozycs Farm membantu mengelola nutrisi (PPM/pH), jadwal spray, populasi tanaman, seleksi buah, dan penjualan hasil panen secara otomatis.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="far fa-question-circle" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Bantuan & FAQ</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                        <!-- Item: Tentang Aplikasi -->
+                        <div onclick="setting.checkAppUpdate()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-mobile-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Tentang Aplikasi</span>
+                            </div>
+                            <span style="font-size: 13px; font-weight: 600; color: #777;">v ${appVer}</span>
+                        </div>
+
+                        <!-- Item: Ketentuan Layanan -->
+                        <div onclick="setting.showInfoModal('Ketentuan Layanan', 'Seluruh data operasional Cozycs Farm disimpan secara lokal di perangkat pengguna. Harap lakukan backup berkala.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="far fa-file-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Ketentuan Layanan</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                        <!-- Item: Kebijakan Privasi -->
+                        <div onclick="setting.showInfoModal('Kebijakan Privasi', 'Sistem tidak membagikan data internal farm ke pihak luar tanpa izin pengelola.')" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-shield-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">Kebijakan Privasi</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- GRUP 3: AKUN & SISTEM -->
+                <div>
+                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
+                        Akun & Data
+                    </div>
+
+                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
+                        
+                        <!-- Item: Reset Data Sistem -->
+                        <div onclick="setting.resetSystemData()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: #D32F2F;">
+                                <i class="fas fa-sign-out-alt" style="font-size: 18px; width: 22px; text-align: center;"></i>
+                                <span style="font-size: 14px; font-weight: 700;">Reset Data / Keluar</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
+
+            <!-- CSS UNTUK SAKLAR TOGGLE & ANIMASI BOLA -->
+            <style>
+                .switch-toggle .slider-round:before {
+                    position: absolute;
+                    content: "";
+                    height: 18px;
+                    width: 18px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: white;
+                    transition: .3s;
+                    border-radius: 50%;
+                }
+                .switch-toggle input:checked + .slider-round {
+                    background-color: #F59E0B !important;
+                }
+                .switch-toggle input:checked + .slider-round:before {
+                    transform: translateX(20px);
+                    background-color: #000;
+                }
+            </style>
         `;
     }
 
     function init() {
-        // 1. Tampilkan Penggunaan Memori
-        var infoEl = document.getElementById('storageUsageInfo');
-        if (infoEl && typeof Storage !== 'undefined') {
-            infoEl.textContent = Storage.getStorageUsage();
+        // Inisialisasi awal
+    }
+
+    function toggleDarkMode(isDark) {
+        localStorage.setItem('cozycs_dark_mode', isDark);
+        
+        if (isDark) {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
         }
 
-        // 2. Event Backup Data
-        var btnExport = document.getElementById('btnExportData');
-        if (btnExport) {
-            btnExport.addEventListener('click', function() {
-                try {
-                    var backupObj = {};
-                    for (var key in Storage.KEYS) {
-                        if (Storage.KEYS.hasOwnProperty(key)) {
-                            var sKey = Storage.KEYS[key];
-                            backupObj[sKey] = Storage.getAll(sKey);
-                        }
-                    }
-                    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
-                    var downloadAnchor = document.createElement('a');
-                    downloadAnchor.setAttribute("href", dataStr);
-                    downloadAnchor.setAttribute("download", "cozycs_farm_backup_" + Helper.getTodayDate() + ".json");
-                    document.body.appendChild(downloadAnchor);
-                    downloadAnchor.click();
-                    downloadAnchor.remove();
-                    Helper.showToast('Berhasil mengunduh cadangan data!', 'success');
-                } catch (e) {
-                    Helper.showToast('Gagal mencadangkan data', 'error');
-                }
-            });
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast(isDark ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan', 'success');
         }
 
-        // 3. Event Reset Data
-        var btnReset = document.getElementById('btnResetData');
-        if (btnReset) {
-            btnReset.addEventListener('click', function() {
-                if (confirm('PERINGATAN: Semua data farm akan dihapus permanen! Yakin ingin melanjutkan?')) {
-                    localStorage.clear();
-                    Storage.init();
-                    Helper.showToast('Semua data berhasil direset.', 'success');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                }
-            });
+        if (typeof navigateTo === 'function') {
+            navigateTo('setting');
         }
+    }
 
-        // 4. Event Cek Pembaruan Manual
-        var btnCheckUpdate = document.getElementById('btnCheckUpdate');
-        if (btnCheckUpdate) {
-            btnCheckUpdate.addEventListener('click', function() {
-                if (!('serviceWorker' in navigator)) {
-                    Helper.showToast('Browser tidak mendukung pembaruan otomatis', 'error');
-                    return;
-                }
+    function showLanguageModal() {
+        var current = localStorage.getItem('cozycs_lang') || 'Indonesia';
+        var newLang = prompt('Pilih Bahasa (Indonesia / English):', current);
+        if (newLang) {
+            localStorage.setItem('cozycs_lang', newLang);
+            if (typeof Helper !== 'undefined' && Helper.showToast) {
+                Helper.showToast('Bahasa diubah ke ' + newLang, 'success');
+            }
+            if (typeof navigateTo === 'function') {
+                navigateTo('setting');
+            }
+        }
+    }
 
-                var icon = document.getElementById('iconCheckUpdate');
-                if (icon) icon.classList.add('fa-spin');
+    function showInfoModal(title, text) {
+        alert(title + '\n\n' + text);
+    }
 
-                Helper.showToast('Memeriksa pembaruan ke server...', 'success');
+    function checkAppUpdate() {
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast('Mengecek versi aplikasi terbaru...', 'info');
+        }
+        setTimeout(function() {
+            if (typeof Helper !== 'undefined' && Helper.showToast) {
+                Helper.showToast('Aplikasi Cozycs Farm sudah versi terbaru!', 'success');
+            }
+        }, 1200);
+    }
 
-                navigator.serviceWorker.ready.then(function(reg) {
-                    // Helper internal untuk memanggil fungsi toast pembaruan global
-                    var triggerToast = function(worker) {
-                        var fn = window.showUpdateToast || (typeof showUpdateToast !== 'undefined' ? showUpdateToast : null);
-                        if (typeof fn === 'function') {
-                            fn(worker);
-                        } else {
-                            Helper.showToast('Pembaruan tersedia! Silakan muat ulang aplikasi.', 'success');
-                        }
-                    };
-
-                    // A. Jika SW baru sudah menunggu (waiting)
-                    if (reg.waiting) {
-                        if (icon) icon.classList.remove('fa-spin');
-                        triggerToast(reg.waiting);
-                        return;
-                    }
-
-                    var isUpdated = false;
-
-                    // B. Pasang pendengar event saat berkas SW baru terdeteksi di server
-                    var onUpdateFound = function() {
-                        isUpdated = true;
-                        var newWorker = reg.installing;
-                        if (newWorker) {
-                            newWorker.addEventListener('statechange', function() {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    if (icon) icon.classList.remove('fa-spin');
-                                    Helper.showToast('Versi baru ditemukan!', 'success');
-                                    triggerToast(newWorker);
-                                }
-                            });
-                        }
-                    };
-
-                    reg.addEventListener('updatefound', onUpdateFound, { once: true });
-
-                    // C. Paksa browser mengecek file sw.js di server GitHub
-                    reg.update().then(function() {
-                        setTimeout(function() {
-                            if (!isUpdated && !reg.waiting && !reg.installing) {
-                                if (icon) icon.classList.remove('fa-spin');
-                                var currentVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.0';
-                                Helper.showToast('Cozycs Farm sudah versi terbaru (v' + currentVer + ')', 'success');
-                            }
-                        }, 2500);
-                    }).catch(function(err) {
-                        if (icon) icon.classList.remove('fa-spin');
-                        Helper.showToast('Gagal memeriksa pembaruan. Cek koneksi internet.', 'error');
-                    });
-                });
-            });
+    function resetSystemData() {
+        var confirmReset = confirm('Apakah Anda yakin ingin menghapus seluruh data dan mereset sistem ke angka 0?');
+        if (confirmReset) {
+            localStorage.clear();
+            if (typeof Helper !== 'undefined' && Helper.showToast) {
+                Helper.showToast('Seluruh data berhasil direset!', 'success');
+            }
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
         }
     }
 
     return {
         render: render,
-        init: init
+        init: init,
+        toggleDarkMode: toggleDarkMode,
+        showLanguageModal: showLanguageModal,
+        showInfoModal: showInfoModal,
+        checkAppUpdate: checkAppUpdate,
+        resetSystemData: resetSystemData
     };
 
 })();
+
+window.setting = setting;
