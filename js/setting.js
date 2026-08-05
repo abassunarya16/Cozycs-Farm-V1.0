@@ -151,7 +151,7 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 3: AKUN (TANPA OPTIONS RESET DATA) -->
+                <!-- GRUP 3: AKUN -->
                 <div>
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.account_title}
@@ -242,10 +242,15 @@ var setting = (function() {
         }
     }
 
-    // FIX POINT 2: TOGGLE MODE GELAP LANGSUNG RESPONSIF
+    // TOGGLE MODE GELAP (DENGAN PEMANGGILAN GLOBAL DARK MODE)
     function toggleDarkMode(isDark) {
         localStorage.setItem('cozycs_dark_mode', isDark);
         applyDarkModeStyle(isDark);
+
+        // Memanggil fungsi penerapan mode gelap global dari index.html
+        if (typeof window.applyDarkModeGlobal === 'function') {
+            window.applyDarkModeGlobal();
+        }
 
         if (typeof Helper !== 'undefined' && Helper.showToast) {
             Helper.showToast(isDark ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan', 'success');
@@ -256,7 +261,6 @@ var setting = (function() {
         }
     }
 
-    // FIX POINT 1: PENAMBAHAN MODAL BAHASA INDONESIA & INGGRIS
     function openLanguageModal() {
         var currentLang = getLang();
         
@@ -280,9 +284,16 @@ var setting = (function() {
         showModal(title, body, actions);
     }
 
+    // PENETAPAN BAHASA (DENGAN PEMANGGILAN GLOBAL LANGUAGE)
     function setLanguage(langCode) {
         localStorage.setItem('cozycs_lang', langCode);
         closeModal();
+
+        // Memanggil fungsi penerapan bahasa global dari index.html
+        if (typeof window.applyAppLanguage === 'function') {
+            window.applyAppLanguage(langCode);
+        }
+
         if (typeof Helper !== 'undefined' && Helper.showToast) {
             Helper.showToast(langCode === 'id' ? 'Bahasa Indonesia dipilih' : 'English language selected', 'success');
         }
@@ -291,7 +302,6 @@ var setting = (function() {
         }
     }
 
-    // FIX POINT 4: MODAL INFORMASI PERINGATAN BERSIH (TANPA HAK CIPTA BROWSER)
     function openCustomInfoModal(titleText, contentText) {
         var actions = `
             <button onclick="setting.closeModal()" style="width: 100%; padding: 10px 16px; border-radius: 10px; border: none; background: #2E7D32; color: #fff; font-weight: bold; font-size: 13px; cursor: pointer;">Tutup</button>
@@ -299,21 +309,22 @@ var setting = (function() {
         showModal(titleText, contentText, actions);
     }
 
-    // FIX POINT 3: MODAL KONFIRMASI KELUAR AKUN ("YAKIN!")
     function openLogoutModal() {
-        var title = 'Yakin!';
-        var body = 'Apakah anda yakin akan keluar dari aplikasi ini?';
+        var isEn = (getLang() === 'en');
+        var title = isEn ? 'Are you sure?' : 'Yakin!';
+        var body = isEn ? 'Are you sure you want to exit from this application?' : 'Apakah anda yakin akan keluar dari aplikasi ini?';
         var actions = `
-            <button onclick="setting.closeModal()" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #555; font-weight: bold; font-size: 13px; cursor: pointer;">Batal</button>
-            <button onclick="setting.confirmLogout()" style="flex: 1; padding: 10px; border-radius: 10px; border: none; background: #D32F2F; color: #fff; font-weight: bold; font-size: 13px; cursor: pointer;">Oke</button>
+            <button onclick="setting.closeModal()" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #555; font-weight: bold; font-size: 13px; cursor: pointer;">${isEn ? 'Cancel' : 'Batal'}</button>
+            <button onclick="setting.confirmLogout()" style="flex: 1; padding: 10px; border-radius: 10px; border: none; background: #D32F2F; color: #fff; font-weight: bold; font-size: 13px; cursor: pointer;">${isEn ? 'OK' : 'Oke'}</button>
         `;
         showModal(title, body, actions);
     }
 
     function confirmLogout() {
         closeModal();
+        var isEn = (getLang() === 'en');
         if (typeof Helper !== 'undefined' && Helper.showToast) {
-            Helper.showToast('Menutup aplikasi...', 'info');
+            Helper.showToast(isEn ? 'Closing application...' : 'Menutup aplikasi...', 'info');
         }
         setTimeout(function() {
             if (window.history.length > 1) {
@@ -325,11 +336,15 @@ var setting = (function() {
     }
 
     function checkAppUpdate() {
+        var isEn = (getLang() === 'en');
         if (typeof Helper !== 'undefined' && Helper.showToast) {
-            Helper.showToast('Mengecek versi aplikasi terbaru...', 'info');
+            Helper.showToast(isEn ? 'Checking for app updates...' : 'Mengecek versi aplikasi terbaru...', 'info');
         }
         setTimeout(function() {
-            openCustomInfoModal('Versi Aplikasi', 'Aplikasi Cozycs Farm kamu sudah menggunakan versi terbaru (v1.6).');
+            openCustomInfoModal(
+                isEn ? 'App Version' : 'Versi Aplikasi', 
+                isEn ? 'Your Cozycs Farm app is up to date (v1.6).' : 'Aplikasi Cozycs Farm kamu sudah menggunakan versi terbaru (v1.6).'
+            );
         }, 800);
     }
 
