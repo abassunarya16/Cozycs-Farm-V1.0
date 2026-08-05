@@ -21,19 +21,21 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- GLOBAL DARK MODE OVERRIDES (FIX BACKGROUND) -->
+<!-- ======================================== -->
+<!-- GLOBAL DARK MODE OVERRIDES (PERBAIKAN GRID & DASBOR) -->
 <!-- ======================================== -->
 <style>
-/* 1. LATAR BELAKANG UTAMA APLIKASI & PEMBUNGKUS (FIX GAP PUTIH) */
+/* 1. LATAR BELAKANG UTAMA APLIKASI & CONTAINER */
 body.dark-theme,
 body.dark-theme .app-wrapper,
 body.dark-theme .app-main,
-body.dark-theme .dashboard-container {
+body.dark-theme .dashboard-container,
+body.dark-theme main {
     background-color: #121212 !important;
     color: #e0e0e0 !important;
 }
 
-/* 2. HEADER ATAS */
+/* 2. HEADER ATAS (BAR ATAS) */
 body.dark-theme .app-header,
 body.dark-theme header {
     background-color: #112214 !important;
@@ -46,7 +48,7 @@ body.dark-theme .header-actions span {
     border-color: #2E7D32 !important;
 }
 
-/* 3. NAVIGATION BAR BAWAH (BOTTOM NAV) */
+/* 3. BOTTOM NAVIGATION (BAR BAWAH) */
 body.dark-theme .bottom-nav {
     background-color: #1e1e1e !important;
     border-top: 1px solid #2d2d2d !important;
@@ -84,33 +86,83 @@ body.dark-theme .sidebar-item.active {
     color: #4CAF50 !important;
 }
 
-/* 5. OVERRIDE SEMUA KARTU / CARD / CONTAINER */
+/* 5. OVERRIDE KARTU UTAMA DASBOR & MODUL (SULAP LATAR PUTIH MENJADI GELAP) */
 body.dark-theme [style*="background: #fff"],
 body.dark-theme [style*="background:#fff"],
 body.dark-theme [style*="background: #ffffff"],
 body.dark-theme [style*="background:#ffffff"],
 body.dark-theme [style*="background: #F4F6F8"],
+body.dark-theme [style*="background:#F4F6F8"],
 body.dark-theme [style*="background: #f4f6f8"],
+body.dark-theme [style*="background:#f4f6f8"],
 body.dark-theme [style*="background: #F5F5F5"],
+body.dark-theme [style*="background:#F5F5F5"],
 body.dark-theme [style*="background: #f5f5f5"],
-body.dark-theme [style*="background: var(--card-bg, #ffffff)"] {
+body.dark-theme [style*="background:#f5f5f5"],
+body.dark-theme [style*="background: #f0f0f0"],
+body.dark-theme [style*="background:#f0f0f0"],
+body.dark-theme [style*="background: var(--card-bg"] {
     background-color: #1e1e1e !important;
-    border-color: #2e2e2e !important;
+    border-color: #333333 !important;
     color: #e0e0e0 !important;
 }
 
-/* 6. OVERRIDE TEKS GELAP AGAR MENJADI TERANG */
+/* 6. OVERRIDE KOTAK GRID DALAM / NESTED CARDS (MODUL GREENHOUSE, SENSOR, DLL) */
+body.dark-theme div div[style*="background: #fff"],
+body.dark-theme div div[style*="background:#fff"],
+body.dark-theme div div[style*="background: #ffffff"],
+body.dark-theme div div[style*="background:#ffffff"],
+body.dark-theme div div[style*="background: #f9f9f9"],
+body.dark-theme div div[style*="background:#f9f9f9"],
+body.dark-theme div div[style*="background: #F4F6F8"],
+body.dark-theme div div[style*="background: #F5F5F5"] {
+    background-color: #282828 !important;
+    border-color: #383838 !important;
+    color: #f0f0f0 !important;
+}
+
+/* 7. OVERRIDE TEKS AGAR TERANG DAN KONTRAS (TIDAK KEBANJIRAN TERANG) */
 body.dark-theme [style*="color: #111"],
+body.dark-theme [style*="color:#111"],
 body.dark-theme [style*="color: #222"],
+body.dark-theme [style*="color:#222"],
 body.dark-theme [style*="color: #333"],
+body.dark-theme [style*="color:#333"],
 body.dark-theme [style*="color: #424242"],
+body.dark-theme [style*="color:#424242"],
+body.dark-theme [style*="color: #000"],
+body.dark-theme [style*="color:#000"] {
+    color: #ffffff !important;
+}
+
 body.dark-theme [style*="color: #555"],
+body.dark-theme [style*="color:#555"],
 body.dark-theme [style*="color: #666"],
-body.dark-theme [style*="color: #777"] {
+body.dark-theme [style*="color:#666"],
+body.dark-theme [style*="color: #777"],
+body.dark-theme [style*="color:#777"],
+body.dark-theme [style*="color: #888"],
+body.dark-theme [style*="color:#888"] {
+    color: #b0b0b0 !important;
+}
+
+/* 8. OVERRIDE TOMBOL & BADGE TERANG */
+body.dark-theme button[style*="background: #f0f0f0"],
+body.dark-theme button[style*="background:#f0f0f0"] {
+    background-color: #333333 !important;
     color: #e0e0e0 !important;
 }
 
-/* 7. OVERRIDE INPUT FIELD & BOX FORM UNTUK SEMUA MODUL */
+body.dark-theme span[style*="background: #E8F5E9"],
+body.dark-theme span[style*="background: #E1F5FE"],
+body.dark-theme span[style*="background: #FFF3E0"],
+body.dark-theme span[style*="background: #F5F5F5"],
+body.dark-theme span[style*="background: #E0F7FA"] {
+    background-color: #2a3b2d !important;
+    color: #81C784 !important;
+}
+
+/* 9. INPUT FIELD & BOX FORM UNTUK SELURUH MODUL */
 body.dark-theme input,
 body.dark-theme select,
 body.dark-theme textarea {
@@ -119,6 +171,7 @@ body.dark-theme textarea {
     border-color: #444444 !important;
 }
 </style>
+    
 </head>
 <body>
 
