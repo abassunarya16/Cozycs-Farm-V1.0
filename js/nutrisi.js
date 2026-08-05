@@ -1,8 +1,119 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (CRUD)
+// COZYCS FARM - MODUL NUTRISI & PPM (CRUD BILINGUAL & DARK MODE)
 // ==========================================
 
 var nutrisi = (function() {
+
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
+    var i18nDict = {
+        'id': {
+            'module_title': 'Cek & Kontrol Nutrisi (PPM & pH)',
+            'form_title_add': 'Catat Cek Nutrisi Harian',
+            'form_title_edit': 'Edit Data Nutrisi',
+            'lbl_gh': 'ID GH',
+            'select_gh': '-- Pilih Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Tanggal Pengecekan',
+            'lbl_time_slot': 'Waktu Cek',
+            'opt_morning': 'Pagi',
+            'opt_afternoon': 'Sore',
+            'lbl_hst': 'HST',
+            'ph_hst': 'Contoh: 15',
+            'lbl_fase': 'Fase Tanaman',
+            'opt_fase_veg_early': 'Vegetatif Awal',
+            'opt_fase_veg_growth': 'Vegetatif Pertumbuhan',
+            'opt_fase_flower': 'Pembungaan / Polinasi',
+            'opt_fase_fruit_grow': 'Pembesaran Buah',
+            'opt_fase_fruit_ripe': 'Pematangan Buah',
+            'lbl_ppm_actual': 'PPM Aktual',
+            'ph_ppm_actual': 'Contoh: 1000',
+            'lbl_ppm_target': 'Target PPM',
+            'ph_ppm_target': 'Contoh: 1200',
+            'lbl_ph_actual': 'pH Aktual',
+            'ph_ph_actual': 'Contoh: 6.5',
+            'lbl_ph_action': 'Aksi Koreksi pH',
+            'opt_ph_safe': 'Aman / Tanpa Koreksi',
+            'opt_ph_up': 'Tambah pH Up',
+            'opt_ph_down': 'Tambah pH Down',
+            'lbl_water_temp': 'Suhu Air Tandon (°C)',
+            'ph_water_temp': 'Contoh: 26°C',
+            'lbl_room_temp': 'Suhu Ruangan (°C)',
+            'ph_room_temp': 'Contoh: 30°C',
+            'lbl_desc': 'Catatan Tambahan',
+            'ph_desc': 'Catatan penambahan A/B mix, air baku, dll...',
+            'btn_save': 'Simpan Catatan Nutrisi',
+            'btn_cancel': 'Batal',
+            'recap_title': 'Riwayat & Rekap Kontrol Nutrisi',
+            'no_data': 'Belum ada catatan nutrisi tercatat.',
+            'card_lbl_ppm': 'PPM',
+            'card_lbl_target_ppm': 'Target:',
+            'card_lbl_ph_action': 'pH & Koreksi',
+            'card_lbl_hst_fase': 'HST & Fase',
+            'card_lbl_temp': 'Suhu Air & Ruangan',
+            'lbl_water': 'Air:',
+            'lbl_room': 'Ruang:',
+            'lbl_notes': 'Catatan',
+            'toast_saved': 'Data berhasil disimpan!',
+            'confirm_delete': 'Apakah kamu yakin ingin menghapus data nutrisi ini?',
+            'toast_deleted': 'Data nutrisi berhasil dihapus'
+        },
+        'en': {
+            'module_title': 'Nutrition Check & Control (PPM & pH)',
+            'form_title_add': 'Record Daily Nutrition Check',
+            'form_title_edit': 'Edit Nutrition Data',
+            'lbl_gh': 'GH ID',
+            'select_gh': '-- Select Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Check Date',
+            'lbl_time_slot': 'Check Time',
+            'opt_morning': 'Morning',
+            'opt_afternoon': 'Afternoon',
+            'lbl_hst': 'DAP (Days After Planting)',
+            'ph_hst': 'e.g., 15',
+            'lbl_fase': 'Plant Phase',
+            'opt_fase_veg_early': 'Early Vegetative',
+            'opt_fase_veg_growth': 'Vegetative Growth',
+            'opt_fase_flower': 'Flowering / Pollination',
+            'opt_fase_fruit_grow': 'Fruit Enlargement',
+            'opt_fase_fruit_ripe': 'Fruit Ripening',
+            'lbl_ppm_actual': 'Actual PPM',
+            'ph_ppm_actual': 'e.g., 1000',
+            'lbl_ppm_target': 'Target PPM',
+            'ph_ppm_target': 'e.g., 1200',
+            'lbl_ph_actual': 'Actual pH',
+            'ph_ph_actual': 'e.g., 6.5',
+            'lbl_ph_action': 'pH Correction Action',
+            'opt_ph_safe': 'Safe / No Correction',
+            'opt_ph_up': 'Add pH Up',
+            'opt_ph_down': 'Add pH Down',
+            'lbl_water_temp': 'Water Temp (°C)',
+            'ph_water_temp': 'e.g., 26°C',
+            'lbl_room_temp': 'Room Temp (°C)',
+            'ph_room_temp': 'e.g., 30°C',
+            'lbl_desc': 'Additional Notes',
+            'ph_desc': 'Notes on A/B mix additions, raw water, etc...',
+            'btn_save': 'Save Nutrition Record',
+            'btn_cancel': 'Cancel',
+            'recap_title': 'Nutrition Control History & Summary',
+            'no_data': 'No nutrition records found.',
+            'card_lbl_ppm': 'PPM',
+            'card_lbl_target_ppm': 'Target:',
+            'card_lbl_ph_action': 'pH & Correction',
+            'card_lbl_hst_fase': 'DAP & Phase',
+            'card_lbl_temp': 'Water & Room Temp',
+            'lbl_water': 'Water:',
+            'lbl_room': 'Room:',
+            'lbl_notes': 'Notes',
+            'toast_saved': 'Data saved successfully!',
+            'confirm_delete': 'Are you sure you want to delete this nutrition data?',
+            'toast_deleted': 'Nutrition data deleted successfully'
+        }
+    };
+
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
 
     // Fungsi pembantu untuk mengambil kunci storage dengan aman
     function getKey() {
@@ -40,7 +151,7 @@ var nutrisi = (function() {
             dataGh = [];
         }
 
-        var optionsHtml = '<option value="">-- Pilih Greenhouse --</option>';
+        var optionsHtml = `<option value="">${t('select_gh')}</option>`;
         if (Array.isArray(dataGh) && dataGh.length > 0) {
             dataGh.forEach(function(gh) {
                 if (gh && gh.kode) {
@@ -48,7 +159,7 @@ var nutrisi = (function() {
                 }
             });
         } else {
-            optionsHtml += '<option value="GH-01">GH-01 (Default)</option>';
+            optionsHtml += `<option value="GH-01">${t('gh_default')}</option>`;
         }
 
         selectEl.innerHTML = optionsHtml;
@@ -57,51 +168,51 @@ var nutrisi = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> Cek & Kontrol Nutrisi (PPM & pH)</div>
+                <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> ${t('module_title')}</div>
                 
                 <!-- Form Input Data Nutrisi -->
-                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #0277BD; margin-bottom: 12px;" id="formTitleNutrisi">Catat Cek Nutrisi Harian</div>
+                <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #0277BD; margin-bottom: 12px;" id="formTitleNutrisi">${t('form_title_add')}</div>
                     <form id="formNutrisi">
                         <input type="hidden" id="nutrisiId">
                         
-                        <!-- ID GH (Dropdown Konek ke Modul Greenhouse) & Tanggal Cek -->
+                        <!-- ID GH & Tanggal Cek -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
-                                <select id="nutrisiGh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="">-- Pilih Greenhouse --</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
+                                <select id="nutrisiGh" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="">${t('select_gh')}</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pengecekan</label>
-                                <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
+                                <input type="date" id="nutrisiDate" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Waktu Cek -->
                         <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Cek</label>
-                            <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                <option value="Pagi">Pagi</option>
-                                <option value="Sore">Sore</option>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_time_slot')}</label>
+                            <select id="nutrisiTimeSlot" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <option value="Pagi">${t('opt_morning')}</option>
+                                <option value="Sore">${t('opt_afternoon')}</option>
                             </select>
                         </div>
 
                         <!-- HST & Fase Tanaman -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">HST</label>
-                                <input type="number" id="nutrisiHst" placeholder="Contoh: 15" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_hst')}</label>
+                                <input type="number" id="nutrisiHst" placeholder="${t('ph_hst')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fase Tanaman</label>
-                                <select id="nutrisiFase" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Vegetatif Awal">Vegetatif Awal</option>
-                                    <option value="Vegetatif Pertumbuhan">Vegetatif Pertumbuhan</option>
-                                    <option value="Pembungaan / Polinasi">Pembungaan / Polinasi</option>
-                                    <option value="Pembesaran Buah">Pembesaran Buah</option>
-                                    <option value="Pematangan Buah">Pematangan Buah</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_fase')}</label>
+                                <select id="nutrisiFase" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="Vegetatif Awal">${t('opt_fase_veg_early')}</option>
+                                    <option value="Vegetatif Pertumbuhan">${t('opt_fase_veg_growth')}</option>
+                                    <option value="Pembungaan / Polinasi">${t('opt_fase_flower')}</option>
+                                    <option value="Pembesaran Buah">${t('opt_fase_fruit_grow')}</option>
+                                    <option value="Pematangan Buah">${t('opt_fase_fruit_ripe')}</option>
                                 </select>
                             </div>
                         </div>
@@ -109,27 +220,27 @@ var nutrisi = (function() {
                         <!-- PPM Aktual & Target PPM -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">PPM Aktual</label>
-                                <input type="number" id="nutrisiPpm" required placeholder="Contoh: 1000" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_ppm_actual')}</label>
+                                <input type="number" id="nutrisiPpm" required placeholder="${t('ph_ppm_actual')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Target PPM</label>
-                                <input type="number" id="nutrisiTargetPpm" required placeholder="Contoh: 1200" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_ppm_target')}</label>
+                                <input type="number" id="nutrisiTargetPpm" required placeholder="${t('ph_ppm_target')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- pH Aktual & Aksi Koreksi pH -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">pH Aktual</label>
-                                <input type="text" id="nutrisiPh" required placeholder="Contoh: 6.5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_ph_actual')}</label>
+                                <input type="text" id="nutrisiPh" required placeholder="${t('ph_ph_actual')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Aksi Koreksi pH</label>
-                                <select id="nutrisiPhAction" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="Aman / Tanpa Koreksi">Aman / Tanpa Koreksi</option>
-                                    <option value="Tambah pH Up">Tambah pH Up</option>
-                                    <option value="Tambah pH Down">Tambah pH Down</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_ph_action')}</label>
+                                <select id="nutrisiPhAction" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="Aman / Tanpa Koreksi">${t('opt_ph_safe')}</option>
+                                    <option value="Tambah pH Up">${t('opt_ph_up')}</option>
+                                    <option value="Tambah pH Down">${t('opt_ph_down')}</option>
                                 </select>
                             </div>
                         </div>
@@ -137,30 +248,30 @@ var nutrisi = (function() {
                         <!-- Suhu Air & Suhu Ruangan -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Air Tandon (°C)</label>
-                                <input type="text" id="nutrisiWaterTemp" placeholder="Contoh: 26°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_water_temp')}</label>
+                                <input type="text" id="nutrisiWaterTemp" placeholder="${t('ph_water_temp')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Suhu Ruangan (°C)</label>
-                                <input type="text" id="nutrisiRoomTemp" placeholder="Contoh: 30°C" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_room_temp')}</label>
+                                <input type="text" id="nutrisiRoomTemp" placeholder="${t('ph_room_temp')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan</label>
-                            <textarea id="nutrisiDesc" rows="2" placeholder="Catatan penambahan A/B mix, air baku, dll..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
+                            <textarea id="nutrisiDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #0277BD; color: #fff; padding: 10px; border: none; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> Simpan Catatan Nutrisi</button>
-                            <button type="button" id="btnCancelNutrisiEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #0277BD; color: #fff; padding: 10px; border: none; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
+                            <button type="button" id="btnCancelNutrisiEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #333;">${t('btn_cancel')}</button>
                         </div>
                     </form>
                 </div>
 
                 <!-- Rekap Data Card Grid 2x2 -->
-                <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> Riwayat & Rekap Kontrol Nutrisi</div>
+                <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> ${t('recap_title')}</div>
                 <div id="containerNutrisiCards"></div>
             </div>
         `;
@@ -194,13 +305,13 @@ var nutrisi = (function() {
                 var payload = {
                     gh: gh || '-',
                     date: date,
-                    timeSlot: timeSlot || 'Pagi',
+                    timeSlot: timeSlot || t('opt_morning'),
                     hst: hst || '-',
-                    fase: fase || 'Vegetatif Pertumbuhan',
+                    fase: fase || t('opt_fase_veg_growth'),
                     ppm: ppm || '-',
                     targetPpm: targetPpm || '-',
                     ph: ph || '-',
-                    phAction: phAction || 'Aman / Tanpa Koreksi',
+                    phAction: phAction || t('opt_ph_safe'),
                     waterTemp: waterTemp || '-',
                     roomTemp: roomTemp || '-',
                     desc: desc,
@@ -225,7 +336,7 @@ var nutrisi = (function() {
                         }
                     }
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
-                        Helper.showToast('Data berhasil disimpan!', 'success');
+                        Helper.showToast(t('toast_saved'), 'success');
                     }
                 } catch(err) {
                     console.error("Storage Error:", err);
@@ -234,7 +345,7 @@ var nutrisi = (function() {
                 form.reset();
                 setVal('nutrisiId', '');
                 var titleEl = document.getElementById('formTitleNutrisi');
-                if (titleEl) titleEl.innerText = 'Catat Cek Nutrisi Harian';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
@@ -246,7 +357,7 @@ var nutrisi = (function() {
                 if (form) form.reset();
                 setVal('nutrisiId', '');
                 var titleEl = document.getElementById('formTitleNutrisi');
-                if (titleEl) titleEl.innerText = 'Catat Cek Nutrisi Harian';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
             });
         }
@@ -267,7 +378,7 @@ var nutrisi = (function() {
         }
 
         if (!Array.isArray(data) || data.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada catatan nutrisi tercatat.</div>';
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             return;
         }
 
@@ -293,13 +404,13 @@ var nutrisi = (function() {
             var valDesc = item.desc ? item.desc : '';
 
             html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <!-- Header Card: Tanggal, ID GH & Waktu -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
-                            <strong style="font-size: 14px; color: #222;">${item.date || '-'}</strong>
+                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.date || '-'}</strong>
                             <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
-                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${item.timeSlot || 'Pagi'}</span>
+                            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${item.timeSlot || t('opt_morning')}</span>
                         </div>
                     </div>
 
@@ -307,48 +418,48 @@ var nutrisi = (function() {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         
                         <!-- 1. Kiri Atas: PPM -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">PPM</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_ppm')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-water" style="color: #0277BD; width: 14px;"></i> <strong>${valPpm} PPM</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-bullseye" style="color: #388E3C; width: 14px;"></i> <strong>Target: ${valTargetPpm}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-bullseye" style="color: #388E3C; width: 14px;"></i> <strong>${t('card_lbl_target_ppm')} ${valTargetPpm}</strong></div>
                             </div>
                         </div>
 
                         <!-- 2. Kanan Atas: pH & Koreksi -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">pH & Koreksi</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_ph_action')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-vial" style="color: #E65100; width: 14px;"></i> <strong>pH ${valPh}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-tools" style="color: #C62828; width: 14px;"></i> <strong>${valPhAction}</strong></div>
                             </div>
                         </div>
 
                         <!-- 3. Kiri Bawah: HST & Fase -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">HST & Fase</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-calendar-day" style="color: #6A1B9A; width: 14px;"></i> <strong>HST ${valHst}</strong></div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_hst_fase')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
+                                <div><i class="fas fa-calendar-day" style="color: #6A1B9A; width: 14px;"></i> <strong>${t('lbl_hst')} ${valHst}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-leaf" style="color: #2E7D32; width: 14px;"></i> <strong>${valFase}</strong></div>
                             </div>
                         </div>
 
                         <!-- 4. Kanan Bawah: Suhu Air & Ruangan -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Suhu Air & Ruangan</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
-                                <div><i class="fas fa-thermometer-half" style="color: #0288D1; width: 14px;"></i> <strong>Air: ${valWater}</strong></div>
-                                <div style="margin-top: 3px;"><i class="fas fa-home" style="color: #F57F17; width: 14px;"></i> <strong>Ruang: ${valRoom}</strong></div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_temp')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
+                                <div><i class="fas fa-thermometer-half" style="color: #0288D1; width: 14px;"></i> <strong>${t('lbl_water')} ${valWater}</strong></div>
+                                <div style="margin-top: 3px;"><i class="fas fa-home" style="color: #F57F17; width: 14px;"></i> <strong>${t('lbl_room')} ${valRoom}</strong></div>
                             </div>
                         </div>
 
                     </div>
 
                     <!-- Catatan Tambahan -->
-                    ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${valDesc}</div>` : ''}
+                    ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${valDesc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="nutrisi.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
                     </div>
@@ -375,19 +486,19 @@ var nutrisi = (function() {
         setVal('nutrisiId', item.id || '');
         setVal('nutrisiGh', item.gh === '-' ? '' : (item.gh || ''));
         setVal('nutrisiDate', item.date || '');
-        setVal('nutrisiTimeSlot', item.timeSlot || 'Pagi');
+        setVal('nutrisiTimeSlot', item.timeSlot || t('opt_morning'));
         setVal('nutrisiHst', item.hst === '-' ? '' : (item.hst || ''));
-        setVal('nutrisiFase', item.fase || 'Vegetatif Pertumbuhan');
+        setVal('nutrisiFase', item.fase || t('opt_fase_veg_growth'));
         setVal('nutrisiPpm', item.ppm === '-' ? '' : (item.ppm || ''));
         setVal('nutrisiTargetPpm', item.targetPpm === '-' ? '' : (item.targetPpm || ''));
         setVal('nutrisiPh', item.ph === '-' ? '' : (item.ph || ''));
-        setVal('nutrisiPhAction', item.phAction || 'Aman / Tanpa Koreksi');
+        setVal('nutrisiPhAction', item.phAction || t('opt_ph_safe'));
         setVal('nutrisiWaterTemp', item.waterTemp === '-' ? '' : (item.waterTemp || ''));
         setVal('nutrisiRoomTemp', item.roomTemp === '-' ? '' : (item.roomTemp || item.ghTemp || ''));
         setVal('nutrisiDesc', item.desc || '');
 
         var titleEl = document.getElementById('formTitleNutrisi');
-        if (titleEl) titleEl.innerText = 'Edit Data Nutrisi';
+        if (titleEl) titleEl.innerText = t('form_title_edit');
         
         var btnCancel = document.getElementById('btnCancelNutrisiEdit');
         if (btnCancel) btnCancel.style.display = 'block';
@@ -396,7 +507,7 @@ var nutrisi = (function() {
     }
 
     function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus data nutrisi ini?')) {
+        if (confirm(t('confirm_delete'))) {
             try {
                 var storageKey = getKey();
                 if (typeof Storage !== 'undefined' && Storage.remove) {
@@ -404,6 +515,9 @@ var nutrisi = (function() {
                 }
             } catch(e) {}
             loadTable();
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast(t('toast_deleted'), 'error');
+            }
         }
     }
 
@@ -415,3 +529,5 @@ var nutrisi = (function() {
     };
 
 })();
+
+window.nutrisi = nutrisi;
