@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (FULL CONNECTED TO ALL MODULES)
+// COZYCS FARM - EXECUTIVE DASHBOARD (DYNAMIC GPS & WEATHER)
 // ==========================================
 
 var dashboard = (function() {
@@ -9,7 +9,13 @@ var dashboard = (function() {
     var isAirflowOn = false;
     var clockInterval = null;
 
-    // Default Cuaca Pesawaran (Diisi otomatis oleh API Open-Meteo)
+    // Lokasi Default (Pesawaran) atau membaca dari memori tersimpan
+    var currentLocation = {
+        lat: parseFloat(localStorage.getItem('cozycs_user_lat')) || -5.4287,
+        lon: parseFloat(localStorage.getItem('cozycs_user_lon')) || 105.1800,
+        city: localStorage.getItem('cozycs_user_city') || 'Pesawaran'
+    };
+
     var pesawaranWeather = {
         temp: '-°C',
         humidity: '-%',
@@ -54,7 +60,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 4. EXECUTIVE SUMMARY (POPULASI & EST. PANEN) -->
+                <!-- 4. EXECUTIVE SUMMARY -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
                 <!-- 5. AGENDA HARI INI -->
@@ -72,13 +78,13 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 7. AKTIVITAS TERAKHIR (LOG) -->
+                <!-- 7. AKTIVITAS TERAKHIR -->
                 <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 8. QUICK ACTION BUTTONS (LANGSUNG MEMANGGIL NAVIGATETO) -->
+                <!-- 8. QUICK ACTION BUTTONS -->
                 <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -98,7 +104,7 @@ var dashboard = (function() {
         renderGhSwitcher();
         refreshAllDashboardData();
         startLiveClock();
-        fetchPesawaranWeather();
+        fetchWeatherByCoords(currentLocation.lat, currentLocation.lon, currentLocation.city);
     }
 
     function getData(key) {
@@ -136,8 +142,70 @@ var dashboard = (function() {
         }, 10000);
     }
 
-    function fetchPesawaranWeather() {
-        var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=-5.4287&longitude=105.1800&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
+    // FUNGSI DETEKSI LOKASI GPS HP TERKINI (LIKE PETANI CERDAS APP)
+    function detectUserLocation() {
+        if (!navigator.geolocation) {
+            if (typeof Helper !== 'undefined' && Helper.showToast) {
+                Helper.showToast('Fitur GPS tidak didukung di browser ini', 'error');
+            }
+            return;
+        }
+
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast('Mencari lokasi terkini...', 'info');
+        }
+
+        var locIconEl = document.getElementById('btnGpsTargetIcon');
+        if (locIconEl) locIconEl.className = 'fas fa-spinner fa-spin';
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+
+                // Reverse Geocoding ke API BigDataCloud (Gratis & Cepat)
+                fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=id')
+                    .then(function(res) { return res.json(); })
+                    .then(function(geoData) {
+                        var cityName = geoData.city || geoData.locality || geoData.principalSubdivision || 'Lokasi Saya';
+                        cityName = cityName.replace(/Kota |Kabupaten /gi, '');
+
+                        currentLocation = { lat: lat, lon: lon, city: cityName };
+
+                        localStorage.setItem('cozycs_user_lat', lat);
+                        localStorage.setItem('cozycs_user_lon', lon);
+                        localStorage.setItem('cozycs_user_city', cityName);
+
+                        fetchWeatherByCoords(lat, lon, cityName);
+
+                        if (typeof Helper !== 'undefined' && Helper.showToast) {
+                            Helper.showToast('Lokasi diperbarui: ' + cityName, 'success');
+                        }
+                    })
+                    .catch(function(err) {
+                        fetchWeatherByCoords(lat, lon, 'Lokasi Saya');
+                    })
+                    .finally(function() {
+                        if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
+                    });
+            },
+            function(error) {
+                if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
+                var msg = 'Gagal mengambil lokasi GPS';
+                if (error.code === error.PERMISSION_DENIED) {
+                    msg = 'Izin lokasi GPS belum diaktifkan di HP';
+                }
+                if (typeof Helper !== 'undefined' && Helper.showToast) {
+                    Helper.showToast(msg, 'error');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    // FUNGSI TARIK DATA CUACA BERDASARKAN KOORDINAT LOKASI TERKINI
+    function fetchWeatherByCoords(lat, lon, cityName) {
+        var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
 
         fetch(apiUrl)
             .then(function(res) { return res.json(); })
@@ -152,10 +220,12 @@ var dashboard = (function() {
                     var tempEl = document.getElementById('liveWeatherTemp');
                     var humEl = document.getElementById('liveWeatherHumidity');
                     var iconEl = document.getElementById('liveWeatherIcon');
+                    var cityEl = document.getElementById('liveLocationName');
 
                     if (tempEl) tempEl.textContent = temp;
                     if (humEl) humEl.textContent = humidity;
                     if (iconEl) iconEl.textContent = icon;
+                    if (cityEl) cityEl.textContent = cityName;
                 }
             })
             .catch(function(err) {});
@@ -223,9 +293,14 @@ var dashboard = (function() {
                         <i class="far fa-calendar-alt" style="color: #2E7D32; font-size: 12px;"></i>
                         <span id="liveDateTime">${dateTimeStr}</span>
                     </div>
+
+                    <!-- LOKASI DINAMIS DENGAN TOMBOL GPS (TARGET ICON) -->
                     <div style="display: flex; align-items: center; gap: 5px; color: #D32F2F; font-weight: 700;">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>Pesawaran</span>
+                        <span id="liveLocationName">${currentLocation.city}</span>
+                        <button onclick="dashboard.detectUserLocation()" title="Deteksi Lokasi Terkini" style="background: #FFEBEE; border: 1px solid #FFCDD2; color: #D32F2F; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-left: 2px;">
+                            <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 11px;"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -500,7 +575,6 @@ var dashboard = (function() {
         `;
     }
 
-    // EXECUTIVE SUMMARY (MENGAKOMODASI SEMUA MODEL KEY STORAGE)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummary');
         if (!el) return;
@@ -510,28 +584,24 @@ var dashboard = (function() {
         var dataBuah = getData('cozycs_buah');
         var dataPolinasi = getData('cozycs_polinasi');
 
-        // 1. Tanaman Aktif (Kapasitas Awal dari GH)
         var totalTanaman = 0;
         var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh || g.id === selectedGh; });
         filteredGhList.forEach(function(g) {
             totalTanaman += (parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.jumlah) || 0);
         });
 
-        // 2. Tanaman Hidup
         var tanamanHidup = 0;
         var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh || t.ghId === selectedGh; });
         filteredTanaman.forEach(function(t) {
             tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || parseFloat(t.jumlahHidup) || 0);
         });
 
-        // 3. Buah Fix
         var buahFix = 0;
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh || b.ghId === selectedGh; });
         filteredBuah.forEach(function(b) {
             buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || parseFloat(b.totalBuah) || 0);
         });
 
-        // 4. Estimasi Tanggal & Bobot Panen
         var tglPanenStr = '-';
         var totalEstimasiKg = 0;
         var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh || p.ghId === selectedGh; });
@@ -569,7 +639,6 @@ var dashboard = (function() {
         `;
     }
 
-    // AGENDA HARI INI (MENCOCOKKAN TANGGAL & STATUS)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -623,7 +692,6 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // PROGRESS MUSIM & ESTIMASI OMZET DINAMIS
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -664,7 +732,6 @@ var dashboard = (function() {
         `;
     }
 
-    // ACTIVITAS TERAKHIR (LOG SYSTEM)
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
@@ -738,7 +805,10 @@ var dashboard = (function() {
         selectGhFilter: selectGhFilter,
         toggleIotSection: toggleIotSection,
         toggleAirflow: toggleAirflow,
-        toggleTask: toggleTask
+        toggleTask: toggleTask,
+        detectUserLocation: detectUserLocation
     };
 
 })();
+
+window.dashboard = dashboard;
