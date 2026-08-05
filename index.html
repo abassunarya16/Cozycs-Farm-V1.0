@@ -20,6 +20,104 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ======================================== -->
+    <!-- GLOBAL DARK MODE OVERRIDES -->
+    <!-- ======================================== -->
+    <style>
+    /* 1. LATAR BELAKANG UTAMA UTAMA */
+    body.dark-theme {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* 2. HEADER ATAS */
+    body.dark-theme .app-header,
+    body.dark-theme header {
+        background-color: #112214 !important;
+        border-bottom: 1px solid #233827 !important;
+        color: #ffffff !important;
+    }
+    body.dark-theme .header-actions span {
+        background: #1c3821 !important;
+        color: #A5D6A7 !important;
+        border-color: #2E7D32 !important;
+    }
+
+    /* 3. NAVIGATION BAR BAWAH (BOTTOM NAV) */
+    body.dark-theme .bottom-nav {
+        background-color: #1e1e1e !important;
+        border-top: 1px solid #2d2d2d !important;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.5) !important;
+    }
+    body.dark-theme .bottom-nav .nav-item {
+        color: #888888 !important;
+    }
+    body.dark-theme .bottom-nav .nav-item.active,
+    body.dark-theme .bottom-nav .nav-item.active i,
+    body.dark-theme .bottom-nav .nav-item.active span {
+        color: #4CAF50 !important;
+    }
+
+    /* 4. MENU SIDEBAR (MENU SAMPING) */
+    body.dark-theme .app-sidebar,
+    body.dark-theme #appSidebar {
+        background-color: #181818 !important;
+        border-right: 1px solid #2d2d2d !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-theme .sidebar-header {
+        background-color: #112214 !important;
+        border-bottom: 1px solid #2d2d2d !important;
+    }
+    body.dark-theme .sidebar-group-title {
+        color: #888888 !important;
+    }
+    body.dark-theme .sidebar-item {
+        color: #cccccc !important;
+    }
+    body.dark-theme .sidebar-item:hover,
+    body.dark-theme .sidebar-item.active {
+        background-color: #282828 !important;
+        color: #4CAF50 !important;
+    }
+
+    /* 5. OVERRIDE SEMUA KARTU / CARD DI DASBOR & MODUL LAIN */
+    body.dark-theme [style*="background: #fff"],
+    body.dark-theme [style*="background:#fff"],
+    body.dark-theme [style*="background: #ffffff"],
+    body.dark-theme [style*="background:#ffffff"],
+    body.dark-theme [style*="background: #F4F6F8"],
+    body.dark-theme [style*="background: #f4f6f8"],
+    body.dark-theme [style*="background: #F5F5F5"],
+    body.dark-theme [style*="background: #f5f5f5"],
+    body.dark-theme [style*="background: var(--card-bg, #ffffff)"] {
+        background-color: #1e1e1e !important;
+        border-color: #2e2e2e !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* 6. OVERRIDE TEKS GELAP AGAR MENJADI TERANG */
+    body.dark-theme [style*="color: #111"],
+    body.dark-theme [style*="color: #222"],
+    body.dark-theme [style*="color: #333"],
+    body.dark-theme [style*="color: #424242"],
+    body.dark-theme [style*="color: #555"],
+    body.dark-theme [style*="color: #666"],
+    body.dark-theme [style*="color: #777"],
+    body.dark-theme [style*="color: var(--text-color, #111)"] {
+        color: #e0e0e0 !important;
+    }
+
+    /* 7. OVERRIDE INPUT FIELD & BOX FORM */
+    body.dark-theme input,
+    body.dark-theme select,
+    body.dark-theme textarea {
+        background-color: #2a2a2a !important;
+        color: #ffffff !important;
+        border-color: #444444 !important;
+    }
+    </style>
 </head>
 <body>
 
@@ -47,7 +145,7 @@
         </div>
         
         <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 10px; background: #1B5E20; color: #E8F5E9; padding: 3px 8px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.3px;">
+            <span data-i18n="owner_view" style="font-size: 10px; background: #1B5E20; color: #E8F5E9; padding: 3px 8px; border-radius: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); letter-spacing: 0.3px;">
                 Owner View
             </span>
             
@@ -70,32 +168,30 @@
             <button class="sidebar-close-btn" id="btnCloseSidebar"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-body">
-            <div class="sidebar-group-title">Utama</div>
-            <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> Dasbor</button>
+            <div class="sidebar-group-title" data-i18n="group_main">Utama</div>
+            <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> <span data-i18n="nav_dashboard">Dasbor</span></button>
             
-            <div class="sidebar-group-title">Fasilitas</div>
-            <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> Greenhouse</button>
-            <button class="sidebar-item" data-page="gudang"><i class="fas fa-boxes" style="color: #37474F;"></i> Stok Gudang</button>
+            <div class="sidebar-group-title" data-i18n="group_facilities">Fasilitas</div>
+            <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> <span data-i18n="nav_greenhouse">Greenhouse</span></button>
+            <button class="sidebar-item" data-page="gudang"><i class="fas fa-boxes" style="color: #37474F;"></i> <span data-i18n="nav_warehouse">Stok Gudang</span></button>
             
-            <div class="sidebar-group-title">Tanaman</div>
-            <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> Database Tanaman</button>
-            <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> Polinasi Bunga</button>
-            <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> Seleksi Buah</button>
-            <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> Pruning / Rempes</button>
+            <div class="sidebar-group-title" data-i18n="group_plants">Tanaman</div>
+            <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> <span data-i18n="nav_plant_db">Database Tanaman</span></button>
+            <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> <span data-i18n="nav_pollination">Polinasi Bunga</span></button>
+            <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> <span data-i18n="nav_fruit_select">Seleksi Buah</span></button>
+            <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> <span data-i18n="nav_pruning">Pruning / Rempes</span></button>
             
-            <div class="sidebar-group-title">Monitoring & Perawatan</div>
-            <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> Nutrisi & PPM</button>
-            <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> Hama & Penyakit</button>
-            <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal Spray</button>
-            <button class="sidebar-item" data-page="notifikasi"><i class="fas fa-bell" style="color: #C62828;"></i> Pusat Notifikasi</button>
-            <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> Jadwal Harian</button>
-            <button class="sidebar-item" data-page="cctv"><i class="fas fa-video" style="color: #C62828;"></i> Live CCTV</button>
+            <div class="sidebar-group-title" data-i18n="group_monitoring">Monitoring & Perawatan</div>
+            <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> <span data-i18n="nav_nutrition">Nutrisi & PPM</span></button>
+            <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> <span data-i18n="nav_pests">Hama & Penyakit</span></button>
+            <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> <span data-i18n="nav_spray">Jadwal Spray</span></button>
+            <button class="sidebar-item" data-page="notifikasi"><i class="fas fa-bell" style="color: #C62828;"></i> <span data-i18n="nav_notif">Pusat Notifikasi</span></button>
+            <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> <span data-i18n="nav_schedule">Jadwal Harian</span></button>
+            <button class="sidebar-item" data-page="cctv"><i class="fas fa-video" style="color: #C62828;"></i> <span data-i18n="nav_cctv">Live CCTV</span></button>
 
-            
-            
-            <div class="sidebar-group-title">Hasil & Bisnis</div>
-            <button class="sidebar-item" data-page="panen"><i class="fas fa-box" style="color: #6A1B9A;"></i> Data Panen</button>
-            <button class="sidebar-item" data-page="laporan"><i class="fas fa-file-invoice" style="color: #00695C;"></i> Laporan Farm</button>
+            <div class="sidebar-group-title" data-i18n="group_business">Hasil & Bisnis</div>
+            <button class="sidebar-item" data-page="panen"><i class="fas fa-box" style="color: #6A1B9A;"></i> <span data-i18n="nav_harvest">Data Panen</span></button>
+            <button class="sidebar-item" data-page="laporan"><i class="fas fa-file-invoice" style="color: #00695C;"></i> <span data-i18n="nav_report">Laporan Farm</span></button>
         </div>
     </nav>
 
@@ -104,12 +200,12 @@
 
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav">
-        <button class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span>Dasbor</span></button>
-        <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>
-        <button class="nav-item" data-page="nutrisi"><i class="fas fa-flask"></i><span>Nutrisi</span></button>
-        <button class="nav-item" data-page="panen"><i class="fas fa-box"></i><span>Panen</span></button>
-        <button class="nav-item" data-page="keuangan"><i class="fas fa-wallet"></i><span>Keuangan</span></button>
-        <button class="nav-item" data-page="setting"><i class="fas fa-cog"></i><span>Pengaturan</span></button>
+        <button class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span data-i18n="nav_dashboard">Dasbor</span></button>
+        <button class="nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span data-i18n="nav_plants">Tanaman</span></button>
+        <button class="nav-item" data-page="nutrisi"><i class="fas fa-flask"></i><span data-i18n="nav_nutrition_short">Nutrisi</span></button>
+        <button class="nav-item" data-page="panen"><i class="fas fa-box"></i><span data-i18n="nav_harvest_short">Panen</span></button>
+        <button class="nav-item" data-page="keuangan"><i class="fas fa-wallet"></i><span data-i18n="nav_finance">Keuangan</span></button>
+        <button class="nav-item" data-page="setting"><i class="fas fa-cog"></i><span data-i18n="nav_settings">Pengaturan</span></button>
     </nav>
 </div>
 
@@ -136,20 +232,111 @@
 <script src="js/keuangan.js"></script>
 <script src="js/setting.js"></script>
 <script src="js/cctv.js"></script>
-    
 
 <!-- ======================================== -->
-<!-- APP ROUTER & NAVIGATION (ROBUST BACK TO EXIT) -->
+<!-- APP ROUTER & NAVIGATION (WITH MULTI-LANG & DARK MODE) -->
 <!-- ======================================== -->
 <script>
 var pages = {};
 var currentPage = 'dashboard';
 var lastBackPressTime = 0;
 
+// KAMUS BAHASA GLOBAL (INDONESIA & ENGLISH)
+var globalDict = {
+    'id': {
+        'owner_view': 'Owner View',
+        'group_main': 'Utama',
+        'group_facilities': 'Fasilitas',
+        'group_plants': 'Tanaman',
+        'group_monitoring': 'Monitoring & Perawatan',
+        'group_business': 'Hasil & Bisnis',
+        'nav_dashboard': 'Dasbor',
+        'nav_greenhouse': 'Greenhouse',
+        'nav_warehouse': 'Stok Gudang',
+        'nav_plant_db': 'Database Tanaman',
+        'nav_pollination': 'Polinasi Bunga',
+        'nav_fruit_select': 'Seleksi Buah',
+        'nav_pruning': 'Pruning / Rempes',
+        'nav_nutrition': 'Nutrisi & PPM',
+        'nav_pests': 'Hama & Penyakit',
+        'nav_spray': 'Jadwal Spray',
+        'nav_notif': 'Pusat Notifikasi',
+        'nav_schedule': 'Jadwal Harian',
+        'nav_cctv': 'Live CCTV',
+        'nav_harvest': 'Data Panen',
+        'nav_report': 'Laporan Farm',
+        'nav_plants': 'Tanaman',
+        'nav_nutrition_short': 'Nutrisi',
+        'nav_harvest_short': 'Panen',
+        'nav_finance': 'Keuangan',
+        'nav_settings': 'Pengaturan'
+    },
+    'en': {
+        'owner_view': 'Owner View',
+        'group_main': 'Main',
+        'group_facilities': 'Facilities',
+        'group_plants': 'Plants',
+        'group_monitoring': 'Monitoring & Care',
+        'group_business': 'Results & Business',
+        'nav_dashboard': 'Dashboard',
+        'nav_greenhouse': 'Greenhouse',
+        'nav_warehouse': 'Warehouse Stock',
+        'nav_plant_db': 'Plant Database',
+        'nav_pollination': 'Flower Pollination',
+        'nav_fruit_select': 'Fruit Selection',
+        'nav_pruning': 'Pruning',
+        'nav_nutrition': 'Nutrition & PPM',
+        'nav_pests': 'Pests & Diseases',
+        'nav_spray': 'Spray Schedule',
+        'nav_notif': 'Notification Center',
+        'nav_schedule': 'Daily Schedule',
+        'nav_cctv': 'Live CCTV',
+        'nav_harvest': 'Harvest Data',
+        'nav_report': 'Farm Report',
+        'nav_plants': 'Plants',
+        'nav_nutrition_short': 'Nutrition',
+        'nav_harvest_short': 'Harvest',
+        'nav_finance': 'Finance',
+        'nav_settings': 'Settings'
+    }
+};
+
+/**
+ * Menerapkan bahasa ke seluruh elemen navigasi dan memuat ulang halaman aktif
+ */
+window.applyAppLanguage = function(langCode) {
+    var lang = langCode || localStorage.getItem('cozycs_lang') || 'id';
+    var dict = globalDict[lang] || globalDict['id'];
+
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+            el.textContent = dict[key];
+        }
+    });
+
+    // Refresh halaman aktif agar kontennya menyesuaikan bahasa
+    if (typeof navigateTo === 'function') {
+        navigateTo(currentPage, true);
+    }
+};
+
+/**
+ * Menerapkan Mode Gelap / Terang Global
+ */
+window.applyDarkModeGlobal = function() {
+    var isDark = localStorage.getItem('cozycs_dark_mode') === 'true';
+    if (isDark) {
+        document.body.classList.add('dark-theme');
+        document.documentElement.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+        document.documentElement.classList.remove('dark-theme');
+    }
+};
+
 /**
  * Fungsi Navigasi Utama Aplikasi
- * @param {string} pageName - Nama modul tujuan
- * @param {boolean} isBackNav - Flag penanda jika dipicu oleh tombol Back HP
  */
 function navigateTo(pageName, isBackNav) {
     var targetModule = pages[pageName];
@@ -210,8 +397,9 @@ window.addEventListener('popstate', function(event) {
             // Ketukan ke-1: Tahan, beri peringatan toast, dan dorong ulang Dasbor ke tumpukan atas
             lastBackPressTime = now;
             
+            var msg = (localStorage.getItem('cozycs_lang') === 'en') ? 'Press back again to exit app' : 'Tekan sekali lagi untuk keluar aplikasi';
             if (typeof Helper !== 'undefined' && Helper.showToast) {
-                Helper.showToast('Tekan sekali lagi untuk keluar aplikasi', 'error');
+                Helper.showToast(msg, 'error');
             }
             
             // Kembalikan posisi history ke status dashboard
@@ -231,6 +419,9 @@ window.addEventListener('popstate', function(event) {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Sinkronisasi Mode Gelap Global saat aplikasi dibuka
+    window.applyDarkModeGlobal();
+
     if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
         Storage.init();
     }
@@ -269,6 +460,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     navigateTo('dashboard', true);
+
+    // 2. Terapkan Bahasa ke Seluruh Navigasi
+    window.applyAppLanguage();
     
     var btnNotif = document.getElementById('btnHeaderNotif');
     if (btnNotif) {
@@ -386,6 +580,10 @@ if ('serviceWorker' in navigator) {
     window.showUpdateToast = function(worker) {
         if (document.getElementById('pwaUpdateToast')) return;
         
+        var isEn = (localStorage.getItem('cozycs_lang') === 'en');
+        var toastText = isEn ? 'New version available!' : 'Versi baru Cozycs Farm tersedia!';
+        var btnText = isEn ? 'UPDATE' : 'PERBARUI';
+
         var toastHtml = 
         '<div id="pwaUpdateToast" style="' +
             'position:fixed;bottom:75px;left:50%;transform:translateX(-50%);' +
@@ -399,13 +597,13 @@ if ('serviceWorker' in navigator) {
         '">' +
             '<div style="display:flex;align-items:center;gap:8px;">' +
                 '<i class="fas fa-sync-alt fa-spin" style="color:#A5D6A7;"></i>' +
-                '<span>Versi baru Cozycs Farm tersedia!</span>' +
+                '<span>' + toastText + '</span>' +
             '</div>' +
             '<button id="btnReloadPwa" style="' +
                 'background:#fff;color:#1B5E20;border:none;' +
                 'padding:6px 14px;border-radius:20px;font-size:11px;' +
                 'font-weight:800;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);' +
-            '">PERBARUI</button>' +
+            '">' + btnText + '</button>' +
         '</div>' +
         '<style>' +
             '@keyframes slideUpPwa {' +
