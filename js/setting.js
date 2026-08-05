@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - SETTINGS MODULE (REVISED UI)
+// COZYCS FARM - SETTINGS MODULE (REVISED WITH BACKUP & RESTORE)
 // ==========================================
 
 var setting = (function() {
@@ -17,9 +17,15 @@ var setting = (function() {
             'about_app': 'Tentang Aplikasi',
             'terms': 'Ketentuan Layanan',
             'privacy': 'Kebijakan Privasi',
+            'backup_title': 'Penyimpanan & Data',
+            'backup_data': 'Cadangkan Data (Backup)',
+            'restore_data': 'Pulihkan Data (Restore)',
             'account_title': 'Akun',
             'logout': 'Keluar',
-            'lang_name': 'Indonesia'
+            'lang_name': 'Indonesia',
+            'toast_backup': 'Backup seluruh data berhasil diunduh!',
+            'toast_restore': 'Data berhasil direstore! Memuat ulang...',
+            'error_restore': 'Gagal memulihkan data. Format file JSON tidak valid.'
         },
         'en': {
             'title': 'Settings',
@@ -32,9 +38,15 @@ var setting = (function() {
             'about_app': 'About Application',
             'terms': 'Terms of Service',
             'privacy': 'Privacy Policy',
+            'backup_title': 'Storage & Data',
+            'backup_data': 'Backup Data',
+            'restore_data': 'Restore Data',
             'account_title': 'Account',
             'logout': 'Sign Out',
-            'lang_name': 'English'
+            'lang_name': 'English',
+            'toast_backup': 'All data backup downloaded successfully!',
+            'toast_restore': 'Data restored successfully! Reloading...',
+            'error_restore': 'Failed to restore data. Invalid JSON format.'
         }
     };
 
@@ -86,7 +98,38 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 2: INFORMASI LAINNYA -->
+                <!-- GRUP 2: BACKUP & RESTORE DATA -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
+                        ${t.backup_title}
+                    </div>
+
+                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
+                        
+                        <!-- Item: Backup Data -->
+                        <div onclick="setting.backupAllData()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-cloud-download-alt" style="font-size: 18px; width: 22px; text-align: center; color: #2E7D32;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">${t.backup_data}</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+
+                        <!-- Item: Restore Data -->
+                        <div onclick="document.getElementById('fileRestoreInput').click()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 18px; width: 22px; text-align: center; color: #0277BD;"></i>
+                                <span style="font-size: 14px; font-weight: 600;">${t.restore_data}</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
+                        </div>
+                        <!-- Hidden File Input untuk Restore -->
+                        <input type="file" id="fileRestoreInput" accept=".json" style="display: none;" onchange="setting.restoreAllData(event)">
+
+                    </div>
+                </div>
+
+                <!-- GRUP 3: INFORMASI LAINNYA -->
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.info_title}
@@ -151,7 +194,7 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 3: AKUN -->
+                <!-- GRUP 4: AKUN -->
                 <div>
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.account_title}
@@ -227,7 +270,6 @@ var setting = (function() {
     }
 
     function init() {
-        // Terapkan mode gelap secara langsung jika tersimpan aktif
         var isDarkMode = localStorage.getItem('cozycs_dark_mode') === 'true';
         applyDarkModeStyle(isDarkMode);
     }
@@ -242,12 +284,10 @@ var setting = (function() {
         }
     }
 
-    // TOGGLE MODE GELAP (DENGAN PEMANGGILAN GLOBAL DARK MODE)
     function toggleDarkMode(isDark) {
         localStorage.setItem('cozycs_dark_mode', isDark);
         applyDarkModeStyle(isDark);
 
-        // Memanggil fungsi penerapan mode gelap global dari index.html
         if (typeof window.applyDarkModeGlobal === 'function') {
             window.applyDarkModeGlobal();
         }
@@ -261,9 +301,63 @@ var setting = (function() {
         }
     }
 
+    // FUNGSI BACKUP SEMUA DATA KE FILE JSON
+    function backupAllData() {
+        var allData = {};
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key.startsWith('cozycs_')) {
+                allData[key] = localStorage.getItem(key);
+            }
+        }
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 2));
+        var downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "CozycsFarm_Backup_" + new Date().toISOString().split('T')[0] + ".json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+
+        var currentLangKey = getLang();
+        var t = translations[currentLangKey] || translations['id'];
+
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast(t.toast_backup, 'success');
+        }
+    }
+
+    // FUNGSI RESTORE DATA DARI FILE JSON
+    function restoreAllData(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+
+        var currentLangKey = getLang();
+        var t = translations[currentLangKey] || translations['id'];
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var importedData = JSON.parse(e.target.result);
+                Object.keys(importedData).forEach(function(key) {
+                    if (key.startsWith('cozycs_')) {
+                        localStorage.setItem(key, importedData[key]);
+                    }
+                });
+                if (typeof Helper !== 'undefined' && Helper.showToast) {
+                    Helper.showToast(t.toast_restore, 'success');
+                }
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } catch (err) {
+                alert(t.error_restore);
+            }
+        };
+        reader.readAsText(file);
+    }
+
     function openLanguageModal() {
         var currentLang = getLang();
-        
         var title = 'Pilih Bahasa / Select Language';
         var body = `
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; text-align: left;">
@@ -280,16 +374,13 @@ var setting = (function() {
         var actions = `
             <button onclick="setting.closeModal()" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #555; font-weight: bold; font-size: 13px; cursor: pointer;">Tutup / Close</button>
         `;
-
         showModal(title, body, actions);
     }
 
-    // PENETAPAN BAHASA (DENGAN PEMANGGILAN GLOBAL LANGUAGE)
     function setLanguage(langCode) {
         localStorage.setItem('cozycs_lang', langCode);
         closeModal();
 
-        // Memanggil fungsi penerapan bahasa global dari index.html
         if (typeof window.applyAppLanguage === 'function') {
             window.applyAppLanguage(langCode);
         }
@@ -348,7 +439,6 @@ var setting = (function() {
         }, 800);
     }
 
-    // HELPER INTERNAL UNTUK MODAL KUSTOM
     function showModal(title, bodyHtml, actionsHtml) {
         var overlay = document.getElementById('customModalOverlay');
         var titleEl = document.getElementById('customModalTitle');
@@ -372,6 +462,8 @@ var setting = (function() {
         render: render,
         init: init,
         toggleDarkMode: toggleDarkMode,
+        backupAllData: backupAllData,
+        restoreAllData: restoreAllData,
         openLanguageModal: openLanguageModal,
         setLanguage: setLanguage,
         openCustomInfoModal: openCustomInfoModal,
