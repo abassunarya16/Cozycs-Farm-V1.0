@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (DYNAMIC GPS & WEATHER)
+// COZYCS FARM - EXECUTIVE DASHBOARD (BILINGUAL & DARK MODE FULL)
 // ==========================================
 
 var dashboard = (function() {
@@ -9,7 +9,6 @@ var dashboard = (function() {
     var isAirflowOn = false;
     var clockInterval = null;
 
-    // Lokasi Default (Pesawaran) atau membaca dari memori tersimpan
     var currentLocation = {
         lat: parseFloat(localStorage.getItem('cozycs_user_lat')) || -5.4287,
         lon: parseFloat(localStorage.getItem('cozycs_user_lon')) || 105.1800,
@@ -22,6 +21,111 @@ var dashboard = (function() {
         icon: '⛅'
     };
 
+    // KAMUS BAHASA KUSUS DASBOR
+    var i18nDict = {
+        'id': {
+            'greeting_sub': 'Semoga panen melimpah hari ini!',
+            'select_gh': 'Pilih Tampilan Greenhouse:',
+            'all_gh': '🌐 Semua GH',
+            'water_env_mon': 'Monitoring Air Dan Lingkungan',
+            'latest': 'Terbaru',
+            'water_param': '💧 Parameter Air Tandon',
+            'env_param': '☀️ Parameter Lingkungan',
+            'nutrition': 'Nutrisi',
+            'ph_water': 'pH Air',
+            'water_temp': 'Suhu Air',
+            'tandon_water': 'Tandon Air',
+            'room_temp': 'Suhu Udara',
+            'humidity': 'Kelembaban',
+            'light': 'Cahaya',
+            'airflow': 'Airflow',
+            'recorded': 'Tercatat',
+            'no_data': 'Belum Ada',
+            'water_level': 'Level Air',
+            'room_temp_lbl': 'Suhu Ruang',
+            'rh_gh': 'RH GH',
+            'intensity': 'Intensitas',
+            'active': 'Aktif',
+            'inactive': 'Tidak Aktif',
+            'active_plants': '🌱 Tanaman Aktif',
+            'living_plants': '🌿 Tanaman Hidup',
+            'selected_fruit': '🍈 Buah Fix',
+            'est_harvest': '📅 Estimasi Panen',
+            'initial_cap': 'Kapasitas Awal',
+            'active_pop': 'Populasi Aktif',
+            'selection_passed': 'Seleksi Lolos',
+            'today_agenda': 'Agenda Hari Ini',
+            'today': 'Hari Ini',
+            'no_agenda': 'Tidak ada agenda kegiatan untuk hari ini.',
+            'season_progress': 'Progress Musim & Estimasi Hasil',
+            'recent_act': 'Aktivitas Terakhir (Audit Log)',
+            'no_logs': 'Belum ada riwayat aktivitas tercatat.',
+            'quick_action': 'Quick Action / Input Cepat',
+            'btn_nutrition': '+ Nutrisi',
+            'btn_spray': '+ Spray',
+            'btn_warehouse': '+ Gudang',
+            'btn_harvest': '+ Panen',
+            'btn_schedule': '+ Jadwal',
+            'btn_pests': '+ Hama',
+            'stem': 'Batang',
+            'tree': 'Pohon',
+            'fruit': 'Buah'
+        },
+        'en': {
+            'greeting_sub': 'May your harvest be abundant today!',
+            'select_gh': 'Select Greenhouse View:',
+            'all_gh': '🌐 All GH',
+            'water_env_mon': 'Water & Environment Monitoring',
+            'latest': 'Latest',
+            'water_param': '💧 Water Tank Parameters',
+            'env_param': '☀️ Environment Parameters',
+            'nutrition': 'Nutrition',
+            'ph_water': 'Water pH',
+            'water_temp': 'Water Temp',
+            'tandon_water': 'Water Tank',
+            'room_temp': 'Air Temp',
+            'humidity': 'Humidity',
+            'light': 'Light',
+            'airflow': 'Airflow',
+            'recorded': 'Recorded',
+            'no_data': 'No Data',
+            'water_level': 'Water Level',
+            'room_temp_lbl': 'Room Temp',
+            'rh_gh': 'GH RH',
+            'intensity': 'Intensity',
+            'active': 'Active',
+            'inactive': 'Inactive',
+            'active_plants': '🌱 Active Plants',
+            'living_plants': '🌿 Living Plants',
+            'selected_fruit': '🍈 Selected Fruit',
+            'est_harvest': '📅 Est. Harvest',
+            'initial_cap': 'Initial Capacity',
+            'active_pop': 'Active Population',
+            'selection_passed': 'Selected Passed',
+            'today_agenda': "Today's Agenda",
+            'today': 'Today',
+            'no_agenda': 'No scheduled activities for today.',
+            'season_progress': 'Season Progress & Estimated Yield',
+            'recent_act': 'Recent Activities (Audit Log)',
+            'no_logs': 'No activity logs recorded yet.',
+            'quick_action': 'Quick Action / Fast Input',
+            'btn_nutrition': '+ Nutrition',
+            'btn_spray': '+ Spray',
+            'btn_warehouse': '+ Stock',
+            'btn_harvest': '+ Harvest',
+            'btn_schedule': '+ Schedule',
+            'btn_pests': '+ Pests',
+            'stem': 'Stems',
+            'tree': 'Trees',
+            'fruit': 'Fruits'
+        }
+    };
+
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
+
     function render() {
         return `
             <div class="dashboard-container" style="padding-bottom: 30px;">
@@ -30,32 +134,32 @@ var dashboard = (function() {
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
                 <!-- 1. SWITCHER / FILTER GREENHOUSE -->
-                <div style="background: #fff; padding: 10px 12px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Pilih Tampilan Greenhouse:</div>
+                <div style="background: var(--card-bg, #fff); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 12px;">
+                    <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">${t('select_gh')}</div>
                     <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
                 </div>
 
                 <!-- 2. KARTU INFORMASI GH BANNER -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
 
-                <!-- 3. MONITORING AIR DAN LINGKUNGAN (SENSOR LOG) -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
+                <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 4px;"></i> Monitoring Air Dan Lingkungan</span>
-                            <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">Terbaru</span>
+                            <span style="font-size: 13px; font-weight: 700; color: #0277BD;"><i class="fas fa-tint" style="margin-right: 4px;"></i> ${t('water_env_mon')}</span>
+                            <span style="font-size: 9px; background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 8px; font-weight: bold;">${t('latest')}</span>
                         </div>
                         
-                        <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #F0F4F8; border: 1px solid #D0D7DE; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                        <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: var(--card-bg, #F0F4F8); border: 1px solid var(--border-color, #D0D7DE); color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
                             <i id="iconToggleIot" class="fas ${isIotCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}" style="font-size: 12px;"></i>
                         </button>
                     </div>
 
                     <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; margin-top: 14px; transition: all 0.3s ease;">
-                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">💧 Parameter Air Tandon</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">${t('water_param')}</div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards"></div>
 
-                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">☀️ Parameter Lingkungan</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase;">${t('env_param')}</div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards"></div>
                     </div>
                 </div>
@@ -64,36 +168,36 @@ var dashboard = (function() {
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
                 <!-- 5. AGENDA HARI INI -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> Agenda Hari Ini</span>
-                        <span style="font-size: 10px; color: #777;" id="dashTodayDate">Hari Ini</span>
+                        <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
+                        <span style="font-size: 10px; color: #777;" id="dashTodayDate">${t('today')}</span>
                     </div>
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
                 <!-- 6. PROGRESS MUSIM & ESTIMASI OMZET -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 16px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> Progress Musim & Estimasi Hasil</div>
+                <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
                 <!-- 7. AKTIVITAS TERAKHIR -->
-                <div style="background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> Aktivitas Terakhir (Audit Log)</div>
+                <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <!-- 8. QUICK ACTION BUTTONS -->
-                <div style="background: #F5F5F5; padding: 12px; border-radius: 12px; border: 1px solid #e0e0e0;">
-                    <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">Quick Action / Input Cepat</div>
+                <div style="background: var(--card-bg, #F5F5F5); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e0e0e0);">
+                    <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">${t('quick_action')}</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
-                        <button onclick="navigateTo('nutrisi')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #B3E5FC; background: #E1F5FE; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Nutrisi</button>
-                        <button onclick="navigateTo('spray')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #E1BEE7; background: #F3E5F5; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Spray</button>
-                        <button onclick="navigateTo('gudang')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFE0B2; background: #FFF3E0; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Gudang</button>
-                        <button onclick="navigateTo('panen')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #C8E6C9; background: #E8F5E9; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Panen</button>
-                        <button onclick="navigateTo('jadwal')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #D1C4E9; background: #EDE7F6; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Jadwal</button>
-                        <button onclick="navigateTo('hama')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFCDD2; background: #FFEBEE; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer;"><i class="fas fa-plus"></i> Hama</button>
+                        <button onclick="navigateTo('nutrisi')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #B3E5FC; background: #E1F5FE; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_nutrition')}</button>
+                        <button onclick="navigateTo('spray')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #E1BEE7; background: #F3E5F5; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_spray')}</button>
+                        <button onclick="navigateTo('gudang')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFE0B2; background: #FFF3E0; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_warehouse')}</button>
+                        <button onclick="navigateTo('panen')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #C8E6C9; background: #E8F5E9; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_harvest')}</button>
+                        <button onclick="navigateTo('jadwal')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #D1C4E9; background: #EDE7F6; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_schedule')}</button>
+                        <button onclick="navigateTo('hama')" style="padding: 8px 4px; border-radius: 8px; border: 1px solid #FFCDD2; background: #FFEBEE; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer;">${t('btn_pests')}</button>
                     </div>
                 </div>
             </div>
@@ -116,16 +220,6 @@ var dashboard = (function() {
         return [];
     }
 
-    function saveData(key, data) {
-        try {
-            if (typeof Storage !== 'undefined' && Storage.saveAll) {
-                Storage.saveAll(key, data);
-            } else {
-                localStorage.setItem(key, JSON.stringify(data));
-            }
-        } catch(e) {}
-    }
-
     function startLiveClock() {
         if (clockInterval) clearInterval(clockInterval);
 
@@ -137,23 +231,22 @@ var dashboard = (function() {
                 dateTimeEl.textContent = Helper.getFullDateTime();
             }
             if (greetingEl && typeof Helper !== 'undefined' && Helper.getGreeting) {
-                greetingEl.textContent = Helper.getGreeting().text;
+                var isEn = (localStorage.getItem('cozycs_lang') === 'en');
+                var g = Helper.getGreeting();
+                var text = g.text;
+                if (isEn) {
+                    if (text.includes('Pagi')) text = 'Good Morning';
+                    else if (text.includes('Siang')) text = 'Good Afternoon';
+                    else if (text.includes('Sore')) text = 'Good Afternoon';
+                    else text = 'Good Evening';
+                }
+                greetingEl.textContent = text;
             }
         }, 10000);
     }
 
-    // FUNGSI DETEKSI LOKASI GPS HP TERKINI (LIKE PETANI CERDAS APP)
     function detectUserLocation() {
-        if (!navigator.geolocation) {
-            if (typeof Helper !== 'undefined' && Helper.showToast) {
-                Helper.showToast('Fitur GPS tidak didukung di browser ini', 'error');
-            }
-            return;
-        }
-
-        if (typeof Helper !== 'undefined' && Helper.showToast) {
-            Helper.showToast('Mencari lokasi terkini...', 'info');
-        }
+        if (!navigator.geolocation) return;
 
         var locIconEl = document.getElementById('btnGpsTargetIcon');
         if (locIconEl) locIconEl.className = 'fas fa-spinner fa-spin';
@@ -163,11 +256,10 @@ var dashboard = (function() {
                 var lat = position.coords.latitude;
                 var lon = position.coords.longitude;
 
-                // Reverse Geocoding ke API BigDataCloud (Gratis & Cepat)
                 fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=id')
                     .then(function(res) { return res.json(); })
                     .then(function(geoData) {
-                        var cityName = geoData.city || geoData.locality || geoData.principalSubdivision || 'Lokasi Saya';
+                        var cityName = geoData.city || geoData.locality || geoData.principalSubdivision || 'My Location';
                         cityName = cityName.replace(/Kota |Kabupaten /gi, '');
 
                         currentLocation = { lat: lat, lon: lon, city: cityName };
@@ -177,13 +269,6 @@ var dashboard = (function() {
                         localStorage.setItem('cozycs_user_city', cityName);
 
                         fetchWeatherByCoords(lat, lon, cityName);
-
-                        if (typeof Helper !== 'undefined' && Helper.showToast) {
-                            Helper.showToast('Lokasi diperbarui: ' + cityName, 'success');
-                        }
-                    })
-                    .catch(function(err) {
-                        fetchWeatherByCoords(lat, lon, 'Lokasi Saya');
                     })
                     .finally(function() {
                         if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
@@ -191,19 +276,11 @@ var dashboard = (function() {
             },
             function(error) {
                 if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
-                var msg = 'Gagal mengambil lokasi GPS';
-                if (error.code === error.PERMISSION_DENIED) {
-                    msg = 'Izin lokasi GPS belum diaktifkan di HP';
-                }
-                if (typeof Helper !== 'undefined' && Helper.showToast) {
-                    Helper.showToast(msg, 'error');
-                }
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     }
 
-    // FUNGSI TARIK DATA CUACA BERDASARKAN KOORDINAT LOKASI TERKINI
     function fetchWeatherByCoords(lat, lon, cityName) {
         var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
 
@@ -213,31 +290,19 @@ var dashboard = (function() {
                 if (data && data.current) {
                     var temp = Math.round(data.current.temperature_2m) + '°C';
                     var humidity = Math.round(data.current.relative_humidity_2m) + '%';
-                    var icon = parseWeatherIcon(data.current.weather_code);
 
-                    pesawaranWeather = { temp: temp, humidity: humidity, icon: icon };
+                    pesawaranWeather = { temp: temp, humidity: humidity, icon: '⛅' };
 
                     var tempEl = document.getElementById('liveWeatherTemp');
                     var humEl = document.getElementById('liveWeatherHumidity');
-                    var iconEl = document.getElementById('liveWeatherIcon');
                     var cityEl = document.getElementById('liveLocationName');
 
                     if (tempEl) tempEl.textContent = temp;
                     if (humEl) humEl.textContent = humidity;
-                    if (iconEl) iconEl.textContent = icon;
                     if (cityEl) cityEl.textContent = cityName;
                 }
             })
             .catch(function(err) {});
-    }
-
-    function parseWeatherIcon(code) {
-        if (code === 0) return '☀️';
-        if (code >= 1 && code <= 3) return '⛅';
-        if (code === 45 || code === 48) return '🌫️';
-        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
-        if (code >= 95 && code <= 99) return '⛈️';
-        return '⛅';
     }
 
     function refreshAllDashboardData() {
@@ -255,11 +320,20 @@ var dashboard = (function() {
         var el = document.getElementById('dashWelcomeBanner');
         if (!el) return;
 
-        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Sore', icon: '⛅' };
-        var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : 'Senin, 03 Agu 2026 | 15:29 WIB';
+        var isEn = (localStorage.getItem('cozycs_lang') === 'en');
+        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Sore' };
+        var greetingText = greeting.text;
+        if (isEn) {
+            if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
+            else if (greetingText.includes('Siang')) greetingText = 'Good Afternoon';
+            else if (greetingText.includes('Sore')) greetingText = 'Good Afternoon';
+            else greetingText = 'Good Evening';
+        }
+
+        var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
 
         el.innerHTML = `
-            <div style="background: #ffffff; border-radius: 16px; padding: 16px; border: 1px solid #e8e8e8; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+            <div style="background: var(--card-bg, #ffffff); border-radius: 16px; padding: 16px; border: 1px solid var(--border-color, #e8e8e8);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="width: 46px; height: 46px; border-radius: 50%; background: #E8F5E9; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid #C8E6C9;">
@@ -267,17 +341,17 @@ var dashboard = (function() {
                         </div>
                         <div>
                             <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #1B5E20; line-height: 1.2;">
-                                ${greeting.text}
+                                ${greetingText}
                             </div>
                             <div style="font-size: 11px; color: #666; margin-top: 3px;">
-                                Semoga panen melimpah hari ini!
+                                ${t('greeting_sub')}
                             </div>
                         </div>
                     </div>
 
                     <div style="text-align: right; flex-shrink: 0;">
                         <div id="liveWeatherIcon" style="font-size: 22px; line-height: 1;">${pesawaranWeather.icon}</div>
-                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #222; margin-top: 2px;">
+                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: var(--text-color, #222); margin-top: 2px;">
                             ${pesawaranWeather.temp}
                         </div>
                         <div id="liveWeatherHumidity" style="font-size: 10px; color: #888; font-weight: 600;">
@@ -294,11 +368,10 @@ var dashboard = (function() {
                         <span id="liveDateTime">${dateTimeStr}</span>
                     </div>
 
-                    <!-- LOKASI DINAMIS DENGAN TOMBOL GPS (TARGET ICON) -->
                     <div style="display: flex; align-items: center; gap: 5px; color: #D32F2F; font-weight: 700;">
                         <i class="fas fa-map-marker-alt"></i>
                         <span id="liveLocationName">${currentLocation.city}</span>
-                        <button onclick="dashboard.detectUserLocation()" title="Deteksi Lokasi Terkini" style="background: #FFEBEE; border: 1px solid #FFCDD2; color: #D32F2F; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-left: 2px;">
+                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: #FFEBEE; border: 1px solid #FFCDD2; color: #D32F2F; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
                             <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 11px;"></i>
                         </button>
                     </div>
@@ -315,7 +388,7 @@ var dashboard = (function() {
 
         var html = `
             <button onclick="dashboard.selectGhFilter('ALL')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${selectedGh === 'ALL' ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
-                🌐 Semua GH
+                ${t('all_gh')}
             </button>
         `;
 
@@ -349,9 +422,9 @@ var dashboard = (function() {
 
         if (dataGh.length === 0) {
             el.innerHTML = `
-                <div style="background: #F5F5F5; border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
+                <div style="background: var(--card-bg, #F5F5F5); border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
                     <i class="fas fa-warehouse" style="font-size: 20px; color: #888; margin-bottom: 6px; display: block;"></i>
-                    Belum ada Greenhouse terdaftar. Silakan tambahkan data di modul <strong>Greenhouse</strong>.
+                    Belum ada Greenhouse terdaftar.
                 </div>
             `;
             return;
@@ -361,8 +434,8 @@ var dashboard = (function() {
             var listGhHtml = '';
             dataGh.forEach(function(g) {
                 var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode || t.ghId === g.id; });
-                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || 'Tanpa Varietas');
-                var hst = (currentTanaman && (currentTanaman.hst !== undefined)) ? currentTanaman.hst + ' HST' : '0 HST';
+                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || '-');
+                var hst = (currentTanaman && (currentTanaman.hst !== undefined)) ? currentTanaman.hst + ' DAP' : '0 DAP';
 
                 listGhHtml += `
                     <div style="font-size: 12px; font-weight: 600; color: #2E7D32; display: flex; align-items: center; gap: 6px; margin-top: 3px;">
@@ -373,57 +446,15 @@ var dashboard = (function() {
             });
 
             el.innerHTML = `
-                <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
+                <div style="background: var(--card-bg, #F4F6F8); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border-color, #EAEAEA);">
                     <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
+                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; padding: 6px;">
                             <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
                         </div>
                         <div>
-                            <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">Cozycs Farm (Semua GH)</div>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--text-color, #111); margin-bottom: 2px;">Cozycs Farm (All GH)</div>
                             ${listGhHtml}
                         </div>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="navigateTo('tanaman')" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                            <i class="fas fa-seedling" style="font-size: 15px;"></i>
-                        </button>
-                        <button onclick="navigateTo('greenhouse')" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                            <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        } else {
-            var currentGh = dataGh.find(function(g) { return g.kode === selectedGh; });
-            var currentTanaman = dataTanaman.find(function(t) { return t.gh === selectedGh || t.ghId === (currentGh ? currentGh.id : ''); });
-
-            var titleZona = selectedGh + ' - ' + (currentGh ? (currentGh.nama || 'Greenhouse') : 'Greenhouse');
-            var varietasText = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : 'Belum Ada Tanaman';
-            var hstText = (currentTanaman && currentTanaman.hst !== undefined) ? currentTanaman.hst + ' HST' : '0 HST';
-            var statusText = (currentTanaman && currentTanaman.status) ? currentTanaman.status : 'Fase Pertumbuhan';
-            var singleMelonImg = (currentGh && currentGh.fotoUrl) ? currentGh.fotoUrl : melonImgUrl;
-
-            el.innerHTML = `
-                <div style="background: #F4F6F8; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #EAEAEA;">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); flex-shrink: 0; padding: 6px;">
-                            <img src="${singleMelonImg}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
-                        </div>
-                        <div>
-                            <div style="font-size: 15px; font-weight: 800; color: #111; margin-bottom: 2px;">${titleZona}</div>
-                            <div style="font-size: 13px; font-weight: 600; color: #2E7D32; margin-bottom: 2px;">${varietasText} (${hstText})</div>
-                            <div style="font-size: 12px; font-weight: 700; color: #00897B;">${statusText}</div>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button onclick="navigateTo('tanaman')" title="Detail Tanaman" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                            <i class="fas fa-seedling" style="font-size: 15px;"></i>
-                        </button>
-                        <button onclick="navigateTo('greenhouse')" title="Pengaturan GH" style="width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 1px solid #E0E0E0; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                            <i class="fas fa-sliders-h" style="font-size: 15px;"></i>
-                        </button>
                     </div>
                 </div>
             `;
@@ -443,60 +474,60 @@ var dashboard = (function() {
         var valWaterTemp = (latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : '0°C';
         var valTandon = (latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
 
-        var statusPpm = (valPpm > 0) ? 'Tercatat' : 'Belum Ada';
-        var statusPh = (valPh > 0) ? 'Tercatat' : 'Belum Ada';
+        var statusPpm = (valPpm > 0) ? t('recorded') : t('no_data');
+        var statusPh = (valPh > 0) ? t('recorded') : t('no_data');
 
         el.innerHTML = `
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E8F5E9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-seedling" style="color: #2E7D32; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Nutrisi</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #888;">ppm</span></div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('nutrition')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #888;">ppm</span></div>
                     </div>
                 </div>
                 <div><span style="background: ${valPpm > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPpm > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-vial" style="color: #0288D1; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">pH Air</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valPh} <span style="font-size: 10px; font-weight: 600; color: #888;">pH</span></div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('ph_water')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valPh} <span style="font-size: 10px; font-weight: 600; color: #888;">pH</span></div>
                     </div>
                 </div>
                 <div><span style="background: ${valPh > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPh > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPh}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E0F7FA; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-thermometer-half" style="color: #00838F; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Suhu Air</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valWaterTemp}</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('water_temp')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valWaterTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Tercatat</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('recorded')}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-water" style="color: #0277BD; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Tandon Air</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valTandon} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('tandon_water')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valTandon} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E1F5FE; color: #0277BD; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Level Air</span></div>
+                <div><span style="background: #E1F5FE; color: #0277BD; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('water_level')}</span></div>
             </div>
         `;
     }
@@ -514,61 +545,61 @@ var dashboard = (function() {
         var valLux = (latest.lux !== undefined && latest.lux !== '') ? latest.lux : '0';
 
         el.innerHTML = `
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFF3E0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-temperature-high" style="color: #E65100; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Suhu Udara</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valRoomTemp}</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('room_temp')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valRoomTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Suhu Ruang</span></div>
+                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('room_temp_lbl')}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #E3F2FD; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-tint-slash" style="color: #1E88E5; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Kelembaban</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valHumidity} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('humidity')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valHumidity} <span style="font-size: 10px; font-weight: 600; color: #888;">%</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">RH GH</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('rh_gh')}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: #FFFDE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-sun" style="color: #F57F17; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Cahaya</div>
-                        <div style="font-size: 18px; font-weight: 800; color: #111;">${valLux} <span style="font-size: 10px; font-weight: 600; color: #888;">Lux</span></div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('light')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: var(--text-color, #111);">${valLux} <span style="font-size: 10px; font-weight: 600; color: #888;">Lux</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">Intensitas</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('intensity')}</span></div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #EAEAEA; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #EAEAEA); display: flex; flex-direction: column; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: ${isAirflowOn ? '#EDE7F6' : '#F5F5F5'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease;">
                         <i class="fas fa-fan" style="color: ${isAirflowOn ? '#512DA8' : '#9E9E9E'}; font-size: 24px;"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 600; color: #777;">Airflow</div>
+                        <div style="font-size: 11px; font-weight: 600; color: #777;">${t('airflow')}</div>
                         <div style="font-size: 15px; font-weight: 800; color: ${isAirflowOn ? '#2E7D32' : '#C62828'}; transition: color 0.3s ease;">
-                            ${isAirflowOn ? 'Aktif' : 'Tidak Aktif'}
+                            ${isAirflowOn ? t('active') : t('inactive')}
                         </div>
                     </div>
                 </div>
                 
                 <div style="display: flex; align-items: center;">
-                    <div onclick="dashboard.toggleAirflow()" title="Klik untuk ubah status Airflow" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease; box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);">
-                        <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
+                    <div onclick="dashboard.toggleAirflow()" style="width: 38px; height: 20px; background: ${isAirflowOn ? '#4CAF50' : '#CCCCCC'}; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s ease;">
+                        <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease;"></div>
                     </div>
                 </div>
             </div>
@@ -613,26 +644,26 @@ var dashboard = (function() {
         });
 
         el.innerHTML = `
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌱 Tanaman Aktif</div>
-                <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} Batang</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Kapasitas Awal</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('active_plants')}</div>
+                <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} ${t('stem')}</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('initial_cap')}</div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🌿 Tanaman Hidup</div>
-                <div style="font-size: 15px; font-weight: 800; color: #0277BD; margin-top: 4px;">${tanamanHidup} Pohon</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Populasi Aktif</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('living_plants')}</div>
+                <div style="font-size: 15px; font-weight: 800; color: #0277BD; margin-top: 4px;">${tanamanHidup} ${t('tree')}</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('active_pop')}</div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">🍈 Buah Fix</div>
-                <div style="font-size: 15px; font-weight: 800; color: #E65100; margin-top: 4px;">${buahFix} Buah</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Seleksi Lolos</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('selected_fruit')}</div>
+                <div style="font-size: 15px; font-weight: 800; color: #E65100; margin-top: 4px;">${buahFix} ${t('fruit')}</div>
+                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('selection_passed')}</div>
             </div>
 
-            <div style="background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #e8e8e8; display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">📅 Estimasi Panen</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('est_harvest')}</div>
                 <div style="font-size: 13px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${tglPanenStr}</div>
                 <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Est. ${totalEstimasiKg} Kg</div>
             </div>
@@ -648,15 +679,13 @@ var dashboard = (function() {
         if (dateEl) dateEl.innerText = (typeof Helper !== 'undefined' && Helper.formatDate) ? Helper.formatDate(todayStr) : todayStr;
 
         var schedules = getData('cozycs_schedules');
-        if (schedules.length === 0) {
-            schedules = getData('cozycs_jadwal');
-        }
+        if (schedules.length === 0) schedules = getData('cozycs_jadwal');
 
         var todayTasks = schedules.filter(function(s) {
             var sDate = s.date || s.tanggal || '';
             var matchDate = (sDate === todayStr);
             var sGh = s.gh || s.greenhouse || 'ALL';
-            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'Seluruh Farm') || (sGh === 'ALL');
+            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL');
             return matchDate && matchGh;
         });
 
@@ -664,7 +693,7 @@ var dashboard = (function() {
             el.innerHTML = `
                 <div style="text-align: center; padding: 12px; color: #888; font-size: 12px;">
                     <i class="far fa-calendar-check" style="font-size: 18px; color: #2E7D32; margin-bottom: 4px; display: block;"></i>
-                    Tidak ada agenda kegiatan untuk hari ini.
+                    ${t('no_agenda')}
                 </div>
             `;
             return;
@@ -678,8 +707,8 @@ var dashboard = (function() {
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#222222'}; text-decoration: ${isDone ? 'line-through' : 'none'};">
-                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda Kegiatan'}
+                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : 'var(--text-color, #222)'}; text-decoration: ${isDone ? 'line-through' : 'none'};">
+                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}
                         </span>
                     </div>
                     <span style="font-size: 10px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
@@ -722,13 +751,13 @@ var dashboard = (function() {
 
         el.innerHTML = `
             <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                <span><strong>Progress Musim (${selectedGh})</strong>: ${percentHst}% (${maxHst} HST)</span>
-                <span style="font-weight: bold; color: #2E7D32;">Est. Omzet: Rp ${estimasiOmzet.toLocaleString('id-ID')}</span>
+                <span><strong>Progress (${selectedGh})</strong>: ${percentHst}% (${maxHst} DAP)</span>
+                <span style="font-weight: bold; color: #2E7D32;">Est: Rp ${estimasiOmzet.toLocaleString('id-ID')}</span>
             </div>
             <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
-                <div style="width: ${percentHst}%; background: #2E7D32; height: 100%; transition: width 0.3s ease;"></div>
+                <div style="width: ${percentHst}%; background: #2E7D32; height: 100%;"></div>
             </div>
-            <div style="font-size: 10px; color: #666;">*Kalkulasi: ${estimasiKg} Kg × Rp ${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
+            <div style="font-size: 10px; color: #666;">*Calc: ${estimasiKg} Kg × Rp ${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
         `;
     }
 
@@ -737,14 +766,12 @@ var dashboard = (function() {
         if (!el) return;
 
         var logs = getData('cozycs_logs');
-        if (logs.length === 0) {
-            logs = getData('cozycs_activities');
-        }
+        if (logs.length === 0) logs = getData('cozycs_activities');
 
         var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
 
         if (filteredLogs.length === 0) {
-            el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">Belum ada riwayat aktivitas tercatat.</div>`;
+            el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">${t('no_logs')}</div>`;
             return;
         }
 
@@ -755,7 +782,7 @@ var dashboard = (function() {
             html += `
                 <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
                     <span style="font-weight: bold; color: #0277BD; width: 45px; flex-shrink: 0;">${jamStr}</span>
-                    <span style="color: #333;">${textStr}</span>
+                    <span style="color: var(--text-color, #333);">${textStr}</span>
                 </div>
             `;
         });
@@ -794,7 +821,9 @@ var dashboard = (function() {
                 item.status = 'Selesai';
                 item.completed = true;
             }
-            saveData(keyName, schedules);
+            if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                Storage.saveAll(keyName, schedules);
+            }
         }
         loadTodayAgenda();
     }
