@@ -19,7 +19,7 @@ var cctv = (function() {
         camList.forEach(function(camName) {
             var isActive = activeCam === camName;
             camButtonsHtml += `
-                <button onclick="cctv.selectCam('${camName}')" class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; ${isActive ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'} border: none; white-space: nowrap; cursor: pointer;">
+                <button onclick="window.cctv.selectCam('${camName}')" class="btn" style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; ${isActive ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'} border: none; white-space: nowrap; cursor: pointer;">
                     📹 ${camName}
                 </button>
             `;
@@ -54,7 +54,7 @@ var cctv = (function() {
                         `}
                     </div>
 
-                    <!-- Footer Control Bar di Video -->
+                    <!-- Footer Control Bar -->
                     <div style="background: #181818; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #282828; font-size: 11px; color: #ccc;">
                         <span id="cctvLiveClock"><i class="far fa-clock"></i> Live Feed</span>
                         <span style="color: #4CAF50; font-weight: 700;"><i class="fas fa-signal"></i> 1080p HD</span>
@@ -136,3 +136,6 @@ var cctv = (function() {
     };
 
 })();
+
+// DAFTARKAN EKSPLISIT KE WINDOW GLOBAL
+window.cctv = cctv;
