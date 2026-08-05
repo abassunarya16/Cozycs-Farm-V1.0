@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - SETTINGS MODULE (REVISED WITH BACKUP & RESTORE)
+// COZYCS FARM - SETTINGS MODULE (REVISED & SYNCED WITH HELPER.JS)
 // ==========================================
 
 var setting = (function() {
@@ -56,7 +56,8 @@ var setting = (function() {
 
     function render() {
         var isDarkMode = localStorage.getItem('cozycs_dark_mode') === 'true';
-        var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.6';
+        // Mengambil versi secara dinamis dari Helper.js
+        var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.0.0';
         var currentLangKey = getLang();
         var t = translations[currentLangKey] || translations['id'];
 
@@ -164,7 +165,7 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Tentang Aplikasi -->
+                        <!-- Item: Tentang Aplikasi (Sinkron Otomatis ke Helper.VERSION) -->
                         <div onclick="setting.checkAppUpdate()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-mobile-alt" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -214,7 +215,7 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- CONTAINER DIALOG / MODAL CUSTOM (NATIVE LOOK, NO BROWSER HEADER) -->
+                <!-- CONTAINER DIALOG / MODAL CUSTOM -->
                 <div id="customModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
                     <div id="customModalCard" style="background: var(--card-bg, #ffffff); color: var(--text-color, #222); width: 100%; max-width: 320px; border-radius: 20px; padding: 22px 20px 18px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); text-align: center; border: 1px solid var(--border-color, #eee);">
                         <div id="customModalTitle" style="font-size: 17px; font-weight: 800; margin-bottom: 8px;"></div>
@@ -246,7 +247,6 @@ var setting = (function() {
                     background-color: #000;
                 }
 
-                /* STYLESHEET GLOBAL UNTUK MODE GELAP */
                 body.dark-theme {
                     --card-bg: #1e1e1e !important;
                     --border-color: #333333 !important;
@@ -301,7 +301,6 @@ var setting = (function() {
         }
     }
 
-    // FUNGSI BACKUP SEMUA DATA KE FILE JSON
     function backupAllData() {
         var allData = {};
         for (var i = 0; i < localStorage.length; i++) {
@@ -326,7 +325,6 @@ var setting = (function() {
         }
     }
 
-    // FUNGSI RESTORE DATA DARI FILE JSON
     function restoreAllData(event) {
         var file = event.target.files[0];
         if (!file) return;
@@ -428,13 +426,15 @@ var setting = (function() {
 
     function checkAppUpdate() {
         var isEn = (getLang() === 'en');
+        var currentVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : '1.0.0';
+
         if (typeof Helper !== 'undefined' && Helper.showToast) {
-            Helper.showToast(isEn ? 'Checking for app updates...' : 'Mengecek versi aplikasi terbaru...', 'info');
+            Helper.showToast(isEn ? 'Checking version...' : 'Mengecek versi aplikasi...', 'info');
         }
         setTimeout(function() {
             openCustomInfoModal(
                 isEn ? 'App Version' : 'Versi Aplikasi', 
-                isEn ? 'Your Cozycs Farm app is up to date (v1.6).' : 'Aplikasi Cozycs Farm kamu sudah menggunakan versi terbaru (v1.6).'
+                isEn ? 'Your Cozycs Farm app is running on version (v' + currentVer + ').' : 'Aplikasi Cozycs Farm kamu menggunakan versi (v' + currentVer + ').'
             );
         }, 800);
     }
