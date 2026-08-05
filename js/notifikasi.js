@@ -1,9 +1,34 @@
 // ==========================================
 // COZYCS FARM - NOTIFICATION / ALARM MODULE
-// (Sistem Alarm Otomatis H-1 & Expired H+1)
+// (Sistem Alarm Otomatis H-1 & Expired H+1 - BILINGUAL & DARK MODE)
 // ==========================================
 
 var notifikasi = (function() {
+
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
+    var i18nDict = {
+        'id': {
+            'module_title': 'Pusat Notifikasi & Alarm Farm',
+            'module_subtitle': 'Daftar pengingat otomatis (H-1 kegiatan). Ketuk kartu alarm untuk langsung menuju modul terkait.',
+            'no_alarm_title': 'Tidak ada alarm aktif untuk esok hari',
+            'no_alarm_desc': 'Semua jadwal aman dan terkendali.',
+            'lbl_tomorrow_agenda': 'Agenda Besok',
+            'lbl_event_date': 'Tanggal Kegiatan:'
+        },
+        'en': {
+            'module_title': 'Farm Notification & Alarm Center',
+            'module_subtitle': 'Automated reminder list (H-1 tasks). Tap an alarm card to go directly to the related module.',
+            'no_alarm_title': 'No active alarms for tomorrow',
+            'no_alarm_desc': 'All schedules are clear and on track.',
+            'lbl_tomorrow_agenda': "Tomorrow's Agenda",
+            'lbl_event_date': 'Event Date:'
+        }
+    };
+
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
 
     // Helper untuk memformat tanggal (YYYY-MM-DD)
     function formatDateString(date) {
@@ -18,9 +43,9 @@ var notifikasi = (function() {
         return [year, month, day].join('-');
     }
 
-    // Mendapatkan tanggal hari ini, H-1, dan H+1 berdasarkan waktu sistem (2026)
+    // Mendapatkan tanggal hari ini, H-1, dan H+1 secara dinamis
     function getSystemDates() {
-        var today = new Date(2026, 7, 1); // 1 Agustus 2026 sesuai konteks sistem
+        var today = new Date();
         
         var tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
@@ -39,14 +64,19 @@ var notifikasi = (function() {
         };
     }
 
-    // Mengambil master jadwal farm (bisa dari modul terkait atau localStorage)
+    // Mengambil master jadwal farm (bisa dari Storage atau fallback)
     function getFarmSchedules() {
+        if (typeof Storage !== 'undefined' && Storage.getAll) {
+            var schedules = Storage.getAll('cozycs_schedules') || [];
+            if (schedules.length > 0) return schedules;
+        }
+
         var defaultSchedules = [
             {
                 id: 'sch_1',
                 title: 'Jadwal Penyemprotan Preventif Hama',
                 desc: 'Penyemprotan fungisida/insektisida rutin pencegahan jamur pada daun.',
-                date: '2026-08-02', // Tanggal pelaksanaan besok (H-1 nya muncul hari ini)
+                date: formatDateString(new Date(Date.now() + 86400000)), // H+1 (Besok)
                 module: 'spray',
                 icon: 'fa-spray-can',
                 color: '#6A1B9A',
@@ -56,41 +86,11 @@ var notifikasi = (function() {
                 id: 'sch_2',
                 title: 'Pengecekan Tandon & Target PPM',
                 desc: 'Pastikan nutrisi AB Mix fase vegetatif stabil di kisaran 1,050 - 1,200 PPM.',
-                date: '2026-08-02', // Pelaksanaan besok
+                date: formatDateString(new Date(Date.now() + 86400000)), // H+1 (Besok)
                 module: 'nutrisi',
                 icon: 'fa-flask',
                 color: '#0277BD',
                 bg: '#E3F2FD'
-            },
-            {
-                id: 'sch_3',
-                title: 'Agenda Polinasi Bunga Susulan',
-                desc: 'Cek bunga tandan ke-9 hingga ke-12 yang siap dikawinkan.',
-                date: '2026-08-03', // Pelaksanaan lusa
-                module: 'polinasi',
-                icon: 'fa-heart',
-                color: '#E65100',
-                bg: '#FFF3E0'
-            },
-            {
-                id: 'sch_4',
-                title: 'Pangkas Tunas Air (Pruning)',
-                desc: 'Merempes cabang air liar di bawah ketinggian 1 meter.',
-                date: '2026-08-05', // Pelaksanaan beberapa hari kedepan
-                module: 'pruning',
-                icon: 'fa-cut',
-                color: '#4E342E',
-                bg: '#EFEBE9'
-            },
-            {
-                id: 'sch_5',
-                title: 'Estimasi Panen Blok Greenhouse A',
-                desc: 'Persiapan keranjang, timbangan, dan sortir buah menjelang hari H.',
-                date: '2026-08-01', // Pelaksanaan hari ini (artinya H-1 nya kemarin, hari ini harusnya sudah expired/hilang)
-                module: 'panen',
-                icon: 'fa-box',
-                color: '#1B5E20',
-                bg: '#E8F5E9'
             }
         ];
 
@@ -108,9 +108,9 @@ var notifikasi = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-bell" style="color: #C62828;"></i> Pusat Notifikasi & Alarm Farm</div>
-                <div style="font-size: 13px; color: #666; margin-bottom: 16px;">
-                    Daftar pengingat otomatis (H-1 kegiatan). Ketuk kartu alarm untuk langsung menuju modul terkait.
+                <div class="section-title"><i class="fas fa-bell" style="color: #C62828;"></i> ${t('module_title')}</div>
+                <div style="font-size: 13px; color: #888; margin-bottom: 16px;">
+                    ${t('module_subtitle')}
                 </div>
 
                 <!-- Daftar Notifikasi Dinamis -->
@@ -133,29 +133,22 @@ var notifikasi = (function() {
         var dates = getSystemDates();
 
         // LOGIKA UTAMA ALARM H-1 & EXPIRED H+1:
-        // Sebuah jadwal akan menjadi alarm aktif jika:
-        // Tanggal Hari Ini (todayStr) adalah TEPAT SATU HARI SEBELUM tanggal kegiatan (date).
-        // Atau dengan kata lain: (Tanggal Kegiatan - 1 Hari) == Hari Ini.
-        // Jika tanggal kegiatan sudah sama dengan hari ini atau sudah lewat (<= todayStr), 
-        // maka alarm otomatis dianggap expired dan tidak dimunculkan lagi di pusat notifikasi.
-        
         var activeAlarms = allSchedules.filter(function(item) {
-            // Hitung tanggal H-1 dari tanggal kegiatan item
+            if (!item || !item.date) return false;
             var eventDate = new Date(item.date);
             var hMinus1 = new Date(eventDate);
             hMinus1.setDate(eventDate.getDate() - 1);
             var hMinus1Str = formatDateString(hMinus1);
 
-            // Alarm hanya muncul jika hari ini adalah tanggal H-1 dari kegiatan tersebut
             return hMinus1Str === dates.todayStr;
         });
 
         if (activeAlarms.length === 0) {
             container.innerHTML = `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 24px; text-align: center; color: #777;">
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 24px; text-align: center; color: #777;">
                     <i class="fas fa-check-circle" style="font-size: 32px; color: #2E7D32; margin-bottom: 8px;"></i>
-                    <div style="font-size: 14px; font-weight: 600; color: #333;">Tidak ada alarm aktif untuk esok hari</div>
-                    <div style="font-size: 12px; color: #777; margin-top: 4px;">Semua jadwal aman dan terkendali.</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text-color, #333);">${t('no_alarm_title')}</div>
+                    <div style="font-size: 12px; color: #777; margin-top: 4px;">${t('no_alarm_desc')}</div>
                 </div>
             `;
             return;
@@ -164,17 +157,17 @@ var notifikasi = (function() {
         var html = '';
         activeAlarms.forEach(function(item) {
             html += `
-                <div class="notif-card-item" data-page="${item.module}" style="background: #fff; border: 1px solid #a5d6a7; border-left: 4px solid ${item.color}; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: all 0.2s;">
-                    <div style="width: 38px; height: 38px; border-radius: 8px; background: ${item.bg}; color: ${item.color}; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
-                        <i class="fas ${item.icon}"></i>
+                <div class="notif-card-item" data-page="${item.module}" style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-left: 4px solid ${item.color || '#C62828'}; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: all 0.2s;">
+                    <div style="width: 38px; height: 38px; border-radius: 8px; background: ${item.bg || '#FFEBEE'}; color: ${item.color || '#C62828'}; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                        <i class="fas ${item.icon || 'fa-bell'}"></i>
                     </div>
                     <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                            <span style="font-size: 13px; font-weight: 700; color: #222;">${item.title}</span>
-                            <span style="font-size: 10px; color: #C62828; background: #FFEBEE; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Agenda Besok</span>
+                            <span style="font-size: 13px; font-weight: 700; color: var(--text-color, #222);">${item.title}</span>
+                            <span style="font-size: 10px; color: #C62828; background: #FFEBEE; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${t('lbl_tomorrow_agenda')}</span>
                         </div>
-                        <div style="font-size: 12px; color: #555; line-height: 1.4; margin-bottom: 4px;">${item.desc}</div>
-                        <div style="font-size: 11px; color: #777;"><i class="far fa-calendar-alt">></i> Tanggal Kegiatan: <strong>${item.date}</strong></div>
+                        <div style="font-size: 12px; color: #888; line-height: 1.4; margin-bottom: 4px;">${item.desc || ''}</div>
+                        <div style="font-size: 11px; color: #777;"><i class="far fa-calendar-alt"></i> ${t('lbl_event_date')} <strong>${item.date}</strong></div>
                     </div>
                 </div>
             `;
@@ -200,3 +193,5 @@ var notifikasi = (function() {
     };
 
 })();
+
+window.notifikasi = notifikasi;
