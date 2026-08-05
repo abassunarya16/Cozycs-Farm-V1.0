@@ -1,8 +1,103 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (CRUD)
+// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (CRUD BILINGUAL)
 // ==========================================
 
 var spray = (function() {
+
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
+    var i18nDict = {
+        'id': {
+            'module_title': 'Jadwal & Riwayat Spray',
+            'form_title_add': 'Tambah Jadwal / Aksi Spray',
+            'form_title_edit': 'Edit Jadwal Spray',
+            'lbl_gh': 'ID GH',
+            'select_gh': '-- Pilih Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Tanggal Pelaksanaan',
+            'lbl_time_slot': 'Waktu Penyemprotan',
+            'opt_morning': 'Pagi (06:00 - 08:00)',
+            'opt_afternoon': 'Sore (16:00 - 17:30)',
+            'lbl_prod_bubuk': 'Nama Produk (Bubuk)',
+            'ph_prod_bubuk': 'Contoh: Antracol',
+            'lbl_prod_cairan': 'Nama Produk (Cairan)',
+            'ph_prod_cairan': 'Contoh: Demolish',
+            'lbl_type_fung_insek': 'Fungisida & Insektisida',
+            'ph_type_fung_insek': 'Contoh: Antracol / Demolish',
+            'lbl_type_fertilizer': 'Fertilizer / Pupuk Daun',
+            'ph_type_fertilizer': 'Contoh: Gandasil D',
+            'lbl_dose_gram': 'Dosis (Gram)',
+            'ph_dose_gram': 'Contoh: 2 gram / 16L',
+            'lbl_dose_ml': 'Dosis (ml)',
+            'ph_dose_ml': 'Contoh: 15 ml / 16L',
+            'lbl_target_hama': 'Pengendalian Hama',
+            'ph_target_hama': 'Contoh: Thrips, Kutu kebul',
+            'lbl_target_penyakit': 'Pengendalian Penyakit',
+            'ph_target_penyakit': 'Contoh: Powdery mildew, Busuk',
+            'lbl_desc': 'Catatan Tambahan (Opsional)',
+            'ph_desc': 'Catatan khusus pelaksanaan...',
+            'btn_save': 'Simpan Jadwal Spray',
+            'btn_cancel': 'Batal',
+            'recap_title': 'Rekap Riwayat & Jadwal Spray',
+            'no_data': 'Belum ada jadwal spray tercatat.',
+            'lbl_product': 'Nama Produk',
+            'lbl_dose': 'Dosis Aplikasi',
+            'lbl_spray_type': 'Jenis Penyemprotan',
+            'lbl_target': 'Sasaran Hama & Penyakit',
+            'lbl_notes': 'Catatan',
+            'toast_updated': 'Jadwal spray berhasil diperbarui!',
+            'toast_added': 'Jadwal spray berhasil ditambahkan!',
+            'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal spray ini?',
+            'toast_deleted': 'Jadwal spray berhasil dihapus'
+        },
+        'en': {
+            'module_title': 'Spray Schedule & History',
+            'form_title_add': 'Add Spray Schedule / Action',
+            'form_title_edit': 'Edit Spray Schedule',
+            'lbl_gh': 'GH ID',
+            'select_gh': '-- Select Greenhouse --',
+            'gh_default': 'GH-01 (Default)',
+            'lbl_date': 'Execution Date',
+            'lbl_time_slot': 'Spraying Time',
+            'opt_morning': 'Morning (06:00 - 08:00)',
+            'opt_afternoon': 'Afternoon (16:00 - 17:30)',
+            'lbl_prod_bubuk': 'Product Name (Powder)',
+            'ph_prod_bubuk': 'e.g., Antracol',
+            'lbl_prod_cairan': 'Product Name (Liquid)',
+            'ph_prod_cairan': 'e.g., Demolish',
+            'lbl_type_fung_insek': 'Fungicide & Insecticide',
+            'ph_type_fung_insek': 'e.g., Antracol / Demolish',
+            'lbl_type_fertilizer': 'Fertilizer / Foliar Fertilizer',
+            'ph_type_fertilizer': 'e.g., Gandasil D',
+            'lbl_dose_gram': 'Dosage (Gram)',
+            'ph_dose_gram': 'e.g., 2 grams / 16L',
+            'lbl_dose_ml': 'Dosage (ml)',
+            'ph_dose_ml': 'e.g., 15 ml / 16L',
+            'lbl_target_hama': 'Pest Control',
+            'ph_target_hama': 'e.g., Thrips, Whiteflies',
+            'lbl_target_penyakit': 'Disease Control',
+            'ph_target_penyakit': 'e.g., Powdery mildew, Rot',
+            'lbl_desc': 'Additional Notes (Optional)',
+            'ph_desc': 'Special execution notes...',
+            'btn_save': 'Save Spray Schedule',
+            'btn_cancel': 'Cancel',
+            'recap_title': 'Spray History & Schedule Recap',
+            'no_data': 'No spray schedules recorded yet.',
+            'lbl_product': 'Product Name',
+            'lbl_dose': 'Application Dosage',
+            'lbl_spray_type': 'Spraying Type',
+            'lbl_target': 'Target Pests & Diseases',
+            'lbl_notes': 'Notes',
+            'toast_updated': 'Spray schedule updated successfully!',
+            'toast_added': 'Spray schedule added successfully!',
+            'confirm_delete': 'Are you sure you want to delete this spray schedule?',
+            'toast_deleted': 'Spray schedule deleted successfully'
+        }
+    };
+
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
 
     // Helper internal kunci penyimpanan agar aman & anti-crash
     function getStorageKey() {
@@ -28,7 +123,7 @@ var spray = (function() {
             dataGh = [];
         }
 
-        var optionsHtml = '<option value="">-- Pilih Greenhouse --</option>';
+        var optionsHtml = `<option value="">${t('select_gh')}</option>`;
         if (Array.isArray(dataGh) && dataGh.length > 0) {
             dataGh.forEach(function(gh) {
                 if (gh && gh.kode) {
@@ -36,7 +131,7 @@ var spray = (function() {
                 }
             });
         } else {
-            optionsHtml += '<option value="GH-01">GH-01 (Default)</option>';
+            optionsHtml += `<option value="GH-01">${t('gh_default')}</option>`;
         }
 
         selectEl.innerHTML = optionsHtml;
@@ -45,100 +140,100 @@ var spray = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> Jadwal & Riwayat Spray</div>
+                <div class="section-title"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> ${t('module_title')}</div>
                 
                 <!-- Form Input / Edit Data Spray -->
-                <div style="background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #e8e8e8; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                    <div style="font-size: 14px; font-weight: 700; color: #6A1B9A; margin-bottom: 12px;" id="formTitleSpray">Tambah Jadwal / Aksi Spray</div>
+                <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #6A1B9A; margin-bottom: 12px;" id="formTitleSpray">${t('form_title_add')}</div>
                     <form id="formSpray">
                         <input type="hidden" id="sprayId">
                         
-                        <!-- ID GH (Dropdown Konek ke Modul Greenhouse) & Tanggal Pelaksanaan -->
+                        <!-- ID GH & Tanggal Pelaksanaan -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">ID GH</label>
-                                <select id="sprayGh" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                    <option value="">-- Pilih Greenhouse --</option>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
+                                <select id="sprayGh" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                    <option value="">${t('select_gh')}</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Tanggal Pelaksanaan</label>
-                                <input type="date" id="sprayDate" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
+                                <input type="date" id="sprayDate" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Waktu Penyemprotan (Pagi / Sore) -->
                         <div style="margin-bottom: 10px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Waktu Penyemprotan</label>
-                            <select id="sprayTimeSlot" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #fff;">
-                                <option value="Pagi (06:00 - 08:00)">Pagi (06:00 - 08:00)</option>
-                                <option value="Sore (16:00 - 17:30)">Sore (16:00 - 17:30)</option>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_time_slot')}</label>
+                            <select id="sprayTimeSlot" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <option value="Pagi (06:00 - 08:00)">${t('opt_morning')}</option>
+                                <option value="Sore (16:00 - 17:30)">${t('opt_afternoon')}</option>
                             </select>
                         </div>
 
                         <!-- Nama Produk Terpisah (Bubuk & Cairan) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk (Bubuk)</label>
-                                <input type="text" id="sprayProductBubuk" placeholder="Contoh: Antracol" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_prod_bubuk')}</label>
+                                <input type="text" id="sprayProductBubuk" placeholder="${t('ph_prod_bubuk')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Nama Produk (Cairan)</label>
-                                <input type="text" id="sprayProductCairan" placeholder="Contoh: Demolish" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_prod_cairan')}</label>
+                                <input type="text" id="sprayProductCairan" placeholder="${t('ph_prod_cairan')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
-                        <!-- Jenis Penyemprotan Terpisah (2 Kolom Grid) -->
+                        <!-- Jenis Penyemprotan Terpisah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fungisida & Insektisida</label>
-                                <input type="text" id="sprayTypeFungInsek" placeholder="Contoh: Antracol / Demolish" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_type_fung_insek')}</label>
+                                <input type="text" id="sprayTypeFungInsek" placeholder="${t('ph_type_fung_insek')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Fertilizer / Pupuk Daun</label>
-                                <input type="text" id="sprayTypeFertilizer" placeholder="Contoh: Gandasil D" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_type_fertilizer')}</label>
+                                <input type="text" id="sprayTypeFertilizer" placeholder="${t('ph_type_fertilizer')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Dosis Terpisah (Gram & ml) -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis (Gram)</label>
-                                <input type="text" id="sprayDoseGram" placeholder="Contoh: 2 gram / 16L" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_dose_gram')}</label>
+                                <input type="text" id="sprayDoseGram" placeholder="${t('ph_dose_gram')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Dosis (ml)</label>
-                                <input type="text" id="sprayDoseMl" placeholder="Contoh: 15 ml / 16L" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_dose_ml')}</label>
+                                <input type="text" id="sprayDoseMl" placeholder="${t('ph_dose_ml')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Sasaran Hama & Penyakit -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Hama</label>
-                                <input type="text" id="sprayTargetHama" placeholder="Contoh: Thrips, Kutu kebul" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_target_hama')}</label>
+                                <input type="text" id="sprayTargetHama" placeholder="${t('ph_target_hama')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">Pengendalian Penyakit</label>
-                                <input type="text" id="sprayTargetPenyakit" placeholder="Contoh: Powdery mildew, Busuk" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_target_penyakit')}</label>
+                                <input type="text" id="sprayTargetPenyakit" placeholder="${t('ph_target_penyakit')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <!-- Catatan Tambahan -->
                         <div style="margin-bottom: 12px;">
-                            <label style="font-size: 12px; font-weight: 600; color: #555;">Catatan Tambahan (Opsional)</label>
-                            <textarea id="sprayDesc" rows="2" placeholder="Catatan khusus pelaksanaan..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
+                            <textarea id="sprayDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #6A1B9A;"><i class="fas fa-save"></i> Simpan Jadwal Spray</button>
-                            <button type="button" id="btnCancelSprayEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #6A1B9A;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
+                            <button type="button" id="btnCancelSprayEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #333;">${t('btn_cancel')}</button>
                         </div>
                     </form>
                 </div>
 
                 <!-- Rekap Data / Card List Grid 2x2 -->
-                <div class="section-title"><i class="fas fa-list" style="color: #6A1B9A;"></i> Rekap Riwayat & Jadwal Spray</div>
+                <div class="section-title"><i class="fas fa-list" style="color: #6A1B9A;"></i> ${t('recap_title')}</div>
                 <div id="containerSprayCards">
                     <!-- Diisi dinamis oleh JavaScript -->
                 </div>
@@ -174,7 +269,7 @@ var spray = (function() {
                 var payload = {
                     gh: (ghEl && ghEl.value) ? ghEl.value : '-',
                     date: dateEl ? dateEl.value : '',
-                    timeSlot: timeSlotEl ? timeSlotEl.value : 'Pagi (06:00 - 08:00)',
+                    timeSlot: timeSlotEl ? timeSlotEl.value : t('opt_morning'),
                     productBubuk: (productBubukEl && productBubukEl.value) ? productBubukEl.value : '-',
                     productCairan: (productCairanEl && productCairanEl.value) ? productCairanEl.value : '-',
                     typeFungInsek: (typeFungInsekEl && typeFungInsekEl.value) ? typeFungInsekEl.value : '-',
@@ -201,7 +296,7 @@ var spray = (function() {
                     syncToSchedules(payload);
 
                     if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Jadwal spray berhasil diperbarui!', 'success');
+                        Helper.showToast(t('toast_updated'), 'success');
                     }
                 } else {
                     var added = null;
@@ -216,14 +311,12 @@ var spray = (function() {
                     if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
                         var ghVal = (ghEl && ghEl.value) ? ghEl.value : '-';
 
-                        // 1. Potong Produk Bubuk jika diisi
                         var produkBubuk = (productBubukEl && productBubukEl.value) ? productBubukEl.value.trim() : '';
                         var dosisGram = parseFloat(doseGramEl ? doseGramEl.value : 0) || 0;
                         if (produkBubuk && produkBubuk !== '-') {
                             gudang.potongStokOtomatis(produkBubuk, dosisGram || 1, 'Spray', ghVal, 'Operator');
                         }
 
-                        // 2. Potong Produk Cairan jika diisi
                         var produkCairan = (productCairanEl && productCairanEl.value) ? productCairanEl.value.trim() : '';
                         var dosisMl = parseFloat(doseMlEl ? doseMlEl.value : 0) || 0;
                         if (produkCairan && produkCairan !== '-') {
@@ -232,14 +325,14 @@ var spray = (function() {
                     }
 
                     if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                        Helper.showToast('Jadwal spray berhasil ditambahkan!', 'success');
+                        Helper.showToast(t('toast_added'), 'success');
                     }
                 }
 
                 form.reset();
                 if (idEl) idEl.value = '';
                 var titleEl = document.getElementById('formTitleSpray');
-                if (titleEl) titleEl.innerText = 'Tambah Jadwal / Aksi Spray';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
@@ -252,7 +345,7 @@ var spray = (function() {
                 var idEl = document.getElementById('sprayId');
                 if (idEl) idEl.value = '';
                 var titleEl = document.getElementById('formTitleSpray');
-                if (titleEl) titleEl.innerText = 'Tambah Jadwal / Aksi Spray';
+                if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
             });
         }
@@ -269,7 +362,7 @@ var spray = (function() {
         }
 
         if (!Array.isArray(data) || data.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;">Belum ada jadwal spray tercatat.</div>`;
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             return;
         }
 
@@ -287,11 +380,11 @@ var spray = (function() {
             var displayFertilizer = item.typeFertilizer || '-';
 
             html += `
-                <div style="background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <!-- Header Card: Tanggal, ID GH & Waktu -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
-                            <strong style="font-size: 14px; color: #222;">${item.date || '-'}</strong>
+                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.date || '-'}</strong>
                             <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
                             <span style="background: #F3E5F5; color: #6A1B9A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${item.timeSlot || ''}</span>
                         </div>
@@ -301,36 +394,36 @@ var spray = (function() {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         
                         <!-- 1. Kiri Atas: Nama Produk (Bubuk & Cairan) -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Nama Produk</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_product')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-box" style="color: #8D6E63; width: 14px;"></i> <strong>${displayBubuk}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-wine-bottle" style="color: #0288D1; width: 14px;"></i> <strong>${displayCairan}</strong></div>
                             </div>
                         </div>
 
                         <!-- 2. Kanan Atas: Dosis (Gram & ml) -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Dosis Aplikasi</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_dose')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-weight-hanging" style="color: #6A1B9A; width: 14px;"></i> <strong>${item.doseGram || '-'}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-flask" style="color: #0277BD; width: 14px;"></i> <strong>${item.doseMl || '-'}</strong></div>
                             </div>
                         </div>
 
                         <!-- 3. Kiri Bawah: Jenis Penyemprotan -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Jenis Penyemprotan</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_spray_type')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-shield-alt" style="color: #C2185B; width: 14px;"></i> <strong>${displayFungInsek}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-seedling" style="color: #2E7D32; width: 14px;"></i> <strong>${displayFertilizer}</strong></div>
                             </div>
                         </div>
 
                         <!-- 4. Kanan Bawah: Sasaran Hama & Penyakit -->
-                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Sasaran Hama & Penyakit</div>
-                            <div style="font-size: 12px; font-weight: bold; color: #000; line-height: 1.4;">
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_target')}</div>
+                            <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
                                 <div><i class="fas fa-bug" style="color: #D32F2F; width: 14px;"></i> <strong>${item.targetHama || '-'}</strong></div>
                                 <div style="margin-top: 3px;"><i class="fas fa-shield-virus" style="color: #7B1FA2; width: 14px;"></i> <strong>${item.targetPenyakit || '-'}</strong></div>
                             </div>
@@ -339,10 +432,10 @@ var spray = (function() {
                     </div>
 
                     <!-- Catatan Tambahan (Jika Ada) -->
-                    ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: #000; background: #fdfdfd; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">Catatan: ${item.desc}</div>` : ''}
+                    ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${item.desc}</div>` : ''}
 
                     <!-- Tombol Aksi Logo Saja -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eee; padding-top: 8px; margin-top: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="spray.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="spray.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
                     </div>
@@ -380,7 +473,7 @@ var spray = (function() {
         if (idEl) idEl.value = item.id || '';
         if (ghEl) ghEl.value = item.gh === '-' ? '' : (item.gh || '');
         if (dateEl) dateEl.value = item.date || '';
-        if (timeSlotEl) timeSlotEl.value = item.timeSlot || 'Pagi (06:00 - 08:00)';
+        if (timeSlotEl) timeSlotEl.value = item.timeSlot || t('opt_morning');
         if (productBubukEl) productBubukEl.value = (item.productBubuk && item.productBubuk !== '-') ? item.productBubuk : (item.title || '');
         if (productCairanEl) productCairanEl.value = (item.productCairan && item.productCairan !== '-') ? item.productCairan : '';
         if (typeFungInsekEl) typeFungInsekEl.value = (item.typeFungInsek && item.typeFungInsek !== '-') ? item.typeFungInsek : (item.sprayType || '');
@@ -392,7 +485,7 @@ var spray = (function() {
         if (descEl) descEl.value = item.desc || '';
 
         var titleEl = document.getElementById('formTitleSpray');
-        if (titleEl) titleEl.innerText = 'Edit Jadwal Spray';
+        if (titleEl) titleEl.innerText = t('form_title_edit');
         
         var btnCancel = document.getElementById('btnCancelSprayEdit');
         if (btnCancel) btnCancel.style.display = 'block';
@@ -401,7 +494,7 @@ var spray = (function() {
     }
 
     function deleteItem(id) {
-        if (confirm('Apakah kamu yakin ingin menghapus jadwal spray ini?')) {
+        if (confirm(t('confirm_delete'))) {
             var key = getStorageKey();
             if (typeof Storage !== 'undefined' && Storage.remove) {
                 Storage.remove(key, id);
@@ -409,7 +502,7 @@ var spray = (function() {
             removeFromSchedules(id);
             loadTable();
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast('Jadwal spray berhasil dihapus', 'error');
+                Helper.showToast(t('toast_deleted'), 'error');
             }
         }
     }
@@ -447,3 +540,5 @@ var spray = (function() {
     };
 
 })();
+
+window.spray = spray;
