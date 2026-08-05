@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - SETTINGS MODULE (WITH AUTO-BACKUP, BACKUP INFO & RESET DATA)
+// COZYCS FARM - SETTINGS MODULE (REVISED STORAGE & DATA GROUP)
 // ==========================================
 
 var setting = (function() {
@@ -28,7 +28,6 @@ var setting = (function() {
             'last_backup': 'Cadangan terakhir',
             'backup_size': 'Ukuran',
             'never': 'Belum pernah',
-            'reset_title': 'Zona Bahaya & Reset',
             'reset_data': 'Reset Semua Data',
             'account_title': 'Akun',
             'logout': 'Keluar',
@@ -64,7 +63,6 @@ var setting = (function() {
             'last_backup': 'Last backup',
             'backup_size': 'Size',
             'never': 'Never',
-            'reset_title': 'Danger Zone & Reset',
             'reset_data': 'Reset All Data',
             'account_title': 'Account',
             'logout': 'Sign Out',
@@ -84,7 +82,6 @@ var setting = (function() {
         return localStorage.getItem('cozycs_lang') || 'id';
     }
 
-    // Helper Hitung Ukuran Data LocalStorage & Waktu Cadangan Terakhir
     function getBackupMetadata() {
         var totalBytes = 0;
         for (var i = 0; i < localStorage.length; i++) {
@@ -94,7 +91,6 @@ var setting = (function() {
                 totalBytes += key.length + val.length;
             }
         }
-        // Konversi ke KB atau Bytes
         var sizeStr = totalBytes < 1024 ? totalBytes + ' B' : (totalBytes / 1024).toFixed(1) + ' KB';
         var lastTime = localStorage.getItem('cozycs_last_backup_time') || null;
         
@@ -124,7 +120,6 @@ var setting = (function() {
 
                     <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
                         
-                        <!-- Item: Pilih Bahasa -->
                         <div onclick="setting.openLanguageModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-globe" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -136,7 +131,6 @@ var setting = (function() {
                             </div>
                         </div>
 
-                        <!-- Item: Mode Gelap -->
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-adjust" style="font-size: 18px; width: 22px; text-align: center; color: #555;"></i>
@@ -151,7 +145,7 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 2: BACKUP & RESTORE DATA -->
+                <!-- GRUP 2: PENYIMPANAN & DATA (TERMASUK BACKUP, RESTORE, AUTO-BACKUP & RESET) -->
                 <div style="margin-bottom: 24px;">
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.backup_title}
@@ -159,13 +153,11 @@ var setting = (function() {
 
                     <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); overflow: hidden;">
                         
-                        <!-- Informasi Detail Cadangan & Ukuran -->
                         <div style="padding: 12px 16px; background: var(--inner-card-bg, #f9f9f9); border-bottom: 1px solid var(--border-color, #f0f0f0); font-size: 12px; color: #666; display: flex; justify-content: space-between;">
                             <div><i class="far fa-clock"></i> ${t.last_backup}: <strong style="color: var(--text-color, #333);">${meta.time ? meta.time : t.never}</strong></div>
                             <div><i class="fas fa-database"></i> ${t.backup_size}: <strong style="color: var(--text-color, #333);">${meta.size}</strong></div>
                         </div>
 
-                        <!-- Item: Backup Data -->
                         <div onclick="setting.backupAllData()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-cloud-download-alt" style="font-size: 18px; width: 22px; text-align: center; color: #2E7D32;"></i>
@@ -174,7 +166,6 @@ var setting = (function() {
                             <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
-                        <!-- Item: Restore Data -->
                         <div onclick="document.getElementById('fileRestoreInput').click()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0); cursor: pointer;">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-cloud-upload-alt" style="font-size: 18px; width: 22px; text-align: center; color: #0277BD;"></i>
@@ -184,13 +175,10 @@ var setting = (function() {
                         </div>
                         <input type="file" id="fileRestoreInput" accept=".json" style="display: none;" onchange="setting.restoreAllData(event)">
 
-                        <!-- Item: Pencadangan Otomatis (Auto-Backup ala WhatsApp) -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color, #f0f0f0);">
                             <div style="display: flex; align-items: center; gap: 14px; color: var(--text-color, #222);">
                                 <i class="fas fa-sync-alt" style="font-size: 18px; width: 22px; text-align: center; color: #F59E0B;"></i>
-                                <div>
-                                    <span style="font-size: 14px; font-weight: 600; display: block;">${t.auto_backup_label}</span>
-                                </div>
+                                <span style="font-size: 14px; font-weight: 600;">${t.auto_backup_label}</span>
                             </div>
                             <select id="selectAutoBackup" onchange="setting.changeAutoBackupFreq(this.value)" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #fff); color: var(--text-color, #333); font-size: 12px; font-weight: 600;">
                                 <option value="off" ${autoBackupFreq === 'off' ? 'selected' : ''}>${t.auto_off}</option>
@@ -198,6 +186,15 @@ var setting = (function() {
                                 <option value="weekly" ${autoBackupFreq === 'weekly' ? 'selected' : ''}>${t.auto_weekly}</option>
                                 <option value="monthly" ${autoBackupFreq === 'monthly' ? 'selected' : ''}>${t.auto_monthly}</option>
                             </select>
+                        </div>
+
+                        <!-- Opsi Reset Data Masuk Ke Dalam Grup Ini -->
+                        <div onclick="setting.openResetModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
+                            <div style="display: flex; align-items: center; gap: 14px; color: #D32F2F;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 18px; width: 22px; text-align: center;"></i>
+                                <span style="font-size: 14px; font-weight: 700;">${t.reset_data}</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
                         </div>
 
                     </div>
@@ -262,24 +259,7 @@ var setting = (function() {
                     </div>
                 </div>
 
-                <!-- GRUP 4: ZONA BAHAYA & RESET DATA -->
-                <div style="margin-bottom: 24px;">
-                    <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #D32F2F; letter-spacing: 0.3px;">
-                        ${t.reset_title}
-                    </div>
-
-                    <div style="background: var(--card-bg, #ffffff); border-radius: 12px; border: 1px solid #ffcccc; overflow: hidden;">
-                        <div onclick="setting.openResetModal()" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer;">
-                            <div style="display: flex; align-items: center; gap: 14px; color: #D32F2F;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 18px; width: 22px; text-align: center;"></i>
-                                <span style="font-size: 14px; font-weight: 700;">${t.reset_data}</span>
-                            </div>
-                            <i class="fas fa-chevron-right" style="font-size: 12px; color: #888;"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GRUP 5: AKUN -->
+                <!-- GRUP 4: AKUN -->
                 <div>
                     <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: var(--text-color, #111); letter-spacing: 0.3px;">
                         ${t.account_title}
@@ -383,7 +363,6 @@ var setting = (function() {
         }
     }
 
-    // FUNGSI BACKUP SEMUA DATA KE FILE JSON + CATAT METADATA WAKTU
     function backupAllData() {
         var allData = {};
         for (var i = 0; i < localStorage.length; i++) {
@@ -400,7 +379,6 @@ var setting = (function() {
         downloadAnchor.click();
         downloadAnchor.remove();
 
-        // Simpan waktu backup terakhir agar tampil di informasi
         var nowStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         localStorage.setItem('cozycs_last_backup_time', nowStr);
 
@@ -411,13 +389,11 @@ var setting = (function() {
             Helper.showToast(t.toast_backup, 'success');
         }
         
-        // Refresh tampilan agar info backup terakhir langsung ter-update
         if (typeof navigateTo === 'function') {
             navigateTo('setting');
         }
     }
 
-    // PENGATURAN FREKUENSI PENCADANGAN OTOMATIS (ALA WHATSAPP)
     function changeAutoBackupFreq(freq) {
         localStorage.setItem('cozycs_auto_backup_freq', freq);
         localStorage.setItem('cozycs_last_auto_backup_check', new Date().getTime());
@@ -426,7 +402,6 @@ var setting = (function() {
         }
     }
 
-    // CEK TRIGGER PENCADANGAN OTOMATIS DI BACKGROUND
     function checkAutoBackupTrigger() {
         var freq = localStorage.getItem('cozycs_auto_backup_freq');
         if (!freq || freq === 'off') return;
@@ -440,7 +415,6 @@ var setting = (function() {
         else if (freq === 'monthly') intervalMs = 30 * 24 * 60 * 60 * 1000;
 
         if (intervalMs > 0 && (now - lastCheck) > intervalMs) {
-            // Jalankan backup otomatis (menyimpan metadata waktu)
             var allData = {};
             for (var i = 0; i < localStorage.length; i++) {
                 var key = localStorage.key(i);
@@ -455,7 +429,6 @@ var setting = (function() {
         }
     }
 
-    // FUNGSI RESTORE DATA DARI FILE JSON
     function restoreAllData(event) {
         var file = event.target.files[0];
         if (!file) return;
@@ -485,7 +458,6 @@ var setting = (function() {
         reader.readAsText(file);
     }
 
-    // OPSI RESET DATA KEBUN
     function openResetModal() {
         var currentLangKey = getLang();
         var t = translations[currentLangKey] || translations['id'];
@@ -503,7 +475,6 @@ var setting = (function() {
         var currentLangKey = getLang();
         var t = translations[currentLangKey] || translations['id'];
 
-        // Hapus hanya key yang berawalan cozycs_
         var keysToRemove = [];
         for (var i = 0; i < localStorage.length; i++) {
             var key = localStorage.key(i);
