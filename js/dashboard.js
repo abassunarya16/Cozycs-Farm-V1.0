@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (PERMANENT MULTICOLOR & FULL SYNC)
+// COZYCS FARM - EXECUTIVE DASHBOARD (CLEANED 4-GRID & SYNCED PROGRESS)
 // ==========================================
 
 var dashboard = (function() {
@@ -21,7 +21,6 @@ var dashboard = (function() {
         icon: '⛅'
     };
 
-    // KAMUS BAHASA KUSUS DASBOR
     var i18nDict = {
         'id': {
             'greeting_sub': 'Semoga panen melimpah hari ini!',
@@ -48,13 +47,6 @@ var dashboard = (function() {
             'intensity': 'Intensitas',
             'active': 'Aktif',
             'inactive': 'Tidak Aktif',
-            'active_plants': '🌱 Tanaman Aktif',
-            'living_plants': '🌿 Tanaman Hidup',
-            'selected_fruit': '🍈 Buah Fix',
-            'est_harvest': '📅 Estimasi Panen',
-            'initial_cap': 'Kapasitas Awal',
-            'active_pop': 'Populasi Aktif',
-            'selection_passed': 'Seleksi Lolos',
             'today_agenda': 'Agenda Hari Ini',
             'today': 'Hari Ini',
             'no_agenda': 'Tidak ada agenda kegiatan untuk hari ini.',
@@ -67,10 +59,7 @@ var dashboard = (function() {
             'btn_warehouse': '+ Gudang',
             'btn_harvest': '+ Panen',
             'btn_schedule': '+ Jadwal',
-            'btn_pests': '+ Hama',
-            'stem': 'Batang',
-            'tree': 'Pohon',
-            'fruit': 'Buah'
+            'btn_pests': '+ Hama'
         },
         'en': {
             'greeting_sub': 'May your harvest be abundant today!',
@@ -97,13 +86,6 @@ var dashboard = (function() {
             'intensity': 'Intensity',
             'active': 'Active',
             'inactive': 'Inactive',
-            'active_plants': '🌱 Active Plants',
-            'living_plants': '🌿 Living Plants',
-            'selected_fruit': '🍈 Selected Fruit',
-            'est_harvest': '📅 Est. Harvest',
-            'initial_cap': 'Initial Capacity',
-            'active_pop': 'Active Population',
-            'selection_passed': 'Selected Passed',
             'today_agenda': "Today's Agenda",
             'today': 'Today',
             'no_agenda': 'No scheduled activities for today.',
@@ -116,10 +98,7 @@ var dashboard = (function() {
             'btn_warehouse': '+ Stock',
             'btn_harvest': '+ Harvest',
             'btn_schedule': '+ Schedule',
-            'btn_pests': '+ Pests',
-            'stem': 'Stems',
-            'tree': 'Trees',
-            'fruit': 'Fruits'
+            'btn_pests': '+ Pests'
         }
     };
 
@@ -141,7 +120,7 @@ var dashboard = (function() {
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
                 <!-- 1. KARTU SWIPE GREENHOUSE (AUTO-SORT & PERMANENT COLORS) -->
-                <div id="dashSwipeableGhContainer" style="margin-bottom: 20px;"></div>
+                <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
@@ -165,10 +144,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. EXECUTIVE SUMMARY -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
-
-                <!-- 4. AGENDA HARI INI -->
+                <!-- 3. AGENDA HARI INI -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -177,19 +153,19 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 5. PROGRESS MUSIM & ESTIMASI OMZET -->
+                <!-- 4. PROGRESS MUSIM & ESTIMASI OMZET -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 6. AKTIVITAS TERAKHIR -->
+                <!-- 5. AKTIVITAS TERAKHIR -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 7. QUICK ACTION BUTTONS -->
+                <!-- 6. QUICK ACTION BUTTONS -->
                 <div style="background: var(--card-bg, #F5F5F5); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e0e0e0);">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">${t('quick_action')}</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -299,7 +275,6 @@ var dashboard = (function() {
         renderSwipeableGhCards();
         loadIotWaterData();
         loadIotEnvData();
-        loadExecutiveSummary();
         loadTodayAgenda();
         loadProgressMusim();
         loadRecentActivities();
@@ -397,7 +372,6 @@ var dashboard = (function() {
 
         var cardsList = [];
 
-        // - Summary ("ALL GH")
         var tPopALL = 0, tPolALL = 0, tBuahALL = 0;
         dataTanaman.forEach(t => tPopALL += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0));
         dataPolinasi.forEach(p => tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0));
@@ -410,10 +384,9 @@ var dashboard = (function() {
             populasi: tPopALL,
             polinasi: tPolALL,
             buahFix: tBuahALL,
-            themeIndex: 0 // Hijau
+            themeIndex: 0
         });
 
-        // - Per Greenhouse
         dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
             
@@ -438,18 +411,16 @@ var dashboard = (function() {
                 populasi: tPop,
                 polinasi: tPol,
                 buahFix: tBuah,
-                themeIndex: (index % 4) + 1 // 1: Biru, 2: Kuning/Orange, 3: Ungu, 4: Teal
+                themeIndex: (index % 4) + 1
             });
         });
 
-        // AUTO-SORT: Pindahkan GH yang dipilih ke urutan pertama (nomor 1)
         var selectedIndex = cardsList.findIndex(c => c.id === selectedGh);
         if (selectedIndex > 0) {
             var selectedItem = cardsList.splice(selectedIndex, 1)[0];
             cardsList.unshift(selectedItem);
         }
 
-        // Render kartu dengan warna permanen masing-masing
         cardsList.forEach(function(c) {
             var isActive = (c.id === selectedGh);
             html += getCardHtml(c.id, c.title, c.subtitle, c.populasi, c.polinasi, c.buahFix, isActive, c.themeIndex);
@@ -460,19 +431,16 @@ var dashboard = (function() {
     }
 
     function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive, themeIndex) {
-        
-        // 5 Tema Warna Elegan Permanen
         var themes = [
-            { bg: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', shadow: 'rgba(46, 125, 50, 0.3)' },     // 0: Hijau (Keseluruhan)
-            { bg: 'linear-gradient(135deg, #0277BD 0%, #01579B 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },     // 1: Biru (GH 1)
-            { bg: 'linear-gradient(135deg, #F57C00 0%, #E65100 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },      // 2: Kuning/Orange (GH 2)
-            { bg: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },    // 3: Ungu (GH 3)
-            { bg: 'linear-gradient(135deg, #00838F 0%, #006064 100%)', shadow: 'rgba(0, 131, 143, 0.3)' }      // 4: Teal (GH 4)
+            { bg: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', shadow: 'rgba(46, 125, 50, 0.3)' },
+            { bg: 'linear-gradient(135deg, #0277BD 0%, #01579B 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },
+            { bg: 'linear-gradient(135deg, #F57C00 0%, #E65100 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },
+            { bg: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },
+            { bg: 'linear-gradient(135deg, #00838F 0%, #006064 100%)', shadow: 'rgba(0, 131, 143, 0.3)' }
         ];
         
         var theme = themes[themeIndex] || themes[1];
 
-        // SEMUA KARTU SEKARANG BERWARNA PERMANEN SESUAI TEMA MASING-MASING
         return `
             <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: ${theme.bg}; border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px ${theme.shadow}; position: relative; overflow: hidden; cursor: pointer; border: ${isActive ? '2px solid #FFF' : '2px solid transparent'};">
                 <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
@@ -649,70 +617,6 @@ var dashboard = (function() {
                         <div style="width: 16px; height: 16px; background: #ffffff; border-radius: 50%; position: absolute; top: 2px; left: ${isAirflowOn ? '20px' : '2px'}; transition: left 0.3s ease;"></div>
                     </div>
                 </div>
-            </div>
-        `;
-    }
-
-    function loadExecutiveSummary() {
-        var el = document.getElementById('dashExecutiveSummary');
-        if (!el) return;
-
-        var dataGh = getData('cozycs_greenhouse');
-        var dataTanaman = getData('cozycs_tanaman');
-        var dataBuah = getData('cozycs_buah');
-        var dataPolinasi = getData('cozycs_polinasi');
-
-        var totalTanaman = 0;
-        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return (g.kode === selectedGh || g.id === selectedGh); });
-        filteredGhList.forEach(function(g) {
-            totalTanaman += (parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.jumlah) || 0);
-        });
-
-        var tanamanHidup = 0;
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
-        filteredTanaman.forEach(function(t) {
-            tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || parseFloat(t.jumlahHidup) || 0);
-        });
-
-        var buahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
-        filteredBuah.forEach(function(b) {
-            buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || parseFloat(b.totalBuah) || 0);
-        });
-
-        var tglPanenStr = '-';
-        var totalEstimasiKg = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return (p.gh === selectedGh || p.ghId === selectedGh); });
-        
-        filteredPolinasi.forEach(function(p) {
-            var jumlahBunga = (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
-            totalEstimasiKg += (jumlahBunga * 1.5);
-            if (p.tglPanen || p.tanggalPanen) tglPanenStr = p.tglPanen || p.tanggalPanen;
-        });
-
-        el.innerHTML = `
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('active_plants')}</div>
-                <div style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalTanaman} ${t('stem')}</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('initial_cap')}</div>
-            </div>
-
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('living_plants')}</div>
-                <div style="font-size: 15px; font-weight: 800; color: #0277BD; margin-top: 4px;">${tanamanHidup} ${t('tree')}</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('active_pop')}</div>
-            </div>
-
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('selected_fruit')}</div>
-                <div style="font-size: 15px; font-weight: 800; color: #E65100; margin-top: 4px;">${buahFix} ${t('fruit')}</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">${t('selection_passed')}</div>
-            </div>
-
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase;">${t('est_harvest')}</div>
-                <div style="font-size: 13px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${tglPanenStr}</div>
-                <div style="font-size: 10px; color: #555; font-weight: 600; margin-top: 2px;">Est. ${totalEstimasiKg} Kg</div>
             </div>
         `;
     }
