@@ -141,6 +141,100 @@ var dashboard = (function() {
 
                 <!-- 2. KARTU INFORMASI GH BANNER -->
                 <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
+                
+// Tambahkan ini di dalam return render() pada dashboard.js kamu, 
+// tepat di atas bagian "Monitoring Air Dan Lingkungan"
+
+`
+<!-- AREA GREENHOUSE SELECTOR (SWIPEABLE CARDS) -->
+<div style="margin-bottom: 20px;">
+    
+    <!-- Header Bagian -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+        <div style="font-size: 14px; font-weight: 800; color: var(--text-color, #111);">Pilih Greenhouse</div>
+        <div style="font-size: 12px; font-weight: 700; color: #2E7D32; cursor: pointer;">Lihat Semua <i class="fas fa-chevron-right" style="font-size: 10px;"></i></div>
+    </div>
+
+    <!-- Kontainer Horizontal Scroll (Swipe Area) -->
+    <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+
+        <!-- KARTU 1: GH-01 (Kondisi Aktif/Dipilih) -->
+        <div onclick="dashboard.selectGH('GH-01')" style="min-width: 85%; flex: 0 0 85%; background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3); position: relative; overflow: hidden; cursor: pointer;">
+            <!-- Hiasan Background Vektor (Opsional) -->
+            <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
+                <div>
+                    <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">GH-01 Premium</div>
+                    <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
+                        🍈 Pembesaran Buah (45 HST)
+                    </div>
+                </div>
+                <!-- Indikator Aktif -->
+                <div style="background: #F59E0B; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);"></div>
+            </div>
+
+            <!-- Grid Data Corong Tanaman -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Populasi</div>
+                    <div style="font-size: 14px; font-weight: 700;">1.200 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                </div>
+                <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Polinasi</div>
+                    <div style="font-size: 14px; font-weight: 700;">1.150 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
+                    <div style="font-size: 14px; font-weight: 800; color: #fff;">1.100 <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KARTU 2: GH-02 (Kondisi Tidak Aktif / Abu-abu terang) -->
+        <div onclick="dashboard.selectGH('GH-02')" style="min-width: 85%; flex: 0 0 85%; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 16px; padding: 18px; color: var(--text-color, #333); scroll-snap-align: center; cursor: pointer; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                <div>
+                    <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">GH-02 Standar</div>
+                    <div style="font-size: 11px; font-weight: 600; color: #666; background: #f0f0f0; padding: 3px 8px; border-radius: 20px; display: inline-block;">
+                        🌱 Vegetatif Awal (14 HST)
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Populasi</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #333;">1.500 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                </div>
+                <div style="text-align: center; border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Polinasi</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #333;">-</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Buah Fix</div>
+                    <div style="font-size: 14px; font-weight: 700; color: #333;">-</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- CSS Tambahan untuk Menyembunyikan Scrollbar (Letakkan di area tag <style>) -->
+<style>
+    /* Sembunyikan scrollbar di slider GH tapi tetap bisa di-swipe */
+    .gh-slider::-webkit-scrollbar {
+        display: none;
+    }
+    .gh-slider {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+`
+
+                
 
                 <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
