@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (SWIPEABLE GH CARDS & FULL FIX)
+// COZYCS FARM - EXECUTIVE DASHBOARD (AUTO-SORTING & MULTICOLOR CARDS)
 // ==========================================
 
 var dashboard = (function() {
@@ -141,7 +141,7 @@ var dashboard = (function() {
                 <!-- 0. WELCOME BANNER, REAL-TIME CLOCK & WEATHER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
-                <!-- 1. KARTU SWIPE GREENHOUSE DINAMIS -->
+                <!-- 1. KARTU SWIPE GREENHOUSE DINAMIS (WARNA-WARNI & AUTO-SORTING) -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 20px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
@@ -311,7 +311,7 @@ var dashboard = (function() {
         if (!el) return;
 
         var isEn = (localStorage.getItem('cozycs_lang') === 'en');
-        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Sore' };
+        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Pagi' };
         var greetingText = greeting.text;
         if (isEn) {
             if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
@@ -370,7 +370,7 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI BARU: MENGHASILKAN KARTU SWIPE SECARA DINAMIS
+    // FUNGSI MEMBANGUN KARTU SWIPE BESERTA LOGIKA AUTO-SORTING
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
         if (!el) return;
@@ -380,7 +380,6 @@ var dashboard = (function() {
         var dataPolinasi = getData('cozycs_polinasi');
         var dataBuah = getData('cozycs_buah');
 
-        // Jika tidak ada GH
         if (dataGh.length === 0) {
             el.innerHTML = `
                 <div style="background: var(--card-bg, #F5F5F5); border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
@@ -398,28 +397,34 @@ var dashboard = (function() {
             <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
         `;
 
-        // Susun opsi "Semua GH" di urutan pertama (kartu summary)
-        var allSelected = selectedGh === 'ALL';
+        // 1. Kumpulkan semua kartu ke dalam Array (biar gampang diurutkan)
+        var cardsList = [];
+
+        // - Hitung Data Summary ("ALL GH")
         var tPopALL = 0, tPolALL = 0, tBuahALL = 0;
-        
         dataTanaman.forEach(t => tPopALL += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0));
         dataPolinasi.forEach(p => tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0));
         dataBuah.forEach(b => tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0));
 
-        html += getCardHtml('ALL', 'Cozycs Farm', 'Keseluruhan Data', tPopALL, tPolALL, tBuahALL, allSelected);
+        cardsList.push({
+            id: 'ALL',
+            title: 'Cozycs Farm',
+            subtitle: 'Keseluruhan Data',
+            populasi: tPopALL,
+            polinasi: tPolALL,
+            buahFix: tBuahALL,
+            themeIndex: 0 // Index 0 = Tema Hijau Master
+        });
 
-        // Susun kartu untuk setiap GH
-        dataGh.forEach(function(g) {
+        // - Hitung Data Per-Greenhouse
+        dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
-            var isSelected = selectedGh === gId;
             
-            // Dapatkan info tanaman di GH ini
             var currentTanaman = dataTanaman.find(t => t.gh === gId || t.ghId === gId);
             var subtitle = (currentTanaman && currentTanaman.varietas) 
                 ? (currentTanaman.varietas + ' (' + (currentTanaman.hst || 0) + ' HST)') 
                 : 'Masa Sterilisasi (Kosong)';
 
-            // Hitung Corong Data
             var tPop = 0, tPol = 0, tBuah = 0;
             if(currentTanaman) tPop = parseFloat(currentTanaman.populasi) || parseFloat(currentTanaman.jumlah) || 0;
             
@@ -429,18 +434,52 @@ var dashboard = (function() {
             var filteredBuah = dataBuah.filter(b => b.gh === gId || b.ghId === gId);
             filteredBuah.forEach(b => tBuah += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0));
 
-            html += getCardHtml(gId, g.nama || g.kode, subtitle, tPop, tPol, tBuah, isSelected);
+            cardsList.push({
+                id: gId,
+                title: g.nama || g.kode,
+                subtitle: subtitle,
+                populasi: tPop,
+                polinasi: tPol,
+                buahFix: tBuah,
+                themeIndex: (index % 4) + 1 // Tema akan berulang: 1(Biru), 2(Orange), 3(Ungu), 4(Teal)
+            });
+        });
+
+        // 2. LOGIKA AUTO-SORT (Pindahkan kartu yang dipilih ke urutan pertama)
+        var selectedIndex = cardsList.findIndex(c => c.id === selectedGh);
+        if (selectedIndex > 0) {
+            var selectedItem = cardsList.splice(selectedIndex, 1)[0];
+            cardsList.unshift(selectedItem); // Memasukkan kembali item yang dipilih ke urutan teratas (index 0)
+        }
+
+        // 3. Cetak HTML sesuai urutan baru
+        cardsList.forEach(function(c) {
+            var isActive = (c.id === selectedGh);
+            html += getCardHtml(c.id, c.title, c.subtitle, c.populasi, c.polinasi, c.buahFix, isActive, c.themeIndex);
         });
 
         html += `</div>`;
         el.innerHTML = html;
     }
 
-    // FUNGSI PEMBANTU UNTUK MERENDER DESAIN KARTU
-    function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive) {
+    // FUNGSI DESAIN KARTU & TEMA WARNA
+    function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive, themeIndex) {
+        
+        // Pilihan 5 Tema Warna Super Elegan
+        var themes = [
+            { bg: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', shadow: 'rgba(46, 125, 50, 0.3)' },     // 0: Hijau (Keseluruhan Data)
+            { bg: 'linear-gradient(135deg, #0277BD 0%, #01579B 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },     // 1: Biru Ocean (GH1)
+            { bg: 'linear-gradient(135deg, #F57C00 0%, #E65100 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },      // 2: Kuning/Orange (GH2)
+            { bg: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },    // 3: Ungu Royal (GH3)
+            { bg: 'linear-gradient(135deg, #00838F 0%, #006064 100%)', shadow: 'rgba(0, 131, 143, 0.3)' }      // 4: Teal Tropis (GH4)
+        ];
+        
+        var theme = themes[themeIndex] || themes[1]; // Jaga-jaga kembali ke Biru kalau index berlebih
+
         if (isActive) {
+            // Tampilan Kartu Sedang Dipilih (Berwarna)
             return `
-                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3); position: relative; overflow: hidden; cursor: pointer;">
+                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: ${theme.bg}; border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px ${theme.shadow}; position: relative; overflow: hidden; cursor: pointer;">
                     <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
                         <div>
@@ -453,11 +492,11 @@ var dashboard = (function() {
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
                         <div style="text-align: center;">
-                            <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Populasi</div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Populasi</div>
                             <div style="font-size: 14px; font-weight: 700;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
                         </div>
                         <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
-                            <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Polinasi</div>
+                            <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Polinasi</div>
                             <div style="font-size: 14px; font-weight: 700;">${polinasi > 0 ? polinasi : '-'} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
                         </div>
                         <div style="text-align: center;">
@@ -468,6 +507,7 @@ var dashboard = (function() {
                 </div>
             `;
         } else {
+            // Tampilan Kartu Sedang TIDAK Dipilih (Putih Bersih)
             return `
                 <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 16px; padding: 18px; color: var(--text-color, #333); scroll-snap-align: center; cursor: pointer; position: relative;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
@@ -478,18 +518,18 @@ var dashboard = (function() {
                             </div>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 12px; border: 1px solid var(--border-color, #eee);">
                         <div style="text-align: center;">
                             <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Populasi</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #333;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
                         </div>
-                        <div style="text-align: center; border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
+                        <div style="text-align: center; border-left: 1px solid var(--border-color, #ddd); border-right: 1px solid var(--border-color, #ddd);">
                             <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Polinasi</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #333;">${polinasi > 0 ? polinasi : '-'}</div>
+                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${polinasi > 0 ? polinasi : '-'}</div>
                         </div>
                         <div style="text-align: center;">
                             <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Buah Fix</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #333;">${buahFix > 0 ? buahFix : '-'}</div>
+                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${buahFix > 0 ? buahFix : '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -497,6 +537,7 @@ var dashboard = (function() {
         }
     }
 
+    // Fungsi Ketika Kartu Di-klik (Filter)
     function selectGhFilter(kodeGh) {
         selectedGh = kodeGh;
         refreshAllDashboardData();
