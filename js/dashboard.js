@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (BILINGUAL & DARK MODE FULL)
+// COZYCS FARM - EXECUTIVE DASHBOARD (SWIPEABLE GH CARDS & FULL FIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -25,7 +25,8 @@ var dashboard = (function() {
     var i18nDict = {
         'id': {
             'greeting_sub': 'Semoga panen melimpah hari ini!',
-            'select_gh': 'Pilih Tampilan Greenhouse:',
+            'select_gh': 'Pilih Greenhouse',
+            'see_all': 'Lihat Semua',
             'all_gh': '🌐 Semua GH',
             'water_env_mon': 'Monitoring Air Dan Lingkungan',
             'latest': 'Terbaru',
@@ -73,7 +74,8 @@ var dashboard = (function() {
         },
         'en': {
             'greeting_sub': 'May your harvest be abundant today!',
-            'select_gh': 'Select Greenhouse View:',
+            'select_gh': 'Select Greenhouse',
+            'see_all': 'See All',
             'all_gh': '🌐 All GH',
             'water_env_mon': 'Water & Environment Monitoring',
             'latest': 'Latest',
@@ -128,115 +130,21 @@ var dashboard = (function() {
 
     function render() {
         return `
+            <style>
+                /* Sembunyikan scrollbar di slider GH tapi tetap bisa di-swipe */
+                .gh-slider::-webkit-scrollbar { display: none; }
+                .gh-slider { -ms-overflow-style: none; scrollbar-width: none; }
+            </style>
+
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
                 <!-- 0. WELCOME BANNER, REAL-TIME CLOCK & WEATHER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
-                <!-- 1. SWITCHER / FILTER GREENHOUSE -->
-                <div style="background: var(--card-bg, #fff); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 12px;">
-                    <div style="font-size: 10px; color: #777; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">${t('select_gh')}</div>
-                    <div id="dashGhSwitcher" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;"></div>
-                </div>
+                <!-- 1. KARTU SWIPE GREENHOUSE DINAMIS -->
+                <div id="dashSwipeableGhContainer" style="margin-bottom: 20px;"></div>
 
-                <!-- 2. KARTU INFORMASI GH BANNER -->
-                <div id="dashGhInfoBanner" style="margin-bottom: 16px;"></div>
-                
-// Tambahkan ini di dalam return render() pada dashboard.js kamu, 
-// tepat di atas bagian "Monitoring Air Dan Lingkungan"
-
-`
-<!-- AREA GREENHOUSE SELECTOR (SWIPEABLE CARDS) -->
-<div style="margin-bottom: 20px;">
-    
-    <!-- Header Bagian -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
-        <div style="font-size: 14px; font-weight: 800; color: var(--text-color, #111);">Pilih Greenhouse</div>
-        <div style="font-size: 12px; font-weight: 700; color: #2E7D32; cursor: pointer;">Lihat Semua <i class="fas fa-chevron-right" style="font-size: 10px;"></i></div>
-    </div>
-
-    <!-- Kontainer Horizontal Scroll (Swipe Area) -->
-    <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
-
-        <!-- KARTU 1: GH-01 (Kondisi Aktif/Dipilih) -->
-        <div onclick="dashboard.selectGH('GH-01')" style="min-width: 85%; flex: 0 0 85%; background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3); position: relative; overflow: hidden; cursor: pointer;">
-            <!-- Hiasan Background Vektor (Opsional) -->
-            <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
-            
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
-                <div>
-                    <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">GH-01 Premium</div>
-                    <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
-                        🍈 Pembesaran Buah (45 HST)
-                    </div>
-                </div>
-                <!-- Indikator Aktif -->
-                <div style="background: #F59E0B; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);"></div>
-            </div>
-
-            <!-- Grid Data Corong Tanaman -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Populasi</div>
-                    <div style="font-size: 14px; font-weight: 700;">1.200 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                </div>
-                <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
-                    <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Polinasi</div>
-                    <div style="font-size: 14px; font-weight: 700;">1.150 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
-                    <div style="font-size: 14px; font-weight: 800; color: #fff;">1.100 <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- KARTU 2: GH-02 (Kondisi Tidak Aktif / Abu-abu terang) -->
-        <div onclick="dashboard.selectGH('GH-02')" style="min-width: 85%; flex: 0 0 85%; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 16px; padding: 18px; color: var(--text-color, #333); scroll-snap-align: center; cursor: pointer; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
-                <div>
-                    <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">GH-02 Standar</div>
-                    <div style="font-size: 11px; font-weight: 600; color: #666; background: #f0f0f0; padding: 3px 8px; border-radius: 20px; display: inline-block;">
-                        🌱 Vegetatif Awal (14 HST)
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Populasi</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #333;">1.500 <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                </div>
-                <div style="text-align: center; border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
-                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Polinasi</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #333;">-</div>
-                </div>
-                <div style="text-align: center;">
-                    <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Buah Fix</div>
-                    <div style="font-size: 14px; font-weight: 700; color: #333;">-</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- CSS Tambahan untuk Menyembunyikan Scrollbar (Letakkan di area tag <style>) -->
-<style>
-    /* Sembunyikan scrollbar di slider GH tapi tetap bisa di-swipe */
-    .gh-slider::-webkit-scrollbar {
-        display: none;
-    }
-    .gh-slider {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-</style>
-`
-
-                
-
-                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -258,10 +166,10 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 4. EXECUTIVE SUMMARY -->
+                <!-- 3. EXECUTIVE SUMMARY -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;" id="dashExecutiveSummary"></div>
 
-                <!-- 5. AGENDA HARI INI -->
+                <!-- 4. AGENDA HARI INI -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 700; color: #1B5E20;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -270,19 +178,19 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 6. PROGRESS MUSIM & ESTIMASI OMZET -->
+                <!-- 5. PROGRESS MUSIM & ESTIMASI OMZET -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 7. AKTIVITAS TERAKHIR -->
+                <!-- 6. AKTIVITAS TERAKHIR -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 8. QUICK ACTION BUTTONS -->
+                <!-- 7. QUICK ACTION BUTTONS -->
                 <div style="background: var(--card-bg, #F5F5F5); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e0e0e0);">
                     <div style="font-size: 11px; font-weight: 700; color: #616161; margin-bottom: 8px; text-transform: uppercase;">${t('quick_action')}</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
@@ -299,7 +207,6 @@ var dashboard = (function() {
     }
 
     function init() {
-        renderGhSwitcher();
         refreshAllDashboardData();
         startLiveClock();
         fetchWeatherByCoords(currentLocation.lat, currentLocation.lon, currentLocation.city);
@@ -341,7 +248,6 @@ var dashboard = (function() {
 
     function detectUserLocation() {
         if (!navigator.geolocation) return;
-
         var locIconEl = document.getElementById('btnGpsTargetIcon');
         if (locIconEl) locIconEl.className = 'fas fa-spinner fa-spin';
 
@@ -349,48 +255,38 @@ var dashboard = (function() {
             function(position) {
                 var lat = position.coords.latitude;
                 var lon = position.coords.longitude;
-
                 fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=id')
                     .then(function(res) { return res.json(); })
                     .then(function(geoData) {
                         var cityName = geoData.city || geoData.locality || geoData.principalSubdivision || 'My Location';
                         cityName = cityName.replace(/Kota |Kabupaten /gi, '');
-
                         currentLocation = { lat: lat, lon: lon, city: cityName };
-
                         localStorage.setItem('cozycs_user_lat', lat);
                         localStorage.setItem('cozycs_user_lon', lon);
                         localStorage.setItem('cozycs_user_city', cityName);
-
                         fetchWeatherByCoords(lat, lon, cityName);
                     })
                     .finally(function() {
                         if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
                     });
             },
-            function(error) {
-                if (locIconEl) locIconEl.className = 'fas fa-crosshairs';
-            },
+            function(error) { if (locIconEl) locIconEl.className = 'fas fa-crosshairs'; },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     }
 
     function fetchWeatherByCoords(lat, lon, cityName) {
         var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
-
         fetch(apiUrl)
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 if (data && data.current) {
                     var temp = Math.round(data.current.temperature_2m) + '°C';
                     var humidity = Math.round(data.current.relative_humidity_2m) + '%';
-
                     pesawaranWeather = { temp: temp, humidity: humidity, icon: '⛅' };
-
                     var tempEl = document.getElementById('liveWeatherTemp');
                     var humEl = document.getElementById('liveWeatherHumidity');
                     var cityEl = document.getElementById('liveLocationName');
-
                     if (tempEl) tempEl.textContent = temp;
                     if (humEl) humEl.textContent = humidity;
                     if (cityEl) cityEl.textContent = cityName;
@@ -401,7 +297,7 @@ var dashboard = (function() {
 
     function refreshAllDashboardData() {
         loadWelcomeBanner();
-        loadGhInfoBanner();
+        renderSwipeableGhCards(); // Memanggil fungsi kartu swipe
         loadIotWaterData();
         loadIotEnvData();
         loadExecutiveSummary();
@@ -474,46 +370,17 @@ var dashboard = (function() {
         `;
     }
 
-    function renderGhSwitcher() {
-        var el = document.getElementById('dashGhSwitcher');
-        if (!el) return;
-
-        var dataGh = getData('cozycs_greenhouse');
-
-        var html = `
-            <button onclick="dashboard.selectGhFilter('ALL')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${selectedGh === 'ALL' ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
-                ${t('all_gh')}
-            </button>
-        `;
-
-        if (dataGh.length > 0) {
-            dataGh.forEach(function(gh) {
-                var isSelected = selectedGh === gh.kode;
-                html += `
-                    <button onclick="dashboard.selectGhFilter('${gh.kode}')" style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; ${isSelected ? 'background: #2E7D32; color: #fff;' : 'background: #f0f0f0; color: #555;'}">
-                        🏡 ${gh.kode || gh.nama}
-                    </button>
-                `;
-            });
-        }
-
-        el.innerHTML = html;
-    }
-
-    function selectGhFilter(kodeGh) {
-        selectedGh = kodeGh;
-        renderGhSwitcher();
-        refreshAllDashboardData();
-    }
-
-    function loadGhInfoBanner() {
-        var el = document.getElementById('dashGhInfoBanner');
+    // FUNGSI BARU: MENGHASILKAN KARTU SWIPE SECARA DINAMIS
+    function renderSwipeableGhCards() {
+        var el = document.getElementById('dashSwipeableGhContainer');
         if (!el) return;
 
         var dataGh = getData('cozycs_greenhouse');
         var dataTanaman = getData('cozycs_tanaman');
-        var melonImgUrl = 'https://cdn-icons-png.flaticon.com/512/2909/2909787.png';
+        var dataPolinasi = getData('cozycs_polinasi');
+        var dataBuah = getData('cozycs_buah');
 
+        // Jika tidak ada GH
         if (dataGh.length === 0) {
             el.innerHTML = `
                 <div style="background: var(--card-bg, #F5F5F5); border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
@@ -524,35 +391,115 @@ var dashboard = (function() {
             return;
         }
 
-        if (selectedGh === 'ALL') {
-            var listGhHtml = '';
-            dataGh.forEach(function(g) {
-                var currentTanaman = dataTanaman.find(function(t) { return t.gh === g.kode || t.ghId === g.id; });
-                var varietas = (currentTanaman && currentTanaman.varietas) ? currentTanaman.varietas : (g.nama || '-');
-                var hst = (currentTanaman && (currentTanaman.hst !== undefined)) ? currentTanaman.hst + ' DAP' : '0 DAP';
+        var html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-color, #111);">${t('select_gh')}</div>
+            </div>
+            <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+        `;
 
-                listGhHtml += `
-                    <div style="font-size: 12px; font-weight: 600; color: #2E7D32; display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                        <span>🏡</span>
-                        <span>${g.kode || g.nama}: ${varietas} (${hst})</span>
-                    </div>
-                `;
-            });
+        // Susun opsi "Semua GH" di urutan pertama (kartu summary)
+        var allSelected = selectedGh === 'ALL';
+        var tPopALL = 0, tPolALL = 0, tBuahALL = 0;
+        
+        dataTanaman.forEach(t => tPopALL += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0));
+        dataPolinasi.forEach(p => tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0));
+        dataBuah.forEach(b => tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0));
 
-            el.innerHTML = `
-                <div style="background: var(--card-bg, #F4F6F8); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border-color, #EAEAEA);">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; padding: 6px;">
-                            <img src="${melonImgUrl}" alt="Melon" style="width: 100%; height: 100%; object-fit: contain;">
-                        </div>
+        html += getCardHtml('ALL', 'Cozycs Farm', 'Keseluruhan Data', tPopALL, tPolALL, tBuahALL, allSelected);
+
+        // Susun kartu untuk setiap GH
+        dataGh.forEach(function(g) {
+            var gId = g.kode || g.id;
+            var isSelected = selectedGh === gId;
+            
+            // Dapatkan info tanaman di GH ini
+            var currentTanaman = dataTanaman.find(t => t.gh === gId || t.ghId === gId);
+            var subtitle = (currentTanaman && currentTanaman.varietas) 
+                ? (currentTanaman.varietas + ' (' + (currentTanaman.hst || 0) + ' HST)') 
+                : 'Masa Sterilisasi (Kosong)';
+
+            // Hitung Corong Data
+            var tPop = 0, tPol = 0, tBuah = 0;
+            if(currentTanaman) tPop = parseFloat(currentTanaman.populasi) || parseFloat(currentTanaman.jumlah) || 0;
+            
+            var filteredPol = dataPolinasi.filter(p => p.gh === gId || p.ghId === gId);
+            filteredPol.forEach(p => tPol += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0));
+            
+            var filteredBuah = dataBuah.filter(b => b.gh === gId || b.ghId === gId);
+            filteredBuah.forEach(b => tBuah += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0));
+
+            html += getCardHtml(gId, g.nama || g.kode, subtitle, tPop, tPol, tBuah, isSelected);
+        });
+
+        html += `</div>`;
+        el.innerHTML = html;
+    }
+
+    // FUNGSI PEMBANTU UNTUK MERENDER DESAIN KARTU
+    function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive) {
+        if (isActive) {
+            return `
+                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3); position: relative; overflow: hidden; cursor: pointer;">
+                    <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
                         <div>
-                            <div style="font-size: 15px; font-weight: 800; color: var(--text-color, #111); margin-bottom: 2px;">Cozycs Farm (All GH)</div>
-                            ${listGhHtml}
+                            <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">${id === 'ALL' ? '🌐 ' + title : title}</div>
+                            <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
+                                ${subtitle}
+                            </div>
+                        </div>
+                        <div style="background: #F59E0B; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Populasi</div>
+                            <div style="font-size: 14px; font-weight: 700;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                        </div>
+                        <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
+                            <div style="font-size: 10px; color: #e8f5e9; margin-bottom: 4px;">Polinasi</div>
+                            <div style="font-size: 14px; font-weight: 700;">${polinasi > 0 ? polinasi : '-'} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 10px; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
+                            <div style="font-size: 14px; font-weight: 800; color: #fff;">${buahFix > 0 ? buahFix : '-'} <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 16px; padding: 18px; color: var(--text-color, #333); scroll-snap-align: center; cursor: pointer; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                        <div>
+                            <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">${id === 'ALL' ? '🌐 ' + title : title}</div>
+                            <div style="font-size: 11px; font-weight: 600; color: #666; background: #f0f0f0; padding: 3px 8px; border-radius: 20px; display: inline-block;">
+                                ${subtitle}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Populasi</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #333;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                        </div>
+                        <div style="text-align: center; border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
+                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Polinasi</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #333;">${polinasi > 0 ? polinasi : '-'}</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Buah Fix</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #333;">${buahFix > 0 ? buahFix : '-'}</div>
                         </div>
                     </div>
                 </div>
             `;
         }
+    }
+
+    function selectGhFilter(kodeGh) {
+        selectedGh = kodeGh;
+        refreshAllDashboardData();
     }
 
     function loadIotWaterData() {
