@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (CLEANED 4-GRID & SYNCED PROGRESS)
+// COZYCS FARM - EXECUTIVE DASHBOARD (AUTO-AUDIT LOG & FULL FIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -119,7 +119,7 @@ var dashboard = (function() {
                 <!-- 0. WELCOME BANNER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
-                <!-- 1. KARTU SWIPE GREENHOUSE (AUTO-SORT & PERMANENT COLORS) -->
+                <!-- 1. KARTU SWIPE GREENHOUSE -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
@@ -159,7 +159,7 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 5. AKTIVITAS TERAKHIR -->
+                <!-- 5. AKTIVITAS TERAKHIR (AUTO AUDIT LOG) -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 13px; font-weight: 700; color: #424242; margin-bottom: 10px;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
@@ -712,12 +712,31 @@ var dashboard = (function() {
         `;
     }
 
+    // FUNGSI AUDIT LOG OTOMATIS (MENGAMBIL DARI SEMUA AKTIVITAS TERAKHIR APLIKASI)
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
 
+        // Ambil riwayat dari berbagai tabel penyimpanan lokal aplikasi
         var logs = getData('cozycs_logs');
         if (logs.length === 0) logs = getData('cozycs_activities');
+        
+        // Jika log khusus masih kosong, gabungkan data nyata dari inputan tanaman, nutrisi, atau panen
+        if (logs.length === 0) {
+            var allTanaman = getData('cozycs_tanaman');
+            var allNutrisi = getData('cozycs_nutrisi');
+            var allPanen = getData('cozycs_panen');
+
+            allTanaman.forEach(function(item) {
+                logs.push({ jam: item.waktu || item.tanggal || 'Baru', text: 'Input Tanaman: ' + (item.varietas || 'Melon') + ' (' + (item.gh || 'GH') + ')' });
+            });
+            allNutrisi.forEach(function(item) {
+                logs.push({ jam: item.jam || item.tanggal || 'Baru', text: 'Update Nutrisi: ' + (item.ppm || 0) + ' ppm (' + (item.gh || 'GH') + ')' });
+            });
+            allPanen.forEach(function(item) {
+                logs.push({ jam: item.tanggal || 'Baru', text: 'Catatan Panen / Buah Fix' });
+            });
+        }
 
         var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
 
@@ -728,11 +747,11 @@ var dashboard = (function() {
 
         var html = '';
         filteredLogs.slice(-5).reverse().forEach(function(l) {
-            var jamStr = l.jam || l.time || l.waktu || '-';
-            var textStr = l.text || l.kegiatan || l.keterangan || l.judul || '-';
+            var jamStr = l.jam || l.time || l.waktu || 'Baru';
+            var textStr = l.text || l.kegiatan || l.keterangan || l.judul || 'Aktivitas tercatat';
             html += `
-                <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px;">
-                    <span style="font-weight: bold; color: #0277BD; width: 45px; flex-shrink: 0;">${jamStr}</span>
+                <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 6px; margin-bottom: 4px;">
+                    <span style="font-weight: bold; color: #0277BD; width: 65px; flex-shrink: 0; font-size: 10px; background: #E1F5FE; padding: 2px 4px; border-radius: 4px; text-align: center;">${jamStr}</span>
                     <span style="color: var(--text-color, #333);">${textStr}</span>
                 </div>
             `;
