@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (AUTO-SORTING & MULTICOLOR CARDS)
+// COZYCS FARM - EXECUTIVE DASHBOARD (PERMANENT MULTICOLOR & FULL SYNC)
 // ==========================================
 
 var dashboard = (function() {
@@ -131,17 +131,16 @@ var dashboard = (function() {
     function render() {
         return `
             <style>
-                /* Sembunyikan scrollbar di slider GH tapi tetap bisa di-swipe */
                 .gh-slider::-webkit-scrollbar { display: none; }
                 .gh-slider { -ms-overflow-style: none; scrollbar-width: none; }
             </style>
 
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. WELCOME BANNER, REAL-TIME CLOCK & WEATHER -->
+                <!-- 0. WELCOME BANNER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 12px;"></div>
 
-                <!-- 1. KARTU SWIPE GREENHOUSE DINAMIS (WARNA-WARNI & AUTO-SORTING) -->
+                <!-- 1. KARTU SWIPE GREENHOUSE (AUTO-SORT & PERMANENT COLORS) -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 20px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
@@ -297,7 +296,7 @@ var dashboard = (function() {
 
     function refreshAllDashboardData() {
         loadWelcomeBanner();
-        renderSwipeableGhCards(); // Memanggil fungsi kartu swipe
+        renderSwipeableGhCards();
         loadIotWaterData();
         loadIotEnvData();
         loadExecutiveSummary();
@@ -370,7 +369,6 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI MEMBANGUN KARTU SWIPE BESERTA LOGIKA AUTO-SORTING
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
         if (!el) return;
@@ -397,10 +395,9 @@ var dashboard = (function() {
             <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
         `;
 
-        // 1. Kumpulkan semua kartu ke dalam Array (biar gampang diurutkan)
         var cardsList = [];
 
-        // - Hitung Data Summary ("ALL GH")
+        // - Summary ("ALL GH")
         var tPopALL = 0, tPolALL = 0, tBuahALL = 0;
         dataTanaman.forEach(t => tPopALL += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0));
         dataPolinasi.forEach(p => tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0));
@@ -413,10 +410,10 @@ var dashboard = (function() {
             populasi: tPopALL,
             polinasi: tPolALL,
             buahFix: tBuahALL,
-            themeIndex: 0 // Index 0 = Tema Hijau Master
+            themeIndex: 0 // Hijau
         });
 
-        // - Hitung Data Per-Greenhouse
+        // - Per Greenhouse
         dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
             
@@ -441,18 +438,18 @@ var dashboard = (function() {
                 populasi: tPop,
                 polinasi: tPol,
                 buahFix: tBuah,
-                themeIndex: (index % 4) + 1 // Tema akan berulang: 1(Biru), 2(Orange), 3(Ungu), 4(Teal)
+                themeIndex: (index % 4) + 1 // 1: Biru, 2: Kuning/Orange, 3: Ungu, 4: Teal
             });
         });
 
-        // 2. LOGIKA AUTO-SORT (Pindahkan kartu yang dipilih ke urutan pertama)
+        // AUTO-SORT: Pindahkan GH yang dipilih ke urutan pertama (nomor 1)
         var selectedIndex = cardsList.findIndex(c => c.id === selectedGh);
         if (selectedIndex > 0) {
             var selectedItem = cardsList.splice(selectedIndex, 1)[0];
-            cardsList.unshift(selectedItem); // Memasukkan kembali item yang dipilih ke urutan teratas (index 0)
+            cardsList.unshift(selectedItem);
         }
 
-        // 3. Cetak HTML sesuai urutan baru
+        // Render kartu dengan warna permanen masing-masing
         cardsList.forEach(function(c) {
             var isActive = (c.id === selectedGh);
             html += getCardHtml(c.id, c.title, c.subtitle, c.populasi, c.polinasi, c.buahFix, isActive, c.themeIndex);
@@ -462,82 +459,50 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // FUNGSI DESAIN KARTU & TEMA WARNA
     function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive, themeIndex) {
         
-        // Pilihan 5 Tema Warna Super Elegan
+        // 5 Tema Warna Elegan Permanen
         var themes = [
-            { bg: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', shadow: 'rgba(46, 125, 50, 0.3)' },     // 0: Hijau (Keseluruhan Data)
-            { bg: 'linear-gradient(135deg, #0277BD 0%, #01579B 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },     // 1: Biru Ocean (GH1)
-            { bg: 'linear-gradient(135deg, #F57C00 0%, #E65100 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },      // 2: Kuning/Orange (GH2)
-            { bg: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },    // 3: Ungu Royal (GH3)
-            { bg: 'linear-gradient(135deg, #00838F 0%, #006064 100%)', shadow: 'rgba(0, 131, 143, 0.3)' }      // 4: Teal Tropis (GH4)
+            { bg: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)', shadow: 'rgba(46, 125, 50, 0.3)' },     // 0: Hijau (Keseluruhan)
+            { bg: 'linear-gradient(135deg, #0277BD 0%, #01579B 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },     // 1: Biru (GH 1)
+            { bg: 'linear-gradient(135deg, #F57C00 0%, #E65100 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },      // 2: Kuning/Orange (GH 2)
+            { bg: 'linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },    // 3: Ungu (GH 3)
+            { bg: 'linear-gradient(135deg, #00838F 0%, #006064 100%)', shadow: 'rgba(0, 131, 143, 0.3)' }      // 4: Teal (GH 4)
         ];
         
-        var theme = themes[themeIndex] || themes[1]; // Jaga-jaga kembali ke Biru kalau index berlebih
+        var theme = themes[themeIndex] || themes[1];
 
-        if (isActive) {
-            // Tampilan Kartu Sedang Dipilih (Berwarna)
-            return `
-                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: ${theme.bg}; border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px ${theme.shadow}; position: relative; overflow: hidden; cursor: pointer;">
-                    <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
-                        <div>
-                            <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">${id === 'ALL' ? '🌐 ' + title : title}</div>
-                            <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
-                                ${subtitle}
-                            </div>
+        // SEMUA KARTU SEKARANG BERWARNA PERMANEN SESUAI TEMA MASING-MASING
+        return `
+            <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: ${theme.bg}; border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px ${theme.shadow}; position: relative; overflow: hidden; cursor: pointer; border: ${isActive ? '2px solid #FFF' : '2px solid transparent'};">
+                <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.1; transform: rotate(-20deg);"></i>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">${id === 'ALL' ? '🌐 ' + title : title}</div>
+                        <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
+                            ${subtitle}
                         </div>
-                        <div style="background: #F59E0B; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);"></div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Populasi</div>
-                            <div style="font-size: 14px; font-weight: 700;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                        </div>
-                        <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
-                            <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Polinasi</div>
-                            <div style="font-size: 14px; font-weight: 700;">${polinasi > 0 ? polinasi : '-'} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 10px; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
-                            <div style="font-size: 14px; font-weight: 800; color: #fff;">${buahFix > 0 ? buahFix : '-'} <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
-                        </div>
+                    <div style="background: ${isActive ? '#F59E0B' : 'rgba(255,255,255,0.4)'}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Populasi</div>
+                        <div style="font-size: 14px; font-weight: 700;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
+                        <div style="font-size: 10px; color: rgba(255,255,255,0.8); margin-bottom: 4px;">Polinasi</div>
+                        <div style="font-size: 14px; font-weight: 700;">${polinasi > 0 ? polinasi : '-'} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 10px; color: #F59E0B; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff;">${buahFix > 0 ? buahFix : '-'} <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
                     </div>
                 </div>
-            `;
-        } else {
-            // Tampilan Kartu Sedang TIDAK Dipilih (Putih Bersih)
-            return `
-                <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 16px; padding: 18px; color: var(--text-color, #333); scroll-snap-align: center; cursor: pointer; position: relative;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
-                        <div>
-                            <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">${id === 'ALL' ? '🌐 ' + title : title}</div>
-                            <div style="font-size: 11px; font-weight: 600; color: #666; background: #f0f0f0; padding: 3px 8px; border-radius: 20px; display: inline-block;">
-                                ${subtitle}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 12px; border: 1px solid var(--border-color, #eee);">
-                        <div style="text-align: center;">
-                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Populasi</div>
-                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                        </div>
-                        <div style="text-align: center; border-left: 1px solid var(--border-color, #ddd); border-right: 1px solid var(--border-color, #ddd);">
-                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Polinasi</div>
-                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${polinasi > 0 ? polinasi : '-'}</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Buah Fix</div>
-                            <div style="font-size: 14px; font-weight: 700; color: var(--text-color, #333);">${buahFix > 0 ? buahFix : '-'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+            </div>
+        `;
     }
 
-    // Fungsi Ketika Kartu Di-klik (Filter)
     function selectGhFilter(kodeGh) {
         selectedGh = kodeGh;
         refreshAllDashboardData();
@@ -548,7 +513,7 @@ var dashboard = (function() {
         if (!el) return;
 
         var dataNutrisi = getData('cozycs_nutrisi');
-        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
+        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
         var valPpm = (latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
@@ -619,7 +584,7 @@ var dashboard = (function() {
         if (!el) return;
 
         var dataNutrisi = getData('cozycs_nutrisi');
-        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return n.gh === selectedGh; });
+        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
         var valRoomTemp = (latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : '0°C';
@@ -698,26 +663,26 @@ var dashboard = (function() {
         var dataPolinasi = getData('cozycs_polinasi');
 
         var totalTanaman = 0;
-        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return g.kode === selectedGh || g.id === selectedGh; });
+        var filteredGhList = (selectedGh === 'ALL') ? dataGh : dataGh.filter(function(g) { return (g.kode === selectedGh || g.id === selectedGh); });
         filteredGhList.forEach(function(g) {
             totalTanaman += (parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.jumlah) || 0);
         });
 
         var tanamanHidup = 0;
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh || t.ghId === selectedGh; });
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
         filteredTanaman.forEach(function(t) {
             tanamanHidup += (parseFloat(t.populasi) || parseFloat(t.jumlah) || parseFloat(t.jumlahHidup) || 0);
         });
 
         var buahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b.gh === selectedGh || b.ghId === selectedGh; });
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
         filteredBuah.forEach(function(b) {
             buahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || parseFloat(b.totalBuah) || 0);
         });
 
         var tglPanenStr = '-';
         var totalEstimasiKg = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh || p.ghId === selectedGh; });
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return (p.gh === selectedGh || p.ghId === selectedGh); });
         
         filteredPolinasi.forEach(function(p) {
             var jumlahBunga = (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
@@ -812,7 +777,7 @@ var dashboard = (function() {
 
         var totalBatang = 0;
         var maxHst = 0;
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return t.gh === selectedGh || t.ghId === selectedGh; });
+        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
         
         filteredTanaman.forEach(function(t) {
             totalBatang += (parseFloat(t.populasi) || parseFloat(t.jumlah) || 0);
@@ -821,7 +786,7 @@ var dashboard = (function() {
         });
 
         var totalPolinasi = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return p.gh === selectedGh || p.ghId === selectedGh; });
+        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return (p.gh === selectedGh || p.ghId === selectedGh); });
         filteredPolinasi.forEach(function(p) {
             totalPolinasi += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
         });
