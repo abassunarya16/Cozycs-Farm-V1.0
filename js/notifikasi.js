@@ -1,12 +1,12 @@
 // ==========================================
-// COZYCS FARM - REAL NOTIFICATIONS MODULE (CONNECTED TO REAL SCHEDULES)
+// COZYCS FARM - REAL NOTIFIKASI MODULE (SAFE & STABLE)
 // ==========================================
 
-var notifications = (function() {
+var notifikasi = (function() {
 
     function render() {
         return `
-            <div class="notifications-container" style="padding: 16px; padding-bottom: 30px;">
+            <div class="notifikasi-container" style="padding: 16px; padding-bottom: 30px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                     <i class="fas fa-bell" style="font-size: 18px; color: #2E7D32;"></i>
                     <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1B5E20;">Pusat Notifikasi & Alarm Farm</h3>
@@ -16,13 +16,13 @@ var notifications = (function() {
                     Daftar pengingat otomatis berdasarkan data jadwal dan agenda asli farm Anda. Ketuk kartu untuk menuju modul terkait.
                 </div>
 
-                <div id="realNotificationsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="realNotifikasiList" style="display: flex; flex-direction: column; gap: 12px;"></div>
             </div>
         `;
     }
 
     function init() {
-        loadRealNotifications();
+        loadRealNotifikasi();
     }
 
     function getData(key) {
@@ -34,28 +34,26 @@ var notifications = (function() {
         return [];
     }
 
-    function loadRealNotifications() {
-        var el = document.getElementById('realNotificationsList');
+    function loadRealNotifikasi() {
+        var el = document.getElementById('realNotifikasiList');
         if (!el) return;
 
-        // Ambil data jadwal/agenda nyata dari database aplikasi
         var schedules = getData('cozycs_schedules');
         if (schedules.length === 0) schedules = getData('cozycs_jadwal');
 
         if (schedules.length === 0) {
             el.innerHTML = `
-                <div style="background: var(--card-bg, #fff); padding: 30px; border-radius: 12px; text-align: center; border: 1px solid var(--border-color, #e8e8e8); color: #888;">
+                <div style="background: #fff; padding: 30px; border-radius: 12px; text-align: center; border: 1px solid #e8e8e8; color: #888;">
                     <i class="far fa-bell-slash" style="font-size: 32px; color: #ccc; margin-bottom: 8px; display: block;"></i>
                     <div style="font-size: 13px; font-weight: 600;">Belum ada notifikasi atau jadwal aktif.</div>
-                    <div style="font-size: 11px; color: #aaa; margin-top: 4px;">Tambahkan jadwal di menu Jadwal/Agenda untuk memunculkan pengingat di sini.</div>
+                    <div style="font-size: 11px; color: #aaa; margin-top: 4px;">Tambahkan jadwal di menu Jadwal untuk memunculkan pengingat di sini.</div>
                 </div>
             `;
             return;
         }
 
         var html = '';
-        // Urutkan dan tampilkan agenda nyata
-        schedules.slice(-10).reverse().forEach(function(item, idx) {
+        schedules.slice(-10).reverse().forEach(function(item) {
             var title = item.title || item.judul || item.kegiatan || item.nama || 'Agenda Farm';
             var dateStr = item.date || item.tanggal || 'Segera';
             var status = item.status || 'Pending';
@@ -66,9 +64,9 @@ var notifications = (function() {
             var textBadgeColor = isDone ? '#2E7D32' : '#E65100';
 
             html += `
-                <div onclick="navigateTo('jadwal')" style="background: var(--card-bg, #fff); border-radius: 12px; padding: 14px; border: 1px solid var(--border-color, #e8e8e8); border-left: 4px solid ${borderColor}; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: transform 0.2s;">
+                <div onclick="navigateTo('jadwal')" style="background: #fff; border-radius: 12px; padding: 14px; border: 1px solid #e8e8e8; border-left: 4px solid ${borderColor}; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                        <div style="font-size: 13px; font-weight: 800; color: var(--text-color, #222);">${title}</div>
+                        <div style="font-size: 13px; font-weight: 800; color: #222;">${title}</div>
                         <span style="font-size: 10px; background: ${bgBadge}; color: ${textBadgeColor}; padding: 2px 8px; border-radius: 6px; font-weight: bold;">
                             ${isDone ? 'Selesai' : 'Agenda Aktif'}
                         </span>
@@ -94,4 +92,4 @@ var notifications = (function() {
 
 })();
 
-window.notifications = notifications;
+window.notifikasi = notifikasi;
