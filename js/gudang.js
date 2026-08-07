@@ -237,7 +237,7 @@ var gudang = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-boxes" style="color: #E65100;"></i> ${t('module_title')}</div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS SAMA PRESISI MODUL KEUANGAN) -->
+                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS PERSIS POLA KEUANGAN) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="gudangStatCards">
                     <!-- Dynamic Stat Cards -->
                 </div>
@@ -487,7 +487,7 @@ var gudang = (function() {
         }
     }
 
-    // DASHBOARD 4 STAT CARDS - DISESUAIKAN PRESISI SAMA DENGAN MODUL KEUANGAN
+    // DASHBOARD 4 STAT CARDS - STRUCTURAL & TYPOGRAPHY COPY IDENTIK MODUL KEUANGAN
     function loadDashboard() {
         var container = document.getElementById('gudangStatCards');
         if (!container) return;
@@ -520,21 +520,22 @@ var gudang = (function() {
             return 'Rp' + val.toLocaleString('id-ID');
         };
 
+        // MEMAKAI KARTU PRESISI SAMA PERSIS KEUANGAN (padding 12px, border #e8e8e8, label 10px uppercase, value 16px bold)
         container.innerHTML = `
             <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: #888; font-weight: 600;">${t('stat_total_items')}</div>
+                <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_total_items')}</div>
                 <div style="font-size: 16px; font-weight: bold; color: var(--text-color, #222);">${totalJenis} ${t('unit_types')}</div>
             </div>
             <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: #2E7D32; font-weight: 600;">${t('stat_inventory_value')}</div>
+                <div style="font-size: 10px; color: #2E7D32; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_inventory_value')}</div>
                 <div style="font-size: 16px; font-weight: bold; color: #2E7D32;">${formatRupiah(nilaiPersediaan)}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid ${stokKritis > 0 ? '#C62828' : 'var(--border-color, #e8e8e8)'};">
-                <div style="font-size: 10px; color: ${stokKritis > 0 ? '#C62828' : '#888'}; font-weight: 600;">${t('stat_critical_stock')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: ${stokKritis > 0 ? '#C62828' : '#777'}; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_critical_stock')}</div>
                 <div style="font-size: 16px; font-weight: bold; color: ${stokKritis > 0 ? '#C62828' : 'var(--text-color, #222)'};">${stokKritis} ${t('unit_items')}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid ${expiredSoon > 0 ? '#E65100' : 'var(--border-color, #e8e8e8)'};">
-                <div style="font-size: 10px; color: ${expiredSoon > 0 ? '#E65100' : '#888'}; font-weight: 600;">${t('stat_expired_soon')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: ${expiredSoon > 0 ? '#E65100' : '#777'}; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_expired_soon')}</div>
                 <div style="font-size: 16px; font-weight: bold; color: ${expiredSoon > 0 ? '#E65100' : 'var(--text-color, #222)'};">${expiredSoon} ${t('unit_items')}</div>
             </div>
         `;
