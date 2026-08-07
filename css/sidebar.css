@@ -1,139 +1,184 @@
-/* ========================================== */
-/* COZYCS FARM - SIDEBAR DRAWER STYLES        */
-/* (FULL FIX - DARK MODE & MOBILE RESPONSIVE) */
-/* ========================================== */
+// ==========================================
+// COZYCS FARM - MODUL SIDEBAR / NAVIGASI UTAMA
+// (PUSAT NOTIFIKASI DIHAPUS DARI MONITORING & PERAWATAN)
+// ==========================================
 
-.app-sidebar,
-.sidebar-container {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 270px;
-    height: 100%;
-    background: var(--card-bg, #ffffff);
-    color: var(--text-color, #333333);
-    z-index: 1100;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    border-right: 1px solid var(--border-color, #e8e8e8);
-}
+var sidebar = (function() {
 
-.app-sidebar.active,
-.sidebar-container.active {
-    left: 0 !important;
-}
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
+    var i18nDict = {
+        'id': {
+            'grp_utama': 'UTAMA',
+            'nav_dashboard': 'Dasbor',
+            'grp_fasilitas': 'FASILITAS',
+            'nav_greenhouse': 'Greenhouse',
+            'nav_warehouse': 'Stok Gudang',
+            'grp_tanaman': 'TANAMAN',
+            'nav_plants': 'Database Tanaman',
+            'nav_pollination': 'Polinasi Bunga',
+            'nav_selection': 'Seleksi Buah',
+            'nav_pruning': 'Pruning / Rempes',
+            'grp_monitoring': 'MONITORING & PERAWATAN',
+            'nav_nutrition': 'Nutrisi & PPM',
+            'nav_pest': 'Hama & Penyakit',
+            'nav_spray': 'Jadwal Spray',
+            'nav_schedule': 'Jadwal Harian',
+            'nav_cctv': 'Live CCTV',
+            'grp_hasil': 'HASIL & BISNIS',
+            'nav_harvest': 'Data Panen',
+            'nav_report': 'Laporan Farm'
+        },
+        'en': {
+            'grp_utama': 'MAIN',
+            'nav_dashboard': 'Dashboard',
+            'grp_fasilitas': 'FACILITIES',
+            'nav_greenhouse': 'Greenhouse',
+            'nav_warehouse': 'Warehouse Stock',
+            'grp_tanaman': 'PLANTS',
+            'nav_plants': 'Plant Database',
+            'nav_pollination': 'Flower Pollination',
+            'nav_selection': 'Fruit Selection',
+            'nav_pruning': 'Pruning / Trimming',
+            'grp_monitoring': 'MONITORING & CARE',
+            'nav_nutrition': 'Nutrition & PPM',
+            'nav_pest': 'Pest & Disease',
+            'nav_spray': 'Spray Schedule',
+            'nav_schedule': 'Daily Schedule',
+            'nav_cctv': 'Live CCTV',
+            'grp_hasil': 'YIELD & BUSINESS',
+            'nav_harvest': 'Harvest Data',
+            'nav_report': 'Farm Report'
+        }
+    };
 
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    background: #1B5E20;
-    color: #ffffff;
-    flex-shrink: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+    function t(key) {
+        var lang = localStorage.getItem('cozycs_lang') || 'id';
+        return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
 
-.sidebar-title {
-    font-size: 15px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ffffff;
-}
+    function render() {
+        // STRUKTUR GRUP MENU SESUAI LAYOUT APLIKASI COZYCS FARM
+        var groups = [
+            {
+                title: t('grp_utama'),
+                items: [
+                    { id: 'dashboard', icon: 'fas fa-home', label: t('nav_dashboard'), module: 'dashboard', color: '#2E7D32' }
+                ]
+            },
+            {
+                title: t('grp_fasilitas'),
+                items: [
+                    { id: 'greenhouse', icon: 'fas fa-warehouse', label: t('nav_greenhouse'), module: 'greenhouse', color: '#2E7D32' },
+                    { id: 'gudang', icon: 'fas fa-boxes', label: t('nav_warehouse'), module: 'gudang', color: '#2E7D32' }
+                ]
+            },
+            {
+                title: t('grp_tanaman'),
+                items: [
+                    { id: 'tanaman', icon: 'fas fa-seedling', label: t('nav_plants'), module: 'tanaman', color: '#2E7D32' },
+                    { id: 'polinasi', icon: 'fas fa-heart', label: t('nav_pollination'), module: 'polinasi', color: '#E65100' },
+                    { id: 'seleksi', icon: 'fas fa-apple-alt', label: t('nav_selection'), module: 'seleksi', color: '#0277BD' },
+                    { id: 'pruning', icon: 'fas fa-cut', label: t('nav_pruning'), module: 'pruning', color: '#5D4037' }
+                ]
+            },
+            {
+                title: t('grp_monitoring'),
+                items: [
+                    { id: 'nutrisi', icon: 'fas fa-flask', label: t('nav_nutrition'), module: 'nutrisi', color: '#0277BD' },
+                    { id: 'hama', icon: 'fas fa-bug', label: t('nav_pest'), module: 'hama', color: '#C62828' },
+                    { id: 'spray', icon: 'fas fa-spray-can', label: t('nav_spray'), module: 'spray', color: '#6A1B9A' },
+                    // PUSAT NOTIFIKASI SUDAH DIHAPUS DARI SINI
+                    { id: 'jadwal', icon: 'fas fa-calendar-alt', label: t('nav_schedule'), module: 'jadwal', color: '#E65100' },
+                    { id: 'cctv', icon: 'fas fa-video', label: t('nav_cctv'), module: 'cctv', color: '#C62828' }
+                ]
+            },
+            {
+                title: t('grp_hasil'),
+                items: [
+                    { id: 'panen', icon: 'fas fa-box-open', label: t('nav_harvest'), module: 'panen', color: '#6A1B9A' },
+                    { id: 'laporan', icon: 'fas fa-file-alt', label: t('nav_report'), module: 'laporan', color: '#00695C' }
+                ]
+            }
+        ];
 
-.sidebar-close-btn {
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    transition: opacity 0.2s;
-}
+        var activeModule = window.currentModule || 'dashboard';
+        var bodyHtml = '';
 
-.sidebar-close-btn:hover {
-    opacity: 0.8;
-}
+        groups.forEach(function(grp) {
+            bodyHtml += `<div class="sidebar-group-title">${grp.title}</div>`;
+            grp.items.forEach(function(item) {
+                var isActive = (activeModule === item.module) ? 'active' : '';
+                bodyHtml += `
+                    <button class="sidebar-item ${isActive}" onclick="sidebar.navigateTo('${item.module}')">
+                        <i class="${item.icon}" style="color: ${item.color};"></i>
+                        <span>${item.label}</span>
+                    </button>
+                `;
+            });
+        });
 
-.sidebar-body {
-    padding: 12px;
-    flex: 1;
-    overflow-y: auto;
-}
+        return `
+            <div class="sidebar-overlay" id="sidebarOverlay" onclick="sidebar.close()"></div>
+            
+            <div class="app-sidebar" id="sidebarMenu">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <div class="sidebar-title">
+                        <i class="fas fa-leaf"></i>
+                        <span>Cozycs Farm v1.0.0</span>
+                    </div>
+                    <button class="sidebar-close-btn" onclick="sidebar.close()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-.sidebar-group-title {
-    font-size: 11px;
-    font-weight: 700;
-    color: #2E7D32;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 14px 0 6px 4px;
-}
+                <!-- Sidebar Body (Daftar Menu Berkelompok) -->
+                <div class="sidebar-body">
+                    ${bodyHtml}
+                </div>
+            </div>
+        `;
+    }
 
-.sidebar-item,
-.sidebar-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    color: var(--text-color, #333333);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    border: none;
-    background: none;
-    width: 100%;
-    text-align: left;
-    box-sizing: border-box;
-}
+    function navigateTo(moduleName) {
+        window.currentModule = moduleName;
+        if (typeof app !== 'undefined' && typeof app.loadModule === 'function') {
+            app.loadModule(moduleName);
+        } else if (window[moduleName] && typeof window[moduleName].render === 'function') {
+            var appContainer = document.getElementById('appContent') || document.getElementById('app');
+            if (appContainer) {
+                appContainer.innerHTML = window[moduleName].render();
+                if (typeof window[moduleName].init === 'function') {
+                    window[moduleName].init();
+                }
+            }
+        }
+        close();
+    }
 
-.sidebar-item:hover,
-.sidebar-item:active,
-.sidebar-item.active,
-.sidebar-link:hover,
-.sidebar-link:active {
-    background: var(--inner-card-bg, #E8F5E9);
-    color: #1B5E20;
-}
+    function open() {
+        var el = document.getElementById('sidebarMenu');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (el) el.classList.add('active');
+        if (overlay) overlay.classList.add('active');
+        document.body.classList.add('sidebar-open');
+    }
 
-.sidebar-item i,
-.sidebar-link i {
-    width: 20px;
-    text-align: center;
-    font-size: 15px;
-    flex-shrink: 0;
-}
+    function close() {
+        var el = document.getElementById('sidebarMenu');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (el) el.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+        document.body.classList.remove('sidebar-open');
+    }
 
-.sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1050;
-    display: none;
-    backdrop-filter: blur(2px);
-}
+    return {
+        render: render,
+        navigateTo: navigateTo,
+        open: open,
+        close: close
+    };
 
-.sidebar-overlay.active {
-    display: block !important;
-}
+})();
 
-/* Pengunci layar agar background tidak ikut terseret saat drawer terbuka */
-body.sidebar-open {
-    overflow: hidden !important;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-}
+window.sidebar = sidebar;
