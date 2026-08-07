@@ -1,8 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (CRUD BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL NUTRISI & PPM (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var nutrisi = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    var searchQuery = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -55,7 +60,12 @@ var nutrisi = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Data berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus data nutrisi ini?',
-            'toast_deleted': 'Data nutrisi berhasil dihapus'
+            'toast_deleted': 'Data nutrisi berhasil dihapus',
+            'ph_search': '🔍 Cari tanggal, GH, PPM, pH, atau fase...',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Nutrition Check & Control (PPM & pH)',
@@ -106,7 +116,12 @@ var nutrisi = (function() {
             'lbl_notes': 'Notes',
             'toast_saved': 'Data saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this nutrition data?',
-            'toast_deleted': 'Nutrition data deleted successfully'
+            'toast_deleted': 'Nutrition data deleted successfully',
+            'ph_search': '🔍 Search date, GH, PPM, pH, or phase...',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -115,7 +130,6 @@ var nutrisi = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // Fungsi pembantu untuk mengambil kunci storage dengan aman
     function getKey() {
         if (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.NUTRISI) {
             return Storage.KEYS.NUTRISI;
@@ -123,19 +137,16 @@ var nutrisi = (function() {
         return 'cozycs_nutrisi';
     }
 
-    // Fungsi pembantu pembaca nilai elemen aman
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
     }
 
-    // Fungsi pembantu pengisi nilai elemen aman
     function setVal(id, val) {
         var el = document.getElementById(id);
         if (el) el.value = val;
     }
 
-    // Fungsi untuk mengisi opsi dropdown ID GH dari data Greenhouse
     function populateGhDropdown() {
         var selectEl = document.getElementById('nutrisiGh');
         if (!selectEl) return;
@@ -270,9 +281,23 @@ var nutrisi = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data Card Grid 2x2 -->
+                <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #0277BD;"></i> ${t('recap_title')}</div>
+                
+                <!-- Kotak Pencarian Khusus Modul Nutrisi -->
+                <div style="margin-bottom: 14px;">
+                    <input type="text" id="inputSearchNutrisi" 
+                           placeholder="${t('ph_search')}" 
+                           oninput="nutrisi.handleSearch(this.value)"
+                           value="${searchQuery}"
+                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                </div>
+
+                <!-- Rekap Data Card Grid 2x2 -->
                 <div id="containerNutrisiCards"></div>
+
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationNutrisiControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
     }
@@ -365,6 +390,7 @@ var nutrisi = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerNutrisiCards');
+        var pageEl = document.getElementById('paginationNutrisiControls');
         if (!container) return;
 
         var data = [];
@@ -379,17 +405,51 @@ var nutrisi = (function() {
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
+        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             var dateA = a && a.date ? new Date(a.date) : new Date(0);
             var dateB = b && b.date ? new Date(b.date) : new Date(0);
             return dateB - dateA;
         });
 
+        // 2. Filter data berdasarkan kata kunci pencarian
+        var filteredData = data.filter(function(item) {
+            if (!searchQuery) return true;
+            var kw = searchQuery.toLowerCase();
+            var gh = (item.gh || '').toLowerCase();
+            var date = (item.date || '').toLowerCase();
+            var timeSlot = (item.timeSlot || '').toLowerCase();
+            var hst = (item.hst || '').toString().toLowerCase();
+            var fase = (item.fase || '').toLowerCase();
+            var ppm = (item.ppm || '').toString().toLowerCase();
+            var ph = (item.ph || '').toString().toLowerCase();
+            var phAction = (item.phAction || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            return gh.includes(kw) || date.includes(kw) || timeSlot.includes(kw) || hst.includes(kw) || fase.includes(kw) || ppm.includes(kw) || ph.includes(kw) || phAction.includes(kw) || desc.includes(kw);
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 3. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 4. Render HTML Kartu
         var html = '';
-        data.forEach(function(item) {
+        pageData.forEach(function(item) {
             if (!item) return;
 
             var valGh = item.gh ? item.gh : '-';
@@ -468,6 +528,25 @@ var nutrisi = (function() {
         });
 
         container.innerHTML = html;
+
+        // 5. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="nutrisi.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} data)
+                    </span>
+                    <button onclick="nutrisi.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} data</span>`;
+            }
+        }
     }
 
     function editItem(id) {
@@ -521,11 +600,25 @@ var nutrisi = (function() {
         }
     }
 
+    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        changePage: changePage
     };
 
 })();
