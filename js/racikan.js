@@ -1,5 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
+// (FIXED INPUT FOCUS JUMPING & RE-RENDER ISSUES)
 // ==========================================
 
 var racikan = (function() {
@@ -213,7 +214,18 @@ var racikan = (function() {
             });
         }
         state.volStock = newVol;
-        renderTables();
+        
+        // Memperbarui nilai berat di input DOM secara spesifik tanpa merender ulang seluruh tabel
+        updateInputValuesInDOM('A', state.itemsA);
+        updateInputValuesInDOM('B', state.itemsB);
+        calculateSummary();
+    }
+
+    function updateInputValuesInDOM(group, items) {
+        items.forEach(function(item, idx) {
+            var el = document.getElementById('input_amount_' + group + '_' + idx);
+            if (el) el.value = item.amount;
+        });
     }
 
     function addItem(group) {
@@ -236,6 +248,7 @@ var racikan = (function() {
         renderTables();
     }
 
+    // UPDATE DATA ITEM TANPA MENIKAM/RE-RENDER TABEL SUPAYA TIDAK HILANG FOKUS KURSOR
     function updateItem(group, index, field, value) {
         var targetArr = (group === 'A') ? state.itemsA : state.itemsB;
         if (!targetArr[index]) return;
@@ -246,7 +259,8 @@ var racikan = (function() {
             targetArr[index][field] = value;
         }
 
-        renderTables();
+        // Cukup hitung ulang total biaya dan bobot tanpa merender ulang seluruh tabel HTML
+        calculateSummary();
     }
 
     function renderTables() {
@@ -289,7 +303,7 @@ var racikan = (function() {
                     <!-- Berat -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Berat</label>
-                        <input type="number" value="${item.amount}" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 6px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                        <input type="number" id="input_amount_${group}_${idx}" value="${item.amount}" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 6px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                     </div>
 
                     <!-- Satuan -->
