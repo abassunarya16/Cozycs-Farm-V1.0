@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL SIDEBAR DRAWER (FIXED POSITIONING & PUSAT NOTIFIKASI REMOVED)
+// COZYCS FARM - MODUL SIDEBAR / NAVIGASI UTAMA
 // ==========================================
 
 var sidebar = (function() {
@@ -7,46 +7,28 @@ var sidebar = (function() {
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
         'id': {
-            'grp_utama': 'UTAMA',
-            'nav_dashboard': 'Dasbor',
-            'grp_fasilitas': 'FASILITAS',
-            'nav_greenhouse': 'Greenhouse',
-            'nav_warehouse': 'Stok Gudang',
-            'grp_tanaman': 'TANAMAN',
-            'nav_plants': 'Database Tanaman',
-            'nav_pollination': 'Polinasi Bunga',
-            'nav_selection': 'Seleksi Buah',
-            'nav_pruning': 'Pruning / Rempes',
-            'grp_monitoring': 'MONITORING & PERAWATAN',
+            'nav_dashboard': 'Dasbor Utama',
+            'nav_greenhouse': 'Master Greenhouse',
+            'nav_plants': 'Data Tanaman',
             'nav_nutrition': 'Nutrisi & PPM',
-            'nav_pest': 'Hama & Penyakit',
             'nav_spray': 'Jadwal Spray',
-            'nav_schedule': 'Jadwal Harian',
-            'nav_cctv': 'Live CCTV',
-            'grp_hasil': 'HASIL & BISNIS',
-            'nav_harvest': 'Data Panen',
-            'nav_report': 'Laporan Farm'
+            'nav_schedule': 'Agenda Operasional',
+            'nav_harvest': 'Hasil Panen',
+            'nav_warehouse': 'Pusat Inventaris & Gudang',
+            'nav_finance': 'Keuangan & Kas',
+            'nav_settings': 'Pengaturan Sistem'
         },
         'en': {
-            'grp_utama': 'MAIN',
-            'nav_dashboard': 'Dashboard',
-            'grp_fasilitas': 'FACILITIES',
-            'nav_greenhouse': 'Greenhouse',
-            'nav_warehouse': 'Warehouse Stock',
-            'grp_tanaman': 'PLANTS',
-            'nav_plants': 'Plant Database',
-            'nav_pollination': 'Flower Pollination',
-            'nav_selection': 'Fruit Selection',
-            'nav_pruning': 'Pruning / Trimming',
-            'grp_monitoring': 'MONITORING & CARE',
+            'nav_dashboard': 'Main Dashboard',
+            'nav_greenhouse': 'Greenhouse Master',
+            'nav_plants': 'Plant Data',
             'nav_nutrition': 'Nutrition & PPM',
-            'nav_pest': 'Pest & Disease',
             'nav_spray': 'Spray Schedule',
-            'nav_schedule': 'Daily Schedule',
-            'nav_cctv': 'Live CCTV',
-            'grp_hasil': 'YIELD & BUSINESS',
-            'nav_harvest': 'Harvest Data',
-            'nav_report': 'Farm Report'
+            'nav_schedule': 'Operational Agenda',
+            'nav_harvest': 'Harvest Yield',
+            'nav_warehouse': 'Warehouse & Inventory',
+            'nav_finance': 'Finance & Cashflow',
+            'nav_settings': 'System Settings'
         }
     };
 
@@ -56,91 +38,60 @@ var sidebar = (function() {
     }
 
     function render() {
-        // STRUKTUR GRUP MENU (PUSAT NOTIFIKASI SUDAH DIHAPUS 100%)
-        var groups = [
-            {
-                title: t('grp_utama'),
-                items: [
-                    { id: 'dashboard', icon: 'fas fa-home', label: t('nav_dashboard'), module: 'dashboard', color: '#2E7D32' }
-                ]
-            },
-            {
-                title: t('grp_fasilitas'),
-                items: [
-                    { id: 'greenhouse', icon: 'fas fa-warehouse', label: t('nav_greenhouse'), module: 'greenhouse', color: '#2E7D32' },
-                    { id: 'gudang', icon: 'fas fa-boxes', label: t('nav_warehouse'), module: 'gudang', color: '#2E7D32' }
-                ]
-            },
-            {
-                title: t('grp_tanaman'),
-                items: [
-                    { id: 'tanaman', icon: 'fas fa-seedling', label: t('nav_plants'), module: 'tanaman', color: '#2E7D32' },
-                    { id: 'polinasi', icon: 'fas fa-heart', label: t('nav_pollination'), module: 'polinasi', color: '#E65100' },
-                    { id: 'seleksi', icon: 'fas fa-apple-alt', label: t('nav_selection'), module: 'seleksi', color: '#0277BD' },
-                    { id: 'pruning', icon: 'fas fa-cut', label: t('nav_pruning'), module: 'pruning', color: '#5D4037' }
-                ]
-            },
-            {
-                title: t('grp_monitoring'),
-                items: [
-                    { id: 'nutrisi', icon: 'fas fa-flask', label: t('nav_nutrition'), module: 'nutrisi', color: '#0277BD' },
-                    { id: 'hama', icon: 'fas fa-bug', label: t('nav_pest'), module: 'hama', color: '#C62828' },
-                    { id: 'spray', icon: 'fas fa-spray-can', label: t('nav_spray'), module: 'spray', color: '#6A1B9A' },
-                    { id: 'jadwal', icon: 'fas fa-calendar-alt', label: t('nav_schedule'), module: 'jadwal', color: '#E65100' },
-                    { id: 'cctv', icon: 'fas fa-video', label: t('nav_cctv'), module: 'cctv', color: '#C62828' }
-                ]
-            },
-            {
-                title: t('grp_hasil'),
-                items: [
-                    { id: 'panen', icon: 'fas fa-box-open', label: t('nav_harvest'), module: 'panen', color: '#6A1B9A' },
-                    { id: 'laporan', icon: 'fas fa-file-alt', label: t('nav_report'), module: 'laporan', color: '#00695C' }
-                ]
-            }
+        var menuItems = [
+            { id: 'dashboard', icon: 'fas fa-home', label: t('nav_dashboard'), module: 'dashboard', color: '#2E7D32' },
+            { id: 'greenhouse', icon: 'fas fa-warehouse', label: t('nav_greenhouse'), module: 'greenhouse', color: '#2E7D32' },
+            { id: 'tanaman', icon: 'fas fa-seedling', label: t('nav_plants'), module: 'tanaman', color: '#388E3C' },
+            { id: 'nutrisi', icon: 'fas fa-flask', label: t('nav_nutrition'), module: 'nutrisi', color: '#0277BD' },
+            { id: 'spray', icon: 'fas fa-spray-can', label: t('nav_spray'), module: 'spray', color: '#6A1B9A' },
+            { id: 'jadwal', icon: 'fas fa-calendar-alt', label: t('nav_schedule'), module: 'jadwal', color: '#2E7D32' },
+            { id: 'panen', icon: 'fas fa-shopping-basket', label: t('nav_harvest'), module: 'panen', color: '#2E7D32' },
+            { id: 'gudang', icon: 'fas fa-boxes', label: t('nav_warehouse'), module: 'gudang', color: '#E65100' },
+            { id: 'keuangan', icon: 'fas fa-wallet', label: t('nav_finance'), module: 'keuangan', color: '#2E7D32' },
+            { id: 'settings', icon: 'fas fa-cog', label: t('nav_settings'), module: 'settings', color: '#555555' }
         ];
 
         var activeModule = window.currentModule || 'dashboard';
-        var bodyHtml = '';
 
-        groups.forEach(function(grp) {
-            bodyHtml += `<div class="sidebar-group-title" style="font-size: 11px; font-weight: 700; color: #2E7D32; text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 6px 4px;">${grp.title}</div>`;
-            grp.items.forEach(function(item) {
-                var isActive = (activeModule === item.module) ? 'active' : '';
-                var activeStyle = isActive ? 'background: var(--inner-card-bg, #E8F5E9); color: #1B5E20;' : '';
+        var menuHtml = '';
+        menuItems.forEach(function(item) {
+            var isActive = (activeModule === item.module) ? 'active' : '';
+            var activeStyle = isActive ? 'background: var(--inner-card-bg, #E8F5E9); font-weight: bold; border-left: 4px solid #2E7D32;' : '';
 
-                bodyHtml += `
-                    <button class="sidebar-item ${isActive}" onclick="sidebar.navigateTo('${item.module}')" 
-                            style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: var(--text-color, #333); font-size: 13px; font-weight: 600; border: none; background: none; width: 100%; text-align: left; cursor: pointer; transition: background 0.2s; ${activeStyle}">
-                        <i class="${item.icon}" style="width: 20px; text-align: center; font-size: 15px; color: ${item.color};"></i>
-                        <span>${item.label}</span>
-                    </button>
-                `;
-            });
+            menuHtml += `
+                <li class="sidebar-item ${isActive}" onclick="sidebar.navigateTo('${item.module}')" style="margin-bottom: 4px; border-radius: 8px; overflow: hidden; ${activeStyle}">
+                    <a href="javascript:void(0)" class="sidebar-link" style="display: flex; align-items: center; padding: 12px 16px; text-decoration: none; color: var(--text-color, #333); font-size: 13px;">
+                        <i class="${item.icon}" style="width: 24px; color: ${item.color}; font-size: 15px;"></i>
+                        <span style="margin-left: 8px;">${item.label}</span>
+                    </a>
+                </li>
+            `;
         });
 
         return `
-            <!-- Background Overlay Gray Dim -->
-            <div class="sidebar-overlay" id="sidebarOverlay" onclick="sidebar.close()" 
-                 style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; display: none; backdrop-filter: blur(2px);"></div>
+            <div class="sidebar-overlay" id="sidebarOverlay" onclick="sidebar.close()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:998;"></div>
             
-            <!-- Drawer Sidebar Layering Fixed OFF-CANVAS -->
-            <div class="app-sidebar sidebar-container" id="sidebarMenu" 
-                 style="position: fixed; top: 0; left: -290px; width: 270px; height: 100%; background: var(--card-bg, #ffffff); color: var(--text-color, #333); z-index: 1100; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.15); overflow-y: auto;">
+            <div class="sidebar-container" id="sidebarMenu" style="position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: var(--card-bg, #fff); z-index: 999; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
                 
-                <!-- Sidebar Header -->
-                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #1B5E20; color: #ffffff; flex-shrink: 0;">
-                    <div class="sidebar-title" style="font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #ffffff;">
-                        <i class="fas fa-leaf"></i>
-                        <span>Cozycs Farm v1.0.0</span>
+                <!-- Sidebar Header Logo -->
+                <div style="padding: 18px 16px; border-bottom: 1px solid var(--border-color, #e8e8e8); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-leaf" style="color: #2E7D32; font-size: 20px;"></i>
+                        <span style="font-size: 16px; font-weight: 700; color: #2E7D32;">Cozycs Farm</span>
                     </div>
-                    <button class="sidebar-close-btn" onclick="sidebar.close()" style="background: none; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 4px;">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <button onclick="sidebar.close()" style="background: none; border: none; font-size: 18px; color: #777; cursor: pointer;"><i class="fas fa-times"></i></button>
                 </div>
 
-                <!-- Sidebar Body List -->
-                <div class="sidebar-body" style="padding: 12px; flex: 1; overflow-y: auto;">
-                    ${bodyHtml}
+                <!-- Navigasi Menu List -->
+                <div style="flex: 1; overflow-y: auto; padding: 12px 8px;">
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        ${menuHtml}
+                    </ul>
+                </div>
+
+                <!-- Footer Sidebar Status -->
+                <div style="padding: 12px 16px; border-top: 1px solid var(--border-color, #e8e8e8); font-size: 11px; color: #888; text-align: center;">
+                    Cozycs Farm System v2.0
                 </div>
             </div>
         `;
@@ -165,29 +116,15 @@ var sidebar = (function() {
     function open() {
         var el = document.getElementById('sidebarMenu');
         var overlay = document.getElementById('sidebarOverlay');
-        if (el) {
-            el.classList.add('active');
-            el.style.left = '0px';
-        }
-        if (overlay) {
-            overlay.classList.add('active');
-            overlay.style.display = 'block';
-        }
-        document.body.classList.add('sidebar-open');
+        if (el) el.style.left = '0px';
+        if (overlay) overlay.style.display = 'block';
     }
 
     function close() {
         var el = document.getElementById('sidebarMenu');
         var overlay = document.getElementById('sidebarOverlay');
-        if (el) {
-            el.classList.remove('active');
-            el.style.left = '-290px';
-        }
-        if (overlay) {
-            overlay.classList.remove('active');
-            overlay.style.display = 'none';
-        }
-        document.body.classList.remove('sidebar-open');
+        if (el) el.style.left = '-280px';
+        if (overlay) overlay.style.display = 'none';
     }
 
     return {
