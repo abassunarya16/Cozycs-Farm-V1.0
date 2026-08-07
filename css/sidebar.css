@@ -1,25 +1,30 @@
 /* ========================================== */
 /* COZYCS FARM - SIDEBAR DRAWER STYLES        */
+/* (FULL FIX - DARK MODE & MOBILE RESPONSIVE) */
 /* ========================================== */
 
-.app-sidebar {
+.app-sidebar,
+.sidebar-container {
     position: fixed;
     top: 0;
-    left: -100%;
-    width: 280px;
+    left: -280px;
+    width: 270px;
     height: 100%;
-    background: #ffffff;
+    background: var(--card-bg, #ffffff);
+    color: var(--text-color, #333333);
     z-index: 1100;
-    transition: left 0.3s ease;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    border-right: 1px solid var(--border-color, #e8e8e8);
 }
 
-.app-sidebar.active {
-    left: 0;
+.app-sidebar.active,
+.sidebar-container.active {
+    left: 0 !important;
 }
 
 .sidebar-header {
@@ -30,6 +35,7 @@
     background: #1B5E20;
     color: #ffffff;
     flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-title {
@@ -38,6 +44,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    color: #ffffff;
 }
 
 .sidebar-close-btn {
@@ -46,11 +53,19 @@
     color: #ffffff;
     font-size: 18px;
     cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: opacity 0.2s;
+}
+
+.sidebar-close-btn:hover {
+    opacity: 0.8;
 }
 
 .sidebar-body {
     padding: 12px;
     flex: 1;
+    overflow-y: auto;
 }
 
 .sidebar-group-title {
@@ -62,13 +77,14 @@
     margin: 14px 0 6px 4px;
 }
 
-.sidebar-item {
+.sidebar-item,
+.sidebar-link {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
     border-radius: 8px;
-    color: #333;
+    color: var(--text-color, #333333);
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
@@ -78,18 +94,24 @@
     background: none;
     width: 100%;
     text-align: left;
+    box-sizing: border-box;
 }
 
 .sidebar-item:hover,
-.sidebar-item:active {
-    background: #E8F5E9;
+.sidebar-item:active,
+.sidebar-item.active,
+.sidebar-link:hover,
+.sidebar-link:active {
+    background: var(--inner-card-bg, #E8F5E9);
     color: #1B5E20;
 }
 
-.sidebar-item i {
+.sidebar-item i,
+.sidebar-link i {
     width: 20px;
     text-align: center;
     font-size: 15px;
+    flex-shrink: 0;
 }
 
 .sidebar-overlay {
@@ -98,16 +120,17 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 1050;
     display: none;
+    backdrop-filter: blur(2px);
 }
 
 .sidebar-overlay.active {
-    display: block;
+    display: block !important;
 }
 
-/* Pengunci layar agar background tidak ikut terseret */
+/* Pengunci layar agar background tidak ikut terseret saat drawer terbuka */
 body.sidebar-open {
     overflow: hidden !important;
     position: fixed;
