@@ -1,8 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL POLINASI & SELEKSI BUAH (CRUD BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL POLINASI & SELEKSI BUAH (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var polinasi = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    var searchQuery = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -48,7 +53,12 @@ var polinasi = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Data polinasi berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus data polinasi ini?',
-            'toast_deleted': 'Data polinasi berhasil dihapus'
+            'toast_deleted': 'Data polinasi berhasil dihapus',
+            'ph_search': '🔍 Cari tanggal, GH, talang, petugas, atau metode...',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Pollination & Flower Mating Monitoring',
@@ -92,7 +102,12 @@ var polinasi = (function() {
             'lbl_notes': 'Notes',
             'toast_saved': 'Pollination data saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this pollination data?',
-            'toast_deleted': 'Pollination data deleted successfully'
+            'toast_deleted': 'Pollination data deleted successfully',
+            'ph_search': '🔍 Search date, GH, gutter, PIC, or method...',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -118,7 +133,6 @@ var polinasi = (function() {
         if (el) el.value = val;
     }
 
-    // Fungsi untuk mengisi opsi dropdown ID GH dari data Greenhouse
     function populateGhDropdown() {
         var selectEl = document.getElementById('polinasiGh');
         if (!selectEl) return;
@@ -197,7 +211,7 @@ var polinasi = (function() {
                             </div>
                         </div>
 
-                        <!-- Metode Polinasi (Termasuk Serum) & Target Buah / Pohon -->
+                        <!-- Metode Polinasi & Target Buah / Pohon -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_method')}</label>
@@ -230,9 +244,23 @@ var polinasi = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data Polinasi Cards Grid 2x2 -->
+                <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #C2185B;"></i> ${t('recap_title')}</div>
+                
+                <!-- Kotak Pencarian Khusus Modul Polinasi -->
+                <div style="margin-bottom: 14px;">
+                    <input type="text" id="inputSearchPolinasi" 
+                           placeholder="${t('ph_search')}" 
+                           oninput="polinasi.handleSearch(this.value)"
+                           value="${searchQuery}"
+                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                </div>
+
+                <!-- Rekap Data Polinasi Cards Grid 2x2 -->
                 <div id="containerPolinasiCards"></div>
+
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationPolinasiControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
     }
@@ -259,7 +287,6 @@ var polinasi = (function() {
                 var targetPohon = getVal('polinasiTargetPohon');
                 var desc = getVal('polinasiDesc');
 
-                // Hitung Estimasi Panen (+50 hari dari polinasi)
                 var expPanen = '-';
                 if (tanggal) {
                     var d = new Date(tanggal);
@@ -323,6 +350,7 @@ var polinasi = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerPolinasiCards');
+        var pageEl = document.getElementById('paginationPolinasiControls');
         if (!container) return;
 
         var data = [];
@@ -337,17 +365,49 @@ var polinasi = (function() {
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
+        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
             var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
             return dateB - dateA;
         });
 
+        // 2. Filter data berdasarkan kata kunci pencarian
+        var filteredData = data.filter(function(item) {
+            if (!searchQuery) return true;
+            var kw = searchQuery.toLowerCase();
+            var gh = (item.gh || '').toLowerCase();
+            var tanggal = (item.tanggal || '').toLowerCase();
+            var talang = (item.talang || '').toLowerCase();
+            var petugas = (item.petugas || '').toLowerCase();
+            var metode = (item.metode || '').toLowerCase();
+            var targetPohon = (item.targetPohon || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            return gh.includes(kw) || tanggal.includes(kw) || talang.includes(kw) || petugas.includes(kw) || metode.includes(kw) || targetPohon.includes(kw) || desc.includes(kw);
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 3. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 4. Render HTML Kartu
         var html = '';
-        data.forEach(function(item) {
+        pageData.forEach(function(item) {
             if (!item) return;
 
             var valGh = item.gh ? item.gh : '-';
@@ -356,7 +416,6 @@ var polinasi = (function() {
             var valBerhasil = item.berhasil ? item.berhasil : 0;
             var valDesc = item.desc ? item.desc : '';
 
-            // Hitung Presentase Keberhasilan (%)
             var rateText = t('not_calculated');
             var rateColor = '#777';
             if (valJumlah > 0 && item.berhasil !== undefined && item.berhasil !== '') {
@@ -428,6 +487,25 @@ var polinasi = (function() {
         });
 
         container.innerHTML = html;
+
+        // 5. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="polinasi.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} ${t('unit_flower')})
+                    </span>
+                    <button onclick="polinasi.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} data</span>`;
+            }
+        }
     }
 
     function editItem(id) {
@@ -478,11 +556,25 @@ var polinasi = (function() {
         }
     }
 
+    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        changePage: changePage
     };
 
 })();
