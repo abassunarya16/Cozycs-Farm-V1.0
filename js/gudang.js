@@ -237,7 +237,7 @@ var gudang = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-boxes" style="color: #E65100;"></i> ${t('module_title')}</div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS PERSIS POLA KEUANGAN) -->
+                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS KEUANGAN PERSISI) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="gudangStatCards">
                     <!-- Dynamic Stat Cards -->
                 </div>
@@ -487,7 +487,7 @@ var gudang = (function() {
         }
     }
 
-    // DASHBOARD 4 STAT CARDS - STRUCTURAL & TYPOGRAPHY COPY IDENTIK MODUL KEUANGAN
+    // DASHBOARD 4 STAT CARDS - DISESUAIKAN PERSIS POLA FOTO 1 (MODUL KEUANGAN)
     function loadDashboard() {
         var container = document.getElementById('gudangStatCards');
         if (!container) return;
@@ -520,23 +520,27 @@ var gudang = (function() {
             return 'Rp' + val.toLocaleString('id-ID');
         };
 
-        // MEMAKAI KARTU PRESISI SAMA PERSIS KEUANGAN (padding 12px, border #e8e8e8, label 10px uppercase, value 16px bold)
+        // KARTU PRESISI SAMA PERSIS KEUANGAN:
+        // - Padding: 14px 16px
+        // - Min height: 68px (vertically centered)
+        // - Label: font-size 11px, font-weight 700, margin-bottom 6px, uppercase
+        // - Value: font-size 16px, font-weight 700
         container.innerHTML = `
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_total_items')}</div>
-                <div style="font-size: 16px; font-weight: bold; color: var(--text-color, #222);">${totalJenis} ${t('unit_types')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_total_items')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: var(--text-color, #222);">${totalJenis} ${t('unit_types')}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: #2E7D32; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_inventory_value')}</div>
-                <div style="font-size: 16px; font-weight: bold; color: #2E7D32;">${formatRupiah(nilaiPersediaan)}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 11px; font-weight: 700; color: #2E7D32; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_inventory_value')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #2E7D32;">${formatRupiah(nilaiPersediaan)}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: ${stokKritis > 0 ? '#C62828' : '#777'}; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_critical_stock')}</div>
-                <div style="font-size: 16px; font-weight: bold; color: ${stokKritis > 0 ? '#C62828' : 'var(--text-color, #222)'};">${stokKritis} ${t('unit_items')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 11px; font-weight: 700; color: ${stokKritis > 0 ? '#C62828' : '#777'}; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_critical_stock')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: ${stokKritis > 0 ? '#C62828' : 'var(--text-color, #222)'};">${stokKritis} ${t('unit_items')}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; color: ${expiredSoon > 0 ? '#E65100' : '#777'}; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('stat_expired_soon')}</div>
-                <div style="font-size: 16px; font-weight: bold; color: ${expiredSoon > 0 ? '#E65100' : 'var(--text-color, #222)'};">${expiredSoon} ${t('unit_items')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 11px; font-weight: 700; color: ${expiredSoon > 0 ? '#E65100' : '#777'}; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_expired_soon')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: ${expiredSoon > 0 ? '#E65100' : 'var(--text-color, #222)'};">${expiredSoon} ${t('unit_items')}</div>
             </div>
         `;
     }
