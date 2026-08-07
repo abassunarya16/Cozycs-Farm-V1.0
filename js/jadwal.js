@@ -1,8 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (BILINGUAL & DARK MODE FULL FIX)
+// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var jadwal = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    var searchQuery = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -52,7 +57,12 @@ var jadwal = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Jadwal berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal ini?',
-            'toast_deleted': 'Jadwal berhasil dihapus'
+            'toast_deleted': 'Jadwal berhasil dihapus',
+            'ph_search': '🔍 Cari judul, GH, tanggal, petugas, atau kategori...',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Operational Schedule & Agenda',
@@ -100,7 +110,12 @@ var jadwal = (function() {
             'lbl_notes': 'Notes',
             'toast_saved': 'Schedule saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this schedule?',
-            'toast_deleted': 'Schedule deleted successfully'
+            'toast_deleted': 'Schedule deleted successfully',
+            'ph_search': '🔍 Search title, GH, date, PIC, or category...',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -225,9 +240,23 @@ var jadwal = (function() {
                     </form>
                 </div>
 
-                <!-- 3. REKAP DAFTAR JADWAL -->
+                <!-- 3. REKAP DAFTAR JADWAL TITLE -->
                 <div class="section-title"><i class="fas fa-list-ul" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
+                
+                <!-- Kotak Pencarian Khusus Modul Jadwal -->
+                <div style="margin-bottom: 14px;">
+                    <input type="text" id="inputSearchJadwal" 
+                           placeholder="${t('ph_search')}" 
+                           oninput="jadwal.handleSearch(this.value)"
+                           value="${searchQuery}"
+                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                </div>
+
+                <!-- Container Cards Jadwal -->
                 <div id="containerJadwalCards"></div>
+
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationJadwalControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
     }
@@ -351,23 +380,58 @@ var jadwal = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerJadwalCards');
+        var pageEl = document.getElementById('paginationJadwalControls');
         if (!container) return;
 
         var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
+        // 1. Urutkan dari tanggal terdekat
         data.sort(function(a, b) {
             var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
             var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
             return dateA - dateB;
         });
 
+        // 2. Filter data berdasarkan kata kunci pencarian
+        var filteredData = data.filter(function(item) {
+            if (!searchQuery) return true;
+            var kw = searchQuery.toLowerCase();
+            var gh = (item.gh || '').toLowerCase();
+            var tanggal = (item.tanggal || '').toLowerCase();
+            var judul = (item.judul || '').toLowerCase();
+            var waktu = (item.waktu || '').toLowerCase();
+            var kategori = (item.kategori || '').toLowerCase();
+            var petugas = (item.petugas || '').toLowerCase();
+            var prioritas = (item.prioritas || '').toLowerCase();
+            var status = (item.status || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            return gh.includes(kw) || tanggal.includes(kw) || judul.includes(kw) || waktu.includes(kw) || kategori.includes(kw) || petugas.includes(kw) || prioritas.includes(kw) || status.includes(kw) || desc.includes(kw);
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 3. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 4. Render HTML Kartu
         var html = '';
-        data.forEach(function(item) {
+        pageData.forEach(function(item) {
             if (!item) return;
 
             var isDone = item.status === 'Selesai' || item.status === 'Completed';
@@ -404,6 +468,25 @@ var jadwal = (function() {
         });
 
         container.innerHTML = html;
+
+        // 5. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="jadwal.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} ${t('unit_tasks')})
+                    </span>
+                    <button onclick="jadwal.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} ${t('unit_tasks')}</span>`;
+            }
+        }
     }
 
     function editItem(id) {
@@ -453,13 +536,27 @@ var jadwal = (function() {
         }
     }
 
+    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         loadDashboard: loadDashboard,
         loadTable: loadTable,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        changePage: changePage
     };
 
 })();
