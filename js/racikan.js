@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (SISTEM TEMPLATE TERPADU, AUTO-FILL, DUAL SAVE & AUTO-DEDUCT)
+// (TAMPILAN FORM TERSTUKTUR, RAPI & SIMETRIS)
 // ==========================================
 
 var racikan = (function() {
@@ -25,7 +25,7 @@ var racikan = (function() {
 
     // STATE RACIKAN UTAMA
     var state = {
-        editingId: null, // ID template jika dalam mode edit
+        editingId: null,
         racikName: '',
         volStock: '',
         itemsA: [],
@@ -87,7 +87,6 @@ var racikan = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // HELPER STORAGE TEMPLATE
     function getSavedTemplates() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY_TEMPLATES);
@@ -112,21 +111,21 @@ var racikan = (function() {
                     <i class="fas fa-calculator" style="color: #2E7D32;"></i> ${t('module_title')}
                 </div>
 
-                <!-- 1. FORM SETUP UTAMA -->
+                <!-- 1. FORM SETUP UTAMA (DIBUAT STRUKTUR VERTIKAL PRESISI & SIMETRIS) -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
                         <div>
-                            <label style="font-size: 12px; font-weight: 700; color: #2E7D32;">${t('lbl_racik_name')}</label>
-                            <input type="text" id="racikNamaTpl" value="${state.racikName}" placeholder="${t('ph_racik_name')}" oninput="racikan.updateRacikName(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: 600; box-sizing: border-box;">
+                            <label style="font-size: 12px; font-weight: 700; color: #2E7D32; display: block; margin-bottom: 6px;">${t('lbl_racik_name')}</label>
+                            <input type="text" id="racikNamaTpl" value="${state.racikName}" placeholder="${t('ph_racik_name')}" oninput="racikan.updateRacikName(this.value)" style="width: 100%; height: 42px; padding: 10px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="font-size: 12px; font-weight: 700; color: #2E7D32;">${t('lbl_vol_stock')}</label>
-                            <input type="number" id="racikVolStock" value="${state.volStock}" placeholder="Contoh: 20" oninput="racikan.changeVolume(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: bold; box-sizing: border-box;">
+                            <label style="font-size: 12px; font-weight: 700; color: #2E7D32; display: block; margin-bottom: 6px;">${t('lbl_vol_stock')}</label>
+                            <input type="number" id="racikVolStock" value="${state.volStock}" placeholder="Contoh: 20" oninput="racikan.changeVolume(this.value)" style="width: 100%; height: 42px; padding: 10px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: bold; box-sizing: border-box;">
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. TABEL BANYAK BAHAN PEKATAN A & B -->
+                <!-- 2. TABEL BAHAN PEKATAN A & B -->
                 <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
                     
                     <!-- PEKATAN A -->
@@ -171,7 +170,6 @@ var racikan = (function() {
                         <div id="grandTotalCostVal" style="font-size: 20px; font-weight: 800; color: #2E7D32; margin-top: 2px;">Rp0</div>
                     </div>
 
-                    <!-- ACTION BUTTONS: SIMPAN TEMPLATE & POTONG STOK GUDANG -->
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button type="button" onclick="racikan.simpanTemplate()" id="btnSaveTemplate" style="width: 100%; background: #1565C0; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                             <i class="fas fa-save"></i> <span id="lblBtnSaveTpl">${t('btn_save_template')}</span>
@@ -190,7 +188,7 @@ var racikan = (function() {
                     </div>
 
                     <div id="containerSavedTemplates">
-                        <!-- Saved Templates Dynamic List -->
+                        <!-- Saved Templates List -->
                     </div>
                 </div>
             </div>
@@ -241,7 +239,6 @@ var racikan = (function() {
             targetArr[index][field] = value;
         }
 
-        // Hitung Subtotal Baris Secara Real-Time Tanpa Menimpa DOM Input
         var item = targetArr[index];
         var amt = parseFloat(item.amount) || 0;
         var price = parseFloat(item.pricePerUnit) || 0;
@@ -297,7 +294,7 @@ var racikan = (function() {
                         </select>
                     </div>
 
-                    <!-- Berat (Murni Gram) -->
+                    <!-- Berat (Gram) -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Berat (Gram)</label>
                         <input type="number" id="input_amount_${group}_${idx}" value="${item.amount}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
@@ -309,7 +306,7 @@ var racikan = (function() {
                         <input type="number" value="${item.pricePerUnit}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'pricePerUnit', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                     </div>
 
-                    <!-- Subtotal Baris -->
+                    <!-- Subtotal -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Subtotal</label>
                         <div id="subtotal_${group}_${idx}" style="font-size: 11px; font-weight: 700; color: #2E7D32; padding: 7px 0; text-align: right; white-space: nowrap;">
@@ -317,7 +314,7 @@ var racikan = (function() {
                         </div>
                     </div>
 
-                    <!-- Tombol Hapus -->
+                    <!-- Hapus -->
                     <div style="text-align: center; padding-bottom: 6px;">
                         <i class="fas fa-trash-alt" onclick="racikan.removeItem('${group}', ${idx})" style="color: #C62828; cursor: pointer; font-size: 14px;" title="Hapus"></i>
                     </div>
@@ -373,7 +370,6 @@ var racikan = (function() {
         }
     }
 
-    // SIMPAN RACIKAN KE TEMPLATE (TANPA MEMOTONG STOK GUDANG) & RESET FORM
     function simpanTemplate() {
         var nameInput = state.racikName.trim();
         if (!nameInput) {
@@ -389,7 +385,6 @@ var racikan = (function() {
         var templates = getSavedTemplates();
 
         if (state.editingId) {
-            // Mode Edit: Perbarui data lama
             var idx = templates.findIndex(function(t) { return t.id === state.editingId; });
             if (idx !== -1) {
                 templates[idx].name = nameInput;
@@ -399,7 +394,6 @@ var racikan = (function() {
                 templates[idx].updatedAt = new Date().toISOString().split('T')[0];
             }
         } else {
-            // Mode Baru: Tambah template racikan baru
             var newTpl = {
                 id: 'RACIK-' + Date.now(),
                 name: nameInput,
@@ -417,7 +411,6 @@ var racikan = (function() {
             Helper.showToast(t('toast_saved'), 'success');
         }
 
-        // RESET FORM KE 0 / KOSONG
         resetForm();
         renderSavedTemplatesList();
     }
@@ -441,13 +434,12 @@ var racikan = (function() {
         renderTables();
     }
 
-    // LOAD DATA TEMPLATE KE FORM MERACIK (AUTO-FILL FORM)
     function applyTemplate(id) {
         var templates = getSavedTemplates();
         var tpl = templates.find(function(item) { return item.id === id; });
         if (!tpl) return;
 
-        state.editingId = null; // mode pakai biasa (auto fill)
+        state.editingId = null;
         state.racikName = tpl.name;
         state.volStock = tpl.volStock;
         state.itemsA = JSON.parse(JSON.stringify(tpl.itemsA || []));
@@ -471,7 +463,7 @@ var racikan = (function() {
         var tpl = templates.find(function(item) { return item.id === id; });
         if (!tpl) return;
 
-        state.editingId = tpl.id; // mode edit aktif
+        state.editingId = tpl.id;
         state.racikName = tpl.name;
         state.volStock = tpl.volStock;
         state.itemsA = JSON.parse(JSON.stringify(tpl.itemsA || []));
@@ -565,7 +557,6 @@ var racikan = (function() {
         container.innerHTML = html;
     }
 
-    // FUNGSI KHUSUS PEMOTONGAN STOK GUDANG (HANYA BERJALAN JIKA TOMBOL DIKLIK)
     function potongStokGudang() {
         if (typeof gudang === 'undefined' || typeof gudang.potongStokOtomatis !== 'function') {
             alert('Modul Gudang belum terhubung.');
@@ -582,7 +573,7 @@ var racikan = (function() {
         allItems.forEach(function(item) {
             var amt = parseFloat(item.amount) || 0;
             if (amt > 0) {
-                var kg = amt / 1000; // Konversi murni gram ke Kg untuk stok gudang
+                var kg = amt / 1000;
                 gudang.potongStokOtomatis(item.name, kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
                 count++;
             }
