@@ -1,8 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL MANAJEMEN GREENHOUSE (CRUD BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL MANAJEMEN GREENHOUSE (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var greenhouse = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    var searchQuery = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -57,7 +62,12 @@ var greenhouse = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Data greenhouse berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus data greenhouse ini?',
-            'toast_deleted': 'Data greenhouse berhasil dihapus'
+            'toast_deleted': 'Data greenhouse berhasil dihapus',
+            'ph_search': '🔍 Cari kode, nama, status, sistem, atau catatan GH...',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Greenhouse Master Data',
@@ -110,7 +120,12 @@ var greenhouse = (function() {
             'lbl_notes': 'Notes',
             'toast_saved': 'Greenhouse data saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this greenhouse data?',
-            'toast_deleted': 'Greenhouse data deleted successfully'
+            'toast_deleted': 'Greenhouse data deleted successfully',
+            'ph_search': '🔍 Search code, name, status, system, or GH notes...',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -151,11 +166,11 @@ var greenhouse = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_code')}</label>
-                                <input type="text" id="ghKode" required placeholder="${t('ph_code')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="ghKode" required placeholder="${t('ph_code')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_name')}</label>
-                                <input type="text" id="ghNama" required placeholder="${t('ph_name')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="ghNama" required placeholder="${t('ph_name')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
@@ -163,7 +178,7 @@ var greenhouse = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_status')}</label>
-                                <select id="ghStatus" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <select id="ghStatus" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                                     <option value="Aktif / Berjalan">${t('opt_status_active')}</option>
                                     <option value="Persiapan / Sterilisasi">${t('opt_status_prep')}</option>
                                     <option value="Masa Rehat / Kosong">${t('opt_status_rest')}</option>
@@ -172,7 +187,7 @@ var greenhouse = (function() {
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_system')}</label>
-                                <select id="ghSistem" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <select id="ghSistem" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                                     <option value="Fertigasi Tetes / Drip">${t('opt_sys_drip')}</option>
                                     <option value="Dutch Bucket">${t('opt_sys_dutch')}</option>
                                     <option value="NFT / DFT">${t('opt_sys_nft_dft')}</option>
@@ -185,22 +200,22 @@ var greenhouse = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gutters')}</label>
-                                <input type="number" id="ghTalang" placeholder="${t('ph_gutters')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="ghTalang" placeholder="${t('ph_gutters')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_holes')}</label>
-                                <input type="number" id="ghLubang" placeholder="${t('ph_holes')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="ghLubang" placeholder="${t('ph_holes')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_area')}</label>
-                                <input type="number" id="ghLuas" placeholder="${t('ph_area')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="ghLuas" placeholder="${t('ph_area')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_tank')}</label>
-                                <input type="number" id="ghTandon" placeholder="${t('ph_tank')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="ghTandon" placeholder="${t('ph_tank')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
@@ -208,35 +223,35 @@ var greenhouse = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_uv')}</label>
-                                <input type="text" id="ghUv" placeholder="${t('ph_uv')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="ghUv" placeholder="${t('ph_uv')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_insect_net')}</label>
-                                <input type="text" id="ghInsect" placeholder="${t('ph_insect_net')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="ghInsect" placeholder="${t('ph_insect_net')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
                         <!-- Tanggal Operasi & Periode Tanam -->
                         <div style="margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date_op')}</label>
-                            <input type="date" id="ghTglOperasi" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            <input type="date" id="ghTglOperasi" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date_plant')}</label>
-                                <input type="date" id="ghTglTanam" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="ghTglTanam" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date_harvest')}</label>
-                                <input type="date" id="ghTglPanen" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="ghTglPanen" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
                         <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
-                            <textarea id="ghDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <textarea id="ghDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -246,11 +261,23 @@ var greenhouse = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data / Card List Grid 2x2 -->
+                <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
-                <div id="containerGhCards">
-                    <!-- Diisi dinamis oleh JavaScript -->
+                
+                <!-- Kotak Pencarian Khusus Modul Greenhouse -->
+                <div style="margin-bottom: 14px;">
+                    <input type="text" id="inputSearchGh" 
+                           placeholder="${t('ph_search')}" 
+                           oninput="greenhouse.handleSearch(this.value)"
+                           value="${searchQuery}"
+                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
                 </div>
+
+                <!-- Rekap Data / Card List Grid 2x2 -->
+                <div id="containerGhCards"></div>
+
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationGhControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
     }
@@ -341,6 +368,7 @@ var greenhouse = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerGhCards');
+        var pageEl = document.getElementById('paginationGhControls');
         if (!container) return;
 
         var data = [];
@@ -355,11 +383,46 @@ var greenhouse = (function() {
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
+        // 1. Filter data berdasarkan kata kunci pencarian
+        var filteredData = data.filter(function(item) {
+            if (!searchQuery) return true;
+            var kw = searchQuery.toLowerCase();
+            var kode = (item.kode || '').toLowerCase();
+            var nama = (item.nama || '').toLowerCase();
+            var status = (item.status || '').toLowerCase();
+            var sistem = (item.sistem || '').toLowerCase();
+            var talang = (item.talang || '').toString().toLowerCase();
+            var lubang = (item.lubang || '').toString().toLowerCase();
+            var luas = (item.luas || '').toString().toLowerCase();
+            var tandon = (item.tandon || '').toString().toLowerCase();
+            var uv = (item.uv || '').toLowerCase();
+            var insect = (item.insect || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            return kode.includes(kw) || nama.includes(kw) || status.includes(kw) || sistem.includes(kw) || talang.includes(kw) || lubang.includes(kw) || luas.includes(kw) || tandon.includes(kw) || uv.includes(kw) || insect.includes(kw) || desc.includes(kw);
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 2. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 3. Render HTML Kartu
         var html = '';
-        data.forEach(function(item) {
+        pageData.forEach(function(item) {
             if (!item) return;
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
@@ -425,6 +488,25 @@ var greenhouse = (function() {
         });
 
         container.innerHTML = html;
+
+        // 4. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="greenhouse.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} data)
+                    </span>
+                    <button onclick="greenhouse.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} data</span>`;
+            }
+        }
     }
 
     function editItem(id) {
@@ -478,11 +560,25 @@ var greenhouse = (function() {
         }
     }
 
+    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        changePage: changePage
     };
 
 })();
