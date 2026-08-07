@@ -1,8 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (CRUD BILINGUAL)
+// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var spray = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    var searchQuery = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -47,7 +52,12 @@ var spray = (function() {
             'toast_updated': 'Jadwal spray berhasil diperbarui!',
             'toast_added': 'Jadwal spray berhasil ditambahkan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal spray ini?',
-            'toast_deleted': 'Jadwal spray berhasil dihapus'
+            'toast_deleted': 'Jadwal spray berhasil dihapus',
+            'ph_search': '🔍 Cari tanggal, GH, produk, jenis, atau target spray...',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Spray Schedule & History',
@@ -90,7 +100,12 @@ var spray = (function() {
             'toast_updated': 'Spray schedule updated successfully!',
             'toast_added': 'Spray schedule added successfully!',
             'confirm_delete': 'Are you sure you want to delete this spray schedule?',
-            'toast_deleted': 'Spray schedule deleted successfully'
+            'toast_deleted': 'Spray schedule deleted successfully',
+            'ph_search': '🔍 Search date, GH, product, type, or spray target...',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -99,7 +114,6 @@ var spray = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // Helper internal kunci penyimpanan agar aman & anti-crash
     function getStorageKey() {
         if (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.SPRAY) {
             return Storage.KEYS.SPRAY;
@@ -107,7 +121,6 @@ var spray = (function() {
         return 'cozycs_spray';
     }
 
-    // Fungsi untuk mengisi opsi dropdown ID GH dari data Greenhouse
     function populateGhDropdown() {
         var selectEl = document.getElementById('sprayGh');
         if (!selectEl) return;
@@ -232,11 +245,23 @@ var spray = (function() {
                     </form>
                 </div>
 
-                <!-- Rekap Data / Card List Grid 2x2 -->
+                <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #6A1B9A;"></i> ${t('recap_title')}</div>
-                <div id="containerSprayCards">
-                    <!-- Diisi dinamis oleh JavaScript -->
+                
+                <!-- Kotak Pencarian Khusus Modul Spray -->
+                <div style="margin-bottom: 14px;">
+                    <input type="text" id="inputSearchSpray" 
+                           placeholder="${t('ph_search')}" 
+                           oninput="spray.handleSearch(this.value)"
+                           value="${searchQuery}"
+                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
                 </div>
+
+                <!-- Rekap Data / Card List Grid 2x2 -->
+                <div id="containerSprayCards"></div>
+
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationSprayControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
     }
@@ -353,6 +378,7 @@ var spray = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerSprayCards');
+        var pageEl = document.getElementById('paginationSprayControls');
         if (!container) return;
 
         var key = getStorageKey();
@@ -363,16 +389,50 @@ var spray = (function() {
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
-        // Urutkan dari tanggal terbaru
+        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             return new Date(b.date || 0) - new Date(a.date || 0);
         });
 
+        // 2. Filter data berdasarkan kata kunci pencarian
+        var filteredData = data.filter(function(item) {
+            if (!searchQuery) return true;
+            var kw = searchQuery.toLowerCase();
+            var gh = (item.gh || '').toLowerCase();
+            var date = (item.date || '').toLowerCase();
+            var timeSlot = (item.timeSlot || '').toLowerCase();
+            var productBubuk = (item.productBubuk || '').toLowerCase();
+            var productCairan = (item.productCairan || '').toLowerCase();
+            var typeFungInsek = (item.typeFungInsek || '').toLowerCase();
+            var typeFertilizer = (item.typeFertilizer || '').toLowerCase();
+            var targetHama = (item.targetHama || '').toLowerCase();
+            var targetPenyakit = (item.targetPenyakit || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            return gh.includes(kw) || date.includes(kw) || timeSlot.includes(kw) || productBubuk.includes(kw) || productCairan.includes(kw) || typeFungInsek.includes(kw) || typeFertilizer.includes(kw) || targetHama.includes(kw) || targetPenyakit.includes(kw) || desc.includes(kw);
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 3. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 4. Render HTML Kartu
         var html = '';
-        data.forEach(function(item) {
+        pageData.forEach(function(item) {
             var valGh = item.gh ? item.gh : '-';
             var displayBubuk = item.productBubuk || item.title || '-';
             var displayCairan = item.productCairan || '-';
@@ -444,6 +504,25 @@ var spray = (function() {
         });
 
         container.innerHTML = html;
+
+        // 5. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="spray.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} data)
+                    </span>
+                    <button onclick="spray.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} data</span>`;
+            }
+        }
     }
 
     function editItem(id) {
@@ -532,11 +611,25 @@ var spray = (function() {
         Storage.saveAll('cozycs_schedules', filtered);
     }
 
+    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        changePage: changePage
     };
 
 })();
