@@ -1,8 +1,15 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (ERP - BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (CRUD BILINGUAL, SEARCH & PAGINATION)
 // ==========================================
 
 var gudang = (function() {
+
+    // VARIABEL STATE UNTUK PENCARIAN, FILTER & PAGINASI
+    var searchQuery = '';
+    var selectedCategory = '';
+    var selectedStatus = '';
+    var currentPage = 1;
+    var itemsPerPage = 20; // Dibatasi 20 data per halaman
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -14,7 +21,7 @@ var gudang = (function() {
             'stat_expired_soon': 'EXPIRED SOON',
             'unit_types': 'Jenis',
             'unit_items': 'Barang',
-            'ph_search': '🔍 Cari nama barang / merek...',
+            'ph_search': '🔍 Cari nama barang, merek, supplier, atau lokasi...',
             'opt_all_categories': 'Semua Kategori',
             'opt_all_status': 'Semua Status',
             'opt_status_kritis': 'Perlu Restock / Kritis',
@@ -70,7 +77,11 @@ var gudang = (function() {
             'confirm_delete': 'Apakah kamu yakin ingin menghapus barang ini dari inventaris?',
             'log_reason_used': 'Dipakai',
             'log_reason_initial': 'Stok Awal / Pembelian',
-            'log_by': 'Oleh:'
+            'log_by': 'Oleh:',
+            'btn_prev': '⬅️ Sebelum',
+            'btn_next': 'Selanjutnya ➡️',
+            'page_lbl': 'Halaman',
+            'total_lbl': 'Total Data'
         },
         'en': {
             'module_title': 'Cozycs Farm Inventory & Warehouse Center',
@@ -80,7 +91,7 @@ var gudang = (function() {
             'stat_expired_soon': 'EXPIRES SOON',
             'unit_types': 'Types',
             'unit_items': 'Items',
-            'ph_search': '🔍 Search item name / brand...',
+            'ph_search': '🔍 Search item name, brand, supplier, or location...',
             'opt_all_categories': 'All Categories',
             'opt_all_status': 'All Status',
             'opt_status_kritis': 'Needs Restock / Critical',
@@ -136,7 +147,11 @@ var gudang = (function() {
             'confirm_delete': 'Are you sure you want to delete this item from inventory?',
             'log_reason_used': 'Used by',
             'log_reason_initial': 'Initial Stock / Purchase',
-            'log_by': 'By:'
+            'log_by': 'By:',
+            'btn_prev': '⬅️ Prev',
+            'btn_next': 'Next ➡️',
+            'page_lbl': 'Page',
+            'total_lbl': 'Total Items'
         }
     };
 
@@ -153,10 +168,6 @@ var gudang = (function() {
         return 'cozycs_gudang_mutasi';
     }
 
-    function getKeySupplier() {
-        return 'cozycs_supplier';
-    }
-
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -168,7 +179,7 @@ var gudang = (function() {
     }
 
     // ==========================================
-    // API OTOMATISASI LINTAS MODUL (DIPANGGIL NUTRISI/SPRAY/TANAMAN)
+    // API OTOMATISASI LINTAS MODUL (DIPANGGIL NUTRISI/SPRAY/TANAMAN/PANEN)
     // ==========================================
     function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas) {
         if (typeof Storage === 'undefined' || !Storage.getAll) return false;
@@ -187,7 +198,6 @@ var gudang = (function() {
         var jumlah = parseFloat(jumlahDipotong) || 0;
         var stokBaru = Math.max(0, stokLama - jumlah);
 
-        // Update Stok
         item.stok = stokBaru;
         if (stokBaru <= 0) item.status = 'Habis';
         else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
@@ -195,7 +205,6 @@ var gudang = (function() {
 
         Storage.update(getKeyBarang(), item);
 
-        // Catat Mutasi
         catatMutasi({
             barangId: item.id,
             namaBarang: item.nama,
@@ -221,7 +230,7 @@ var gudang = (function() {
     }
 
     // ==========================================
-    // RENDER TAMPILAN
+    // RENDER TAMPILAN MODUL
     // ==========================================
     function render() {
         return `
@@ -233,46 +242,21 @@ var gudang = (function() {
                     <!-- Dynamic Stat Cards -->
                 </div>
 
-                <!-- 2. PENCARIAN & FILTER KATEGORI -->
-                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <input type="text" id="gudangSearch" onkeyup="gudang.loadTable()" placeholder="${t('ph_search')}" style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
-                    </div>
-                    <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
-                        <select id="gudangFilterKategori" onchange="gudang.loadTable()" style="padding: 6px 10px; border: 1px solid var(--border-color, #ddd); border-radius: 6px; font-size: 12px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
-                            <option value="">${t('opt_all_categories')}</option>
-                            <option value="Nutrisi">${t('opt_cat_nutrition')}</option>
-                            <option value="Pestisida">${t('opt_cat_pesticide')}</option>
-                            <option value="Benih">${t('opt_cat_seeds')}</option>
-                            <option value="Rockwool">${t('opt_cat_rockwool')}</option>
-                            <option value="Netpot">${t('opt_cat_netpot')}</option>
-                            <option value="Peralatan">${t('opt_cat_equipment')}</option>
-                            <option value="Sparepart">${t('opt_cat_sparepart')}</option>
-                            <option value="Lainnya">${t('opt_cat_others')}</option>
-                        </select>
-                        <select id="gudangFilterStatus" onchange="gudang.loadTable()" style="padding: 6px 10px; border: 1px solid var(--border-color, #ddd); border-radius: 6px; font-size: 12px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
-                            <option value="">${t('opt_all_status')}</option>
-                            <option value="KRITIS">${t('opt_status_kritis')}</option>
-                            <option value="EXPIRED">${t('opt_status_expired')}</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 3. FORM INPUT MASTER BARANG -->
+                <!-- 2. FORM INPUT MASTER BARANG GUDANG -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 14px; font-weight: 700; color: #E65100; margin-bottom: 12px;" id="formTitleGudang">${t('form_title_add')}</div>
                     <form id="formGudang">
                         <input type="hidden" id="barangId">
 
-                        <!-- Tanggal & Kategori -->
+                        <!-- Tanggal Beli & Kategori -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date_buy')}</label>
-                                <input type="date" id="barangTglBeli" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="barangTglBeli" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_category')}</label>
-                                <select id="barangKategori" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <select id="barangKategori" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                                     <option value="Nutrisi">${t('opt_cat_nutrition')}</option>
                                     <option value="Pestisida">${t('opt_cat_pesticide')}</option>
                                     <option value="Benih">${t('opt_cat_seeds')}</option>
@@ -292,11 +276,11 @@ var gudang = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_item_name')}</label>
-                                <input type="text" id="barangNama" required placeholder="${t('ph_item_name')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="barangNama" required placeholder="${t('ph_item_name')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_brand')}</label>
-                                <input type="text" id="barangMerek" placeholder="${t('ph_brand')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="barangMerek" placeholder="${t('ph_brand')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
@@ -304,11 +288,11 @@ var gudang = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_stock_initial')}</label>
-                                <input type="number" step="any" id="barangStok" required placeholder="10" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" step="any" id="barangStok" required placeholder="10" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_unit')}</label>
-                                <select id="barangSatuan" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <select id="barangSatuan" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                                     <option value="Kg">Kg</option>
                                     <option value="Gram">Gram</option>
                                     <option value="Liter">Liter</option>
@@ -320,7 +304,7 @@ var gudang = (function() {
                             </div>
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_stock_min')}</label>
-                                <input type="number" step="any" id="barangStokMin" placeholder="2" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" step="any" id="barangStokMin" placeholder="2" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
@@ -328,45 +312,82 @@ var gudang = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_price_per_unit')}</label>
-                                <input type="number" id="barangHarga" placeholder="${t('ph_price')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="barangHarga" placeholder="${t('ph_price')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_supplier')}</label>
-                                <input type="text" id="barangSupplier" placeholder="${t('ph_supplier')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="barangSupplier" placeholder="${t('ph_supplier')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
-                        <!-- Lokasi Spesifik, No Batch, Tgl Expired -->
+                        <!-- Lokasi Spesifik & Expired -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_location')}</label>
-                                <input type="text" id="barangLokasi" placeholder="${t('ph_location')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="text" id="barangLokasi" placeholder="${t('ph_location')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_expired_batch')}</label>
-                                <input type="date" id="barangExpired" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="barangExpired" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                         </div>
 
                         <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
-                            <textarea id="barangDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea>
+                            <textarea id="barangDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #E65100; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #E65100; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
                             <button type="button" id="btnCancelGudangEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #333;">${t('btn_cancel')}</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- 4. REKAP KATALOG STOK GUDANG -->
+                <!-- 3. REKAP KATALOG STOK GUDANG TITLE -->
                 <div class="section-title"><i class="fas fa-cubes" style="color: #E65100;"></i> ${t('recap_catalog_title')}</div>
+
+                <!-- PENCARIAN & FILTER KATEGORI/STATUS -->
+                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
+                    <div style="margin-bottom: 8px;">
+                        <input type="text" id="inputSearchGudang" 
+                               placeholder="${t('ph_search')}" 
+                               oninput="gudang.handleSearch(this.value)"
+                               value="${searchQuery}"
+                               style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                    </div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+                        <select id="gudangFilterKategori" onchange="gudang.handleCategoryFilter(this.value)" style="flex: 1; padding: 8px 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                            <option value="">${t('opt_all_categories')}</option>
+                            <option value="Nutrisi" ${selectedCategory === 'Nutrisi' ? 'selected' : ''}>${t('opt_cat_nutrition')}</option>
+                            <option value="Pestisida" ${selectedCategory === 'Pestisida' ? 'selected' : ''}>${t('opt_cat_pesticide')}</option>
+                            <option value="Benih" ${selectedCategory === 'Benih' ? 'selected' : ''}>${t('opt_cat_seeds')}</option>
+                            <option value="Rockwool" ${selectedCategory === 'Rockwool' ? 'selected' : ''}>${t('opt_cat_rockwool')}</option>
+                            <option value="Netpot" ${selectedCategory === 'Netpot' ? 'selected' : ''}>${t('opt_cat_netpot')}</option>
+                            <option value="Tali" ${selectedCategory === 'Tali' ? 'selected' : ''}>${t('opt_cat_twine')}</option>
+                            <option value="Plastik UV" ${selectedCategory === 'Plastik UV' ? 'selected' : ''}>${t('opt_cat_uv_film')}</option>
+                            <option value="Insect Net" ${selectedCategory === 'Insect Net' ? 'selected' : ''}>${t('opt_cat_insect_net')}</option>
+                            <option value="Peralatan" ${selectedCategory === 'Peralatan' ? 'selected' : ''}>${t('opt_cat_equipment')}</option>
+                            <option value="Sparepart" ${selectedCategory === 'Sparepart' ? 'selected' : ''}>${t('opt_cat_sparepart')}</option>
+                            <option value="Lainnya" ${selectedCategory === 'Lainnya' ? 'selected' : ''}>${t('opt_cat_others')}</option>
+                        </select>
+                        <select id="gudangFilterStatus" onchange="gudang.handleStatusFilter(this.value)" style="flex: 1; padding: 8px 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                            <option value="">${t('opt_all_status')}</option>
+                            <option value="KRITIS" ${selectedStatus === 'KRITIS' ? 'selected' : ''}>${t('opt_status_kritis')}</option>
+                            <option value="EXPIRED" ${selectedStatus === 'EXPIRED' ? 'selected' : ''}>${t('opt_status_expired')}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Container Cards Inventaris Gudang -->
                 <div id="containerGudangCards"></div>
 
-                <!-- 5. RIWAYAT MUTASI STOK (LOG AUDIT) -->
-                <div class="section-title" style="margin-top:24px;"><i class="fas fa-history" style="color: #0277BD;"></i> ${t('recap_mutation_title')}</div>
+                <!-- Kontrol Navigasi Paginasi -->
+                <div id="paginationGudangControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 24px; font-size: 12px;"></div>
+
+                <!-- 4. RIWAYAT MUTASI STOK (LOG AUDIT) -->
+                <div class="section-title"><i class="fas fa-history" style="color: #0277BD;"></i> ${t('recap_mutation_title')}</div>
                 <div id="containerMutasiLog"></div>
             </div>
         `;
@@ -426,7 +447,6 @@ var gudang = (function() {
                     }
                 } else {
                     var added = (typeof Storage !== 'undefined' && Storage.add) ? Storage.add(key, payload) : payload;
-                    // Catat Log Mutasi Masuk Awal
                     catatMutasi({
                         barangId: added.id || ('BRG-' + Date.now()),
                         namaBarang: nama,
@@ -521,34 +541,67 @@ var gudang = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerGudangCards');
+        var pageEl = document.getElementById('paginationGudangControls');
         if (!container) return;
 
         var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyBarang()) || []) : [];
-        var search = (getVal('gudangSearch') || '').toLowerCase();
-        var filterKat = getVal('gudangFilterKategori');
-        var filterStat = getVal('gudangFilterStatus');
 
-        var filtered = data.filter(function(item) {
-            var matchSearch = (item.nama || '').toLowerCase().includes(search) || (item.merek || '').toLowerCase().includes(search);
-            var matchKat = !filterKat || item.kategori === filterKat;
-            
+        if (!Array.isArray(data) || data.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data_stock')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
+            return;
+        }
+
+        // 1. Filter data berdasarkan Pencarian & Dropdown Filters
+        var today = new Date();
+        var filteredData = data.filter(function(item) {
+            var kw = searchQuery.toLowerCase();
+            var nama = (item.nama || '').toLowerCase();
+            var merek = (item.merek || '').toLowerCase();
+            var supplier = (item.supplier || '').toLowerCase();
+            var lokasi = (item.lokasi || '').toLowerCase();
+            var kategori = (item.kategori || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+
+            var matchSearch = !searchQuery || nama.includes(kw) || merek.includes(kw) || supplier.includes(kw) || lokasi.includes(kw) || kategori.includes(kw) || desc.includes(kw);
+            var matchKat = !selectedCategory || item.kategori === selectedCategory;
+
             var stok = parseFloat(item.stok) || 0;
             var stokMin = parseFloat(item.stokMin) || 0;
             var isKritis = stok <= stokMin;
 
+            var isExpiredSoon = false;
+            if (item.expired && item.expired !== '-') {
+                var expDate = new Date(item.expired);
+                var diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+                if (diffDays <= 30) isExpiredSoon = true;
+            }
+
             var matchStat = true;
-            if (filterStat === 'KRITIS') matchStat = isKritis;
+            if (selectedStatus === 'KRITIS') matchStat = isKritis;
+            if (selectedStatus === 'EXPIRED') matchStat = isExpiredSoon;
 
             return matchSearch && matchKat && matchStat;
         });
 
-        if (filtered.length === 0) {
+        if (filteredData.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data_stock')}</div>`;
+            if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
+        // 2. Paginasi: potong array data sesuai halaman aktif
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIndex = (currentPage - 1) * itemsPerPage;
+        var endIndex = startIndex + itemsPerPage;
+        var pageData = filteredData.slice(startIndex, endIndex);
+
+        // 3. Render HTML Kartu Inventaris
         var html = '';
-        filtered.forEach(function(item) {
+        pageData.forEach(function(item) {
             var stok = parseFloat(item.stok) || 0;
             var stokMin = parseFloat(item.stokMin) || 0;
             var isKritis = stok <= stokMin;
@@ -559,35 +612,39 @@ var gudang = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+                    <!-- Header Card: Nama Barang, Kategori & Status Badge -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 15px; color: var(--text-color, #222);">${item.nama}</strong>
-                            <span style="font-size: 11px; background: var(--inner-card-bg, #F5F5F5); color: #666; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${item.kategori}</span>
+                            <span style="font-size: 11px; background: var(--inner-card-bg, #F5F5F5); color: #666; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">${item.kategori}</span>
                         </div>
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold;">${badgeText}</span>
                     </div>
 
+                    <!-- Grid 2 Kotak: Sisa Stok & Harga -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600;">${t('lbl_remaining_stock')}</div>
-                            <div style="font-size: 14px; font-weight: bold; color: ${isKritis ? '#C62828' : 'var(--text-color, #000)'};">
-                                ${stok} ${item.satuan} <span style="font-size:10px; font-weight:normal; color:#777;">(Min: ${stokMin})</span>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_remaining_stock')}</div>
+                            <div style="font-size: 13px; font-weight: bold; color: ${isKritis ? '#C62828' : 'var(--text-color, #000)'};">
+                                ${stok} ${item.satuan} <span style="font-size: 10px; font-weight: normal; color: #777;">(Min: ${stokMin})</span>
                             </div>
                         </div>
-                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px;">
-                            <div style="font-size: 10px; color: #777; font-weight: 600;">${t('lbl_price_value')}</div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_price_value')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: #2E7D32;">
                                 Rp${(item.harga || 0).toLocaleString('id-ID')} / ${item.satuan}
                             </div>
                         </div>
                     </div>
 
+                    <!-- Detail Tambahan (Lokasi, Supplier, Expired) -->
                     <div style="font-size: 11px; color: #777; margin-bottom: 6px; line-height: 1.5;">
                         <div><i class="fas fa-map-marker-alt" style="color: #E65100; width: 14px;"></i> ${t('lbl_location_card')} <strong>${item.lokasi || t('default_location')}</strong></div>
                         <div><i class="fas fa-truck" style="color: #0277BD; width: 14px;"></i> ${t('lbl_supplier_card')} <strong>${item.supplier || '-'}</strong> | ${t('lbl_brand_card')} <strong>${item.merek || '-'}</strong></div>
                         ${item.expired && item.expired !== '-' ? `<div><i class="fas fa-hourglass-half" style="color: #C62828; width: 14px;"></i> ${t('lbl_expired_card')} <strong>${item.expired}</strong></div>` : ''}
                     </div>
 
+                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="gudang.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="gudang.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -597,6 +654,25 @@ var gudang = (function() {
         });
 
         container.innerHTML = html;
+
+        // 4. Render Tombol Paginasi
+        if (pageEl) {
+            if (totalPages > 1) {
+                pageEl.innerHTML = `
+                    <button onclick="gudang.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_prev')}
+                    </button>
+                    <span style="font-weight: bold; color: var(--text-color, #555);">
+                        ${t('page_lbl')} ${currentPage} / ${totalPages} (${filteredData.length} ${t('unit_types')})
+                    </span>
+                    <button onclick="gudang.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : 'style="cursor:pointer;"'} class="btn" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); background: var(--card-bg, #f5f5f5); font-weight: bold; color: var(--text-color, #333);">
+                        ${t('btn_next')}
+                    </button>
+                `;
+            } else {
+                pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} ${t('unit_types')}</span>`;
+            }
+        }
     }
 
     function loadMutasiLog() {
@@ -670,13 +746,41 @@ var gudang = (function() {
         }
     }
 
+    // FUNGSI PENANGAN SEARCH, FILTER & NAVIGASI HALAMAN
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleCategoryFilter(val) {
+        selectedCategory = val || '';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleStatusFilter(val) {
+        selectedStatus = val || '';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        loadTable();
+    }
+
     return {
         render: render,
         init: init,
         loadTable: loadTable,
         editItem: editItem,
         deleteItem: deleteItem,
-        potongStokOtomatis: potongStokOtomatis
+        potongStokOtomatis: potongStokOtomatis,
+        handleSearch: handleSearch,
+        handleCategoryFilter: handleCategoryFilter,
+        handleStatusFilter: handleStatusFilter,
+        changePage: changePage
     };
 
 })();
