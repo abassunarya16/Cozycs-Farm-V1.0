@@ -487,7 +487,7 @@ var gudang = (function() {
         }
     }
 
-    // DASHBOARD 4 STAT CARDS - DISESUAIKAN PERSIS POLA FOTO 1 (MODUL KEUANGAN)
+    // DASHBOARD 4 STAT CARDS - DIJAAMIN 100% SAMA PERSIS DENGAN KEUANGAN (FOTO 1)
     function loadDashboard() {
         var container = document.getElementById('gudangStatCards');
         if (!container) return;
@@ -520,27 +520,27 @@ var gudang = (function() {
             return 'Rp' + val.toLocaleString('id-ID');
         };
 
-        // KARTU PRESISI SAMA PERSIS KEUANGAN:
-        // - Padding: 14px 16px
-        // - Min height: 68px (vertically centered)
-        // - Label: font-size 11px, font-weight 700, margin-bottom 6px, uppercase
-        // - Value: font-size 16px, font-weight 700
+        // SUSUNAN SAMA PERSIS KEUANGAN:
+        // Card 1: Title Grey (#777), Value Green (#2E7D32)
+        // Card 2: Title Green (#2E7D32), Value Green (#2E7D32)
+        // Card 3: Title Red (#C62828), Value Red (#C62828)
+        // Card 4: Title Blue (#0277BD), Value Blue (#0277BD)
         container.innerHTML = `
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_total_items')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: var(--text-color, #222);">${totalJenis} ${t('unit_types')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_total_items')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #2E7D32;">${totalJenis} ${t('unit_types')}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 11px; font-weight: 700; color: #2E7D32; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_inventory_value')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; font-weight: 700; color: #2E7D32; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_inventory_value')}</div>
                 <div style="font-size: 16px; font-weight: 700; color: #2E7D32;">${formatRupiah(nilaiPersediaan)}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 11px; font-weight: 700; color: ${stokKritis > 0 ? '#C62828' : '#777'}; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_critical_stock')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: ${stokKritis > 0 ? '#C62828' : 'var(--text-color, #222)'};">${stokKritis} ${t('unit_items')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; font-weight: 700; color: #C62828; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_critical_stock')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #C62828;">${stokKritis} ${t('unit_items')}</div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); box-shadow: 0 1px 3px rgba(0,0,0,0.02); min-height: 68px; display: flex; flex-direction: column; justify-content: center;">
-                <div style="font-size: 11px; font-weight: 700; color: ${expiredSoon > 0 ? '#E65100' : '#777'}; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">${t('stat_expired_soon')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: ${expiredSoon > 0 ? '#E65100' : 'var(--text-color, #222)'};">${expiredSoon} ${t('unit_items')}</div>
+            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; font-weight: 700; color: #0277BD; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_expired_soon')}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #0277BD;">${expiredSoon} ${t('unit_items')}</div>
             </div>
         `;
     }
