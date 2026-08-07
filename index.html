@@ -220,45 +220,42 @@ body.dark-theme button[style*="background: #f0f0f0"] {
     background-color: #333333 !important;
     color: #ffffff !important;
 }
-        /* 9. FIX MODAL POP-UP & OPSI PILIH BAHASA DI MODE GELAP */
-    body.dark-theme #customModalCard {
-        background-color: #1e1e1e !important;
-        color: #ffffff !important;
-        border: 1px solid #333333 !important;
-    }
-    body.dark-theme #customModalTitle,
-    body.dark-theme #customModalBody {
-        color: #ffffff !important;
-    }
-    body.dark-theme #customModalCard label {
-        background-color: #282828 !important;
-        border-color: #383838 !important;
-        color: #ffffff !important;
-    }
-    /* Kotak bahasa yang sedang aktif/dipilih */
-    body.dark-theme #customModalCard label[style*="background: #E8F5E9"] {
-        background-color: #1b3320 !important;
-        border-color: #2d5434 !important;
-        color: #81c784 !important;
-    }
-    body.dark-theme #customModalCard label span {
-        color: #ffffff !important;
-    }
-    /* Tombol Tutup / Batal / Oke di dalam Modal */
-    body.dark-theme #customModalCard button {
-        background-color: #333333 !important;
-        color: #ffffff !important;
-        border-color: #444444 !important;
-    }
-    body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
-        background-color: #381a1c !important;
-        color: #e57373 !important;
-        border-color: #5c2c30 !important;
-    }
-    
+/* 9. FIX MODAL POP-UP & OPSI PILIH BAHASA DI MODE GELAP */
+body.dark-theme #customModalCard {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 1px solid #333333 !important;
+}
+body.dark-theme #customModalTitle,
+body.dark-theme #customModalBody {
+    color: #ffffff !important;
+}
+body.dark-theme #customModalCard label {
+    background-color: #282828 !important;
+    border-color: #383838 !important;
+    color: #ffffff !important;
+}
+/* Kotak bahasa yang sedang aktif/dipilih */
+body.dark-theme #customModalCard label[style*="background: #E8F5E9"] {
+    background-color: #1b3320 !important;
+    border-color: #2d5434 !important;
+    color: #81c784 !important;
+}
+body.dark-theme #customModalCard label span {
+    color: #ffffff !important;
+}
+/* Tombol Tutup / Batal / Oke di dalam Modal */
+body.dark-theme #customModalCard button {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border-color: #444444 !important;
+}
+body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
+    background-color: #381a1c !important;
+    color: #e57373 !important;
+    border-color: #5c2c30 !important;
+}
 </style>
-    
-    
 </head>
 <body>
 
@@ -324,6 +321,8 @@ body.dark-theme button[style*="background: #f0f0f0"] {
             
             <div class="sidebar-group-title" data-i18n="group_monitoring">Monitoring & Perawatan</div>
             <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> <span data-i18n="nav_nutrition">Nutrisi & PPM</span></button>
+            <!-- MENU KALKULATOR RACIK AB MIX TERDAFTAR DI SINI -->
+            <button class="sidebar-item" data-page="racikan"><i class="fas fa-calculator" style="color: #2E7D32;"></i> <span data-i18n="nav_racikan">Kalkulator Racik AB Mix</span></button>
             <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> <span data-i18n="nav_pests">Hama & Penyakit</span></button>
             <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> <span data-i18n="nav_spray">Jadwal Spray</span></button>
             <button class="sidebar-item" data-page="jadwal"><i class="fas fa-calendar-alt" style="color: #EF6C00;"></i> <span data-i18n="nav_schedule">Jadwal Harian</span></button>
@@ -372,6 +371,8 @@ body.dark-theme button[style*="background: #f0f0f0"] {
 <script src="js/keuangan.js"></script>
 <script src="js/setting.js"></script>
 <script src="js/cctv.js"></script>
+<script src="js/racikan.js"></script>
+    
 
 <!-- ======================================== -->
 <!-- APP ROUTER & NAVIGATION (WITH MULTI-LANG & DARK MODE) -->
@@ -398,6 +399,7 @@ var globalDict = {
         'nav_fruit_select': 'Seleksi Buah',
         'nav_pruning': 'Pruning / Rempes',
         'nav_nutrition': 'Nutrisi & PPM',
+        'nav_racikan': 'Kalkulator Racik AB Mix',
         'nav_pests': 'Hama & Penyakit',
         'nav_spray': 'Jadwal Spray',
         'nav_notif': 'Pusat Notifikasi',
@@ -426,6 +428,7 @@ var globalDict = {
         'nav_fruit_select': 'Fruit Selection',
         'nav_pruning': 'Pruning',
         'nav_nutrition': 'Nutrition & PPM',
+        'nav_racikan': 'AB Mix Calculator',
         'nav_pests': 'Pests & Diseases',
         'nav_spray': 'Spray Schedule',
         'nav_notif': 'Notification Center',
@@ -580,6 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'polinasi': polinasi,
         'buah': buah,
         'nutrisi': nutrisi,
+        'racikan': racikan,
         'pruning': pruning,
         'hama': hama,
         'spray': spray,
