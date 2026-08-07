@@ -1,11 +1,11 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (FIXED INPUT FOCUS JUMPING & RE-RENDER ISSUES)
+// (VERSI DATA KOSONG TOTAL / CLEAN SLATE)
 // ==========================================
 
 var racikan = (function() {
 
-    // DAFTAR NAMA PUPUK TANPA RUMUS KIMIA
+    // DAFTAR NAMA PUPUK DUKUNGAN
     var LIST_PUPUK = [
         "CALNIT",
         "KNO3",
@@ -20,52 +20,12 @@ var racikan = (function() {
         "Lainnya"
     ];
 
-    // DATA PRESET DEFAULT RACIKAN (UNTUK 20 LITER PEKATAN)
-    var PRESETS = {
-        'veg': {
-            name: 'Fase Vegetatif',
-            pekatA: [
-                { name: 'CALNIT', amount: 1100, unit: 'Gram', pricePerUnit: 25000 },
-                { name: 'KNO3', amount: 350, unit: 'Gram', pricePerUnit: 45000 },
-                { name: 'Fe EDDHA', amount: 40, unit: 'Gram', pricePerUnit: 150000 }
-            ],
-            pekatB: [
-                { name: 'KNO3', amount: 450, unit: 'Gram', pricePerUnit: 45000 },
-                { name: 'Mag-S', amount: 650, unit: 'Gram', pricePerUnit: 15000 },
-                { name: 'MKP', amount: 300, unit: 'Gram', pricePerUnit: 55000 },
-                { name: 'MAP', amount: 200, unit: 'Gram', pricePerUnit: 50000 },
-                { name: 'SOP/ZK', amount: 250, unit: 'Gram', pricePerUnit: 35000 },
-                { name: 'ZA', amount: 100, unit: 'Gram', pricePerUnit: 12000 },
-                { name: 'FLEX-G', amount: 50, unit: 'Gram', pricePerUnit: 80000 },
-                { name: 'VITAFLEX', amount: 35, unit: 'Gram', pricePerUnit: 120000 }
-            ]
-        },
-        'gen': {
-            name: 'Fase Generatif',
-            pekatA: [
-                { name: 'CALNIT', amount: 1200, unit: 'Gram', pricePerUnit: 25000 },
-                { name: 'KNO3', amount: 500, unit: 'Gram', pricePerUnit: 45000 },
-                { name: 'Fe EDDHA', amount: 50, unit: 'Gram', pricePerUnit: 150000 }
-            ],
-            pekatB: [
-                { name: 'KNO3', amount: 600, unit: 'Gram', pricePerUnit: 45000 },
-                { name: 'Mag-S', amount: 750, unit: 'Gram', pricePerUnit: 15000 },
-                { name: 'MKP', amount: 400, unit: 'Gram', pricePerUnit: 55000 },
-                { name: 'MAP', amount: 250, unit: 'Gram', pricePerUnit: 50000 },
-                { name: 'SOP/ZK', amount: 350, unit: 'Gram', pricePerUnit: 35000 },
-                { name: 'ZA', amount: 150, unit: 'Gram', pricePerUnit: 12000 },
-                { name: 'FLEX-G', amount: 60, unit: 'Gram', pricePerUnit: 80000 },
-                { name: 'VITAFLEX', amount: 40, unit: 'Gram', pricePerUnit: 120000 }
-            ]
-        }
-    };
-
-    // STATE RACIKAN UTAMA
+    // STATE RACIKAN UTAMA (KOSONG TOTAL)
     var state = {
-        volStock: 20,
-        currentPreset: 'veg',
-        itemsA: JSON.parse(JSON.stringify(PRESETS['veg'].pekatA)),
-        itemsB: JSON.parse(JSON.stringify(PRESETS['veg'].pekatB))
+        volStock: '',
+        currentPreset: '',
+        itemsA: [],
+        itemsB: []
     };
 
     // KAMUS TERJEMAHAN DUAL BAHASA
@@ -76,6 +36,7 @@ var racikan = (function() {
             'lbl_vol_stock': 'Target Volume Pekatan (Liter)',
             'preset_veg': 'Fase Vegetatif',
             'preset_gen': 'Fase Generatif',
+            'preset_custom': '-- Input Manual / Kosong --',
             'title_pekat_a': 'Komposisi Pekatan A',
             'title_pekat_b': 'Komposisi Pekatan B',
             'btn_add_a': '+ Tambah Bahan A',
@@ -91,8 +52,9 @@ var racikan = (function() {
             'module_title': 'AB Mix Compounding Calculator',
             'lbl_preset': 'Crop Stage Preset',
             'lbl_vol_stock': 'Target Concentrate Volume (Liters)',
-            'preset_veg': 'Fase Vegetatif',
-            'preset_gen': 'Fase Generatif',
+            'preset_veg': 'Vegetative Stage',
+            'preset_gen': 'Generative Stage',
+            'preset_custom': '-- Manual / Blank Input --',
             'title_pekat_a': 'Stock A Composition',
             'title_pekat_b': 'Stock B Composition',
             'btn_add_a': '+ Add Stock A Material',
@@ -124,13 +86,14 @@ var racikan = (function() {
                         <div>
                             <label style="font-size: 12px; font-weight: 700; color: #2E7D32;">${t('lbl_preset')}</label>
                             <select id="racikPreset" onchange="racikan.changePreset(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: 600;">
+                                <option value="" ${state.currentPreset === '' ? 'selected' : ''}>${t('preset_custom')}</option>
                                 <option value="veg" ${state.currentPreset === 'veg' ? 'selected' : ''}>${t('preset_veg')}</option>
                                 <option value="gen" ${state.currentPreset === 'gen' ? 'selected' : ''}>${t('preset_gen')}</option>
                             </select>
                         </div>
                         <div>
                             <label style="font-size: 12px; font-weight: 700; color: #2E7D32;">${t('lbl_vol_stock')}</label>
-                            <input type="number" id="racikVolStock" value="${state.volStock}" oninput="racikan.changeVolume(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: bold;">
+                            <input type="number" id="racikVolStock" value="${state.volStock}" placeholder="Contoh: 20" oninput="racikan.changeVolume(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: bold;">
                         </div>
                     </div>
                 </div>
@@ -195,45 +158,25 @@ var racikan = (function() {
 
     function changePreset(presetKey) {
         state.currentPreset = presetKey;
-        if (PRESETS[presetKey]) {
-            state.itemsA = JSON.parse(JSON.stringify(PRESETS[presetKey].pekatA));
-            state.itemsB = JSON.parse(JSON.stringify(PRESETS[presetKey].pekatB));
+        if (presetKey === '') {
+            state.itemsA = [];
+            state.itemsB = [];
         }
         renderTables();
     }
 
     function changeVolume(val) {
-        var newVol = parseFloat(val) || 0;
-        if (newVol > 0 && state.volStock > 0) {
-            var ratio = newVol / state.volStock;
-            state.itemsA.forEach(function(item) {
-                item.amount = Math.round(item.amount * ratio);
-            });
-            state.itemsB.forEach(function(item) {
-                item.amount = Math.round(item.amount * ratio);
-            });
-        }
-        state.volStock = newVol;
-        
-        // Memperbarui nilai berat di input DOM secara spesifik tanpa merender ulang seluruh tabel
-        updateInputValuesInDOM('A', state.itemsA);
-        updateInputValuesInDOM('B', state.itemsB);
+        state.volStock = val;
         calculateSummary();
     }
 
-    function updateInputValuesInDOM(group, items) {
-        items.forEach(function(item, idx) {
-            var el = document.getElementById('input_amount_' + group + '_' + idx);
-            if (el) el.value = item.amount;
-        });
-    }
-
     function addItem(group) {
+        var defaultName = (group === 'A') ? "CALNIT" : "MKP";
         var newItem = {
-            name: LIST_PUPUK[0],
-            amount: 100,
+            name: defaultName,
+            amount: '',
             unit: 'Gram',
-            pricePerUnit: 25000
+            pricePerUnit: ''
         };
         if (group === 'A') state.itemsA.push(newItem);
         else state.itemsB.push(newItem);
@@ -248,18 +191,28 @@ var racikan = (function() {
         renderTables();
     }
 
-    // UPDATE DATA ITEM TANPA MENIKAM/RE-RENDER TABEL SUPAYA TIDAK HILANG FOKUS KURSOR
     function updateItem(group, index, field, value) {
         var targetArr = (group === 'A') ? state.itemsA : state.itemsB;
         if (!targetArr[index]) return;
 
         if (field === 'amount' || field === 'pricePerUnit') {
-            targetArr[index][field] = parseFloat(value) || 0;
+            targetArr[index][field] = value === '' ? '' : parseFloat(value);
         } else {
             targetArr[index][field] = value;
         }
 
-        // Cukup hitung ulang total biaya dan bobot tanpa merender ulang seluruh tabel HTML
+        // Hitung Subtotal Baris Secara Real-Time
+        var item = targetArr[index];
+        var amt = parseFloat(item.amount) || 0;
+        var price = parseFloat(item.pricePerUnit) || 0;
+        var gramVal = (item.unit === 'Kg') ? (amt * 1000) : amt;
+        var subtotal = (gramVal / 1000) * price;
+
+        var subtotalEl = document.getElementById('subtotal_' + group + '_' + index);
+        if (subtotalEl) {
+            subtotalEl.innerText = 'Rp' + Math.round(subtotal).toLocaleString('id-ID');
+        }
+
         calculateSummary();
     }
 
@@ -279,7 +232,7 @@ var racikan = (function() {
 
     function buildTableHTML(group, items) {
         if (items.length === 0) {
-            return `<div style="text-align: center; color: #888; font-size: 12px; padding: 12px;">Belum ada bahan di Pekatan ${group}.</div>`;
+            return `<div style="text-align: center; color: #888; font-size: 12px; padding: 14px; background: var(--inner-card-bg, #f9f9f9); border-radius: 8px; border: 1px dashed var(--border-color, #ccc);">Belum ada bahan di Pekatan ${group}. Klik tombol di atas untuk menambah.</div>`;
         }
 
         var html = `<div style="display: flex; flex-direction: column; gap: 8px;">`;
@@ -290,12 +243,18 @@ var racikan = (function() {
                 return `<option value="${p}" ${selected}>${p}</option>`;
             }).join('');
 
+            var amt = parseFloat(item.amount) || 0;
+            var price = parseFloat(item.pricePerUnit) || 0;
+            var gramVal = (item.unit === 'Kg') ? (amt * 1000) : amt;
+            var subtotal = (gramVal / 1000) * price;
+            var subtotalFormatted = 'Rp' + Math.round(subtotal).toLocaleString('id-ID');
+
             html += `
-                <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #eee); display: grid; grid-template-columns: 2.2fr 1.1fr 1fr 1.5fr 28px; gap: 6px; align-items: end;">
+                <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #eee); display: grid; grid-template-columns: 2fr 1fr 0.9fr 1.2fr 1.2fr 24px; gap: 6px; align-items: end;">
                     <!-- Nama Bahan -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Nama Pupuk</label>
-                        <select onchange="racikan.updateItem('${group}', ${idx}, 'name', this.value)" style="width: 100%; padding: 7px 6px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                        <select onchange="racikan.updateItem('${group}', ${idx}, 'name', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                             ${optionsPupuk}
                         </select>
                     </div>
@@ -303,13 +262,13 @@ var racikan = (function() {
                     <!-- Berat -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Berat</label>
-                        <input type="number" id="input_amount_${group}_${idx}" value="${item.amount}" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 6px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                        <input type="number" id="input_amount_${group}_${idx}" value="${item.amount}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                     </div>
 
                     <!-- Satuan -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Satuan</label>
-                        <select onchange="racikan.updateItem('${group}', ${idx}, 'unit', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                        <select onchange="racikan.updateItem('${group}', ${idx}, 'unit', this.value)" style="width: 100%; padding: 7px 2px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                             <option value="Gram" ${item.unit === 'Gram' ? 'selected' : ''}>Gram</option>
                             <option value="Kg" ${item.unit === 'Kg' ? 'selected' : ''}>Kg</option>
                         </select>
@@ -317,8 +276,16 @@ var racikan = (function() {
 
                     <!-- Harga / Kg (Rp) -->
                     <div>
-                        <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Harga/Kg (Rp)</label>
-                        <input type="number" value="${item.pricePerUnit}" oninput="racikan.updateItem('${group}', ${idx}, 'pricePerUnit', this.value)" style="width: 100%; padding: 7px 6px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                        <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Harga/Kg</label>
+                        <input type="number" value="${item.pricePerUnit}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'pricePerUnit', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
+                    </div>
+
+                    <!-- Subtotal Baris -->
+                    <div>
+                        <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Subtotal</label>
+                        <div id="subtotal_${group}_${idx}" style="font-size: 11px; font-weight: 700; color: #2E7D32; padding: 7px 0; text-align: right; white-space: nowrap;">
+                            ${subtotalFormatted}
+                        </div>
                     </div>
 
                     <!-- Tombol Hapus -->
@@ -337,17 +304,21 @@ var racikan = (function() {
         var totalGramA = 0;
         var totalCostA = 0;
         state.itemsA.forEach(function(item) {
-            var g = (item.unit === 'Kg') ? (item.amount * 1000) : item.amount;
+            var amt = parseFloat(item.amount) || 0;
+            var price = parseFloat(item.pricePerUnit) || 0;
+            var g = (item.unit === 'Kg') ? (amt * 1000) : amt;
             totalGramA += g;
-            totalCostA += (g / 1000) * item.pricePerUnit;
+            totalCostA += (g / 1000) * price;
         });
 
         var totalGramB = 0;
         var totalCostB = 0;
         state.itemsB.forEach(function(item) {
-            var g = (item.unit === 'Kg') ? (item.amount * 1000) : item.amount;
+            var amt = parseFloat(item.amount) || 0;
+            var price = parseFloat(item.pricePerUnit) || 0;
+            var g = (item.unit === 'Kg') ? (amt * 1000) : amt;
             totalGramB += g;
-            totalCostB += (g / 1000) * item.pricePerUnit;
+            totalCostB += (g / 1000) * price;
         });
 
         var grandTotalCost = totalCostA + totalCostB;
@@ -388,8 +359,11 @@ var racikan = (function() {
         }
 
         allItems.forEach(function(item) {
-            var kg = (item.unit === 'Kg') ? item.amount : (item.amount / 1000);
-            gudang.potongStokOtomatis(item.name, kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
+            var amt = parseFloat(item.amount) || 0;
+            if (amt > 0) {
+                var kg = (item.unit === 'Kg') ? amt : (amt / 1000);
+                gudang.potongStokOtomatis(item.name, kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
+            }
         });
 
         if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
