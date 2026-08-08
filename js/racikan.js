@@ -1,13 +1,14 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (WITH CUSTOM PROFESSIONAL MODAL POPUP & ANTI DOUBLE-CLICK)
+// (WITH REAL-TIME DRAFT AUTO-SAVE, CUSTOM MODAL & DATA PROTECTION)
 // ==========================================
 
 var racikan = (function() {
 
     var STORAGE_KEY_TEMPLATES = 'cozycs_racikan_templates';
+    var STORAGE_KEY_DRAFT = 'cozycs_racikan_draft'; // Storage khusus draf input aktif
     var isProcessingStok = false;
-    var pendingDeductItems = []; // Menampung item sementara untuk diproses modal
+    var pendingDeductItems = [];
 
     var LIST_PUPUK = [
         "CALNIT",
@@ -85,6 +86,37 @@ var racikan = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
+    // HELPER AUTO-SAVE DRAF OTOMATIS
+    function saveDraftToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(state));
+        } catch(e) {
+            console.error('Gagal menyimpan draf racikan ke localStorage', e);
+        }
+    }
+
+    function loadDraftFromStorage() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY_DRAFT);
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                state.editingId = parsed.editingId || null;
+                state.racikName = parsed.racikName || '';
+                state.volStock = parsed.volStock || '';
+                state.itemsA = parsed.itemsA || [];
+                state.itemsB = parsed.itemsB || [];
+            }
+        } catch(e) {
+            console.error('Gagal memuat draf racikan dari localStorage', e);
+        }
+    }
+
+    function clearDraftStorage() {
+        try {
+            localStorage.removeItem(STORAGE_KEY_DRAFT);
+        } catch(e) {}
+    }
+
     function getSavedTemplates() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY_TEMPLATES);
@@ -103,6 +135,8 @@ var racikan = (function() {
     }
 
     function render() {
+        loadDraftFromStorage(); // Pastikan draf termuat saat HTML dibuat
+
         return `
             <div class="dashboard-container">
                 <div class="section-title">
@@ -170,7 +204,7 @@ var racikan = (function() {
 
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button type="button" onclick="racikan.simpanTemplate()" id="btnSaveTemplate" style="width: 100%; background: #1565C0; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <i class="fas fa-save"></i> <span id="lblBtnSaveTpl">${t('btn_save_template')}</span>
+                            <i class="fas fa-save"></i> <span id="lblBtnSaveTpl">${state.editingId ? t('btn_update_template') : t('btn_save_template')}</span>
                         </button>
                         
                         <button type="button" id="btnPotongGudang" onclick="racikan.potongStokGudang()" style="width: 100%; background: #2E7D32; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -190,7 +224,7 @@ var racikan = (function() {
                     </div>
                 </div>
 
-                <!-- 5. CUSTOM PROFESSIONAL MODAL POPUP (TANPA HEADER URL) -->
+                <!-- 5. CUSTOM PROFESSIONAL MODAL POPUP -->
                 <div id="racikConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; backdrop-filter: blur(3px);">
                     <div style="background: var(--card-bg, #fff); width: 100%; max-width: 420px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #eee);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
@@ -227,16 +261,26 @@ var racikan = (function() {
     }
 
     function init() {
+        loadDraftFromStorage();
+
+        var nameEl = document.getElementById('racikNamaTpl');
+        if (nameEl) nameEl.value = state.racikName;
+
+        var volEl = document.getElementById('racikVolStock');
+        if (volEl) volEl.value = state.volStock;
+
         renderTables();
         renderSavedTemplatesList();
     }
 
     function updateRacikName(val) {
         state.racikName = val || '';
+        saveDraftToStorage();
     }
 
     function changeVolume(val) {
         state.volStock = val;
+        saveDraftToStorage();
         calculateSummary();
     }
 
@@ -250,6 +294,7 @@ var racikan = (function() {
         if (group === 'A') state.itemsA.push(newItem);
         else state.itemsB.push(newItem);
 
+        saveDraftToStorage();
         renderTables();
     }
 
@@ -257,6 +302,7 @@ var racikan = (function() {
         if (group === 'A') state.itemsA.splice(index, 1);
         else state.itemsB.splice(index, 1);
 
+        saveDraftToStorage();
         renderTables();
     }
 
@@ -269,6 +315,8 @@ var racikan = (function() {
         } else {
             targetArr[index][field] = value;
         }
+
+        saveDraftToStorage();
 
         var item = targetArr[index];
         var amt = parseFloat(item.amount) || 0;
@@ -465,6 +513,8 @@ var racikan = (function() {
         state.itemsA = [];
         state.itemsB = [];
 
+        clearDraftStorage();
+
         var nameEl = document.getElementById('racikNamaTpl');
         if (nameEl) nameEl.value = '';
 
@@ -487,6 +537,8 @@ var racikan = (function() {
         state.volStock = tpl.volStock;
         state.itemsA = JSON.parse(JSON.stringify(tpl.itemsA || []));
         state.itemsB = JSON.parse(JSON.stringify(tpl.itemsB || []));
+
+        saveDraftToStorage();
 
         var nameEl = document.getElementById('racikNamaTpl');
         if (nameEl) nameEl.value = state.racikName;
@@ -511,6 +563,8 @@ var racikan = (function() {
         state.volStock = tpl.volStock;
         state.itemsA = JSON.parse(JSON.stringify(tpl.itemsA || []));
         state.itemsB = JSON.parse(JSON.stringify(tpl.itemsB || []));
+
+        saveDraftToStorage();
 
         var nameEl = document.getElementById('racikNamaTpl');
         if (nameEl) nameEl.value = state.racikName;
@@ -600,7 +654,6 @@ var racikan = (function() {
         container.innerHTML = html;
     }
 
-    // MEMBUKA CUSTOM MODAL CONFIRMATION (REPLACES BROWSER CONFIRM)
     function potongStokGudang() {
         if (isProcessingStok) return;
 
@@ -626,7 +679,6 @@ var racikan = (function() {
 
         pendingDeductItems = validItems;
 
-        // Render item list secara rapi di dalam modal
         var listContainer = document.getElementById('racikModalItemList');
         if (listContainer) {
             var listHtml = '';
@@ -641,7 +693,6 @@ var racikan = (function() {
             listContainer.innerHTML = listHtml;
         }
 
-        // Tampilkan Custom Modal
         var modal = document.getElementById('racikConfirmModal');
         if (modal) {
             modal.style.display = 'flex';
@@ -656,7 +707,6 @@ var racikan = (function() {
         pendingDeductItems = [];
     }
 
-    // EKSEKUSI PEMOTONGAN STOK SETELAH KLIK "YA, POTONG STOK" DI MODAL
     function executePotongStok() {
         if (isProcessingStok || pendingDeductItems.length === 0) return;
 
