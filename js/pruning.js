@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PEMANGKASAN & PRUNING (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL PEMANGKASAN & PRUNING (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var pruning = (function() {
@@ -7,7 +7,7 @@ var pruning = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -268,6 +268,11 @@ var pruning = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formPruning');
+        }
+
         var form = document.getElementById('formPruning');
         var btnCancel = document.getElementById('btnCancelPruningEdit');
 
@@ -309,6 +314,23 @@ var pruning = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Data Pruning' : 'Pemangkasan & Pruning',
+                            deskripsi: (gh || 'GH') + ' - ' + (jenis || 'Pruning') + ' (' + jumlahPohon + ' Batang) - Talang: ' + (talang || '-'),
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Pruning',
+                            icon: 'fas fa-cut',
+                            color: '#D81B60'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -542,10 +564,9 @@ var pruning = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
