@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (WITH DASHBOARD LOG & CROSS-BROWSER FIX)
 // ==========================================
 
 var laporan = (function() {
@@ -90,6 +90,25 @@ var laporan = (function() {
         }
     }
 
+    // HELPER CATAT LOG AKTIVITAS DAHBOARD
+    function catatAktivitasDasbor(judul, deskripsi) {
+        if (typeof Storage !== 'undefined' && Storage.add) {
+            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            
+            Storage.add(keyAktivitas, {
+                judul: judul,
+                deskripsi: deskripsi,
+                tanggal: now.toISOString().split('T')[0],
+                jam: timeStr,
+                kategori: 'Laporan',
+                icon: 'fas fa-file-download',
+                color: '#2E7D32'
+            });
+        }
+    }
+
     function render() {
         var modules = [
             { id: 'greenhouse', icon: 'fa-warehouse', color: '#2E7D32', titleKey: 'mod_greenhouse', descKey: 'desc_greenhouse' },
@@ -162,7 +181,6 @@ var laporan = (function() {
             return;
         }
 
-        // Ambil header dari keys objek data pertama
         var headers = Object.keys(data[0]);
         var csvRows = [];
 
@@ -173,7 +191,9 @@ var laporan = (function() {
         data.forEach(function(row) {
             var values = headers.map(function(header) {
                 var val = row[header] === undefined || row[header] === null ? '' : row[header];
-                // Escape string dengan petik dua jika mengandung koma atau newline
+                if (typeof val === 'object') {
+                    val = JSON.stringify(val);
+                }
                 var escaped = ('' + val).replace(/"/g, '""');
                 return '"' + escaped + '"';
             });
@@ -191,6 +211,9 @@ var laporan = (function() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Catat Log ke Dasbor
+        catatAktivitasDasbor('Unduh Laporan CSV', 'Modul ' + modName.toUpperCase() + ' (' + data.length + ' ' + t('unit_records') + ')');
 
         if (typeof Helper !== 'undefined' && Helper.showToast) {
             Helper.showToast(t('toast_exported') + modName, 'success');
@@ -212,30 +235,47 @@ var laporan = (function() {
 
         var headers = Object.keys(data[0]);
 
-        var tableHeaderHtml = '<tr>' + headers.map(h => `<th style="border:1px solid #ddd; padding:8px; background:#f2f2f2; font-size:12px;">${h.toUpperCase()}</th>`).join('') + '</tr>';
+        var tableHeaderHtml = '<tr>' + headers.map(function(h) {
+            return '<th style="border:1px solid #ddd; padding:8px; background:#f2f2f2; font-size:12px; text-align:left;">' + h.toUpperCase() + '</th>';
+        }).join('') + '</tr>';
         
         var tableBodyHtml = '';
         data.forEach(function(row) {
-            tableBodyHtml += '<tr>' + headers.map(h => `<td style="border:1px solid #ddd; padding:8px; font-size:11px;">${row[h] || '-'}</td>`).join('') + '</tr>';
+            tableBodyHtml += '<tr>' + headers.map(function(h) {
+                var cell = row[h] !== undefined && row[h] !== null ? row[h] : '-';
+                if (typeof cell === 'object') {
+                    cell = JSON.stringify(cell);
+                }
+                return '<td style="border:1px solid #ddd; padding:8px; font-size:11px;">' + cell + '</td>';
+            }).join('') + '</tr>';
         });
 
         var printWindow = window.open('', '', 'height=600,width=800');
+        if (!printWindow) {
+            alert('Pop-up terblokir oleh browser. Harap izinkan pop-up untuk mencetak laporan.');
+            return;
+        }
+
         printWindow.document.write('<html><head><title>Laporan ' + modName.toUpperCase() + ' - Cozycs Farm</title>');
         printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin-top:15px;}</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write('<h2>COZYCS FARM - LAPORAN OPERASIONAL</h2>');
-        printWindow.document.write('<h4>Modul: ' + modName.toUpperCase() + ' | Tanggal Cetak: ' + new Date().toLocaleDateString() + '</h4>');
+        printWindow.document.write('<h4>Modul: ' + modName.toUpperCase() + ' | Tanggal Cetak: ' + new Date().toLocaleDateString('id-ID') + '</h4>');
         printWindow.document.write('<table>' + tableHeaderHtml + tableBodyHtml + '</table>');
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
+
+        // Catat Log ke Dasbor
+        catatAktivitasDasbor('Cetak Laporan PDF', 'Modul ' + modName.toUpperCase() + ' (' + data.length + ' ' + t('unit_records') + ')');
+
         setTimeout(function() {
             printWindow.print();
         }, 500);
     }
 
     function init() {
-        // Init handler bila diperlukan
+        // Module Initialization
     }
 
     return {
