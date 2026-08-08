@@ -712,53 +712,66 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI AUDIT LOG OTOMATIS (MENGAMBIL DARI SEMUA AKTIVITAS TERAKHIR APLIKASI)
-    function loadRecentActivities() {
-        var el = document.getElementById('dashRecentActivities');
-        if (!el) return;
+    // FUNGSI AUDIT LOG OTOMATIS (TERAMBUNG DENGAN SELURUH MODUL APLIKASI)
+function loadRecentActivities() {
+    var el = document.getElementById('dashRecentActivities');
+    if (!el) return;
 
-        // Ambil riwayat dari berbagai tabel penyimpanan lokal aplikasi
-        var logs = getData('cozycs_logs');
-        if (logs.length === 0) logs = getData('cozycs_activities');
-        
-        // Jika log khusus masih kosong, gabungkan data nyata dari inputan tanaman, nutrisi, atau panen
-        if (logs.length === 0) {
-            var allTanaman = getData('cozycs_tanaman');
-            var allNutrisi = getData('cozycs_nutrisi');
-            var allPanen = getData('cozycs_panen');
+    // 1. Cek penyimpanan log utama (dukung key cozycs_aktivitas, cozycs_activities, dan cozycs_logs)
+    var logs = getData('cozycs_aktivitas');
+    if (!logs || logs.length === 0) logs = getData('cozycs_activities');
+    if (!logs || logs.length === 0) logs = getData('cozycs_logs');
 
-            allTanaman.forEach(function(item) {
-                logs.push({ jam: item.waktu || item.tanggal || 'Baru', text: 'Input Tanaman: ' + (item.varietas || 'Melon') + ' (' + (item.gh || 'GH') + ')' });
-            });
-            allNutrisi.forEach(function(item) {
-                logs.push({ jam: item.jam || item.tanggal || 'Baru', text: 'Update Nutrisi: ' + (item.ppm || 0) + ' ppm (' + (item.gh || 'GH') + ')' });
-            });
-            allPanen.forEach(function(item) {
-                logs.push({ jam: item.tanggal || 'Baru', text: 'Catatan Panen / Buah Fix' });
-            });
-        }
+    // 2. Jika log khusus masih kosong, buat fallback nyata dari seluruh modul
+    if (!logs || logs.length === 0) {
+        logs = [];
+        var allTanaman = getData('cozycs_tanaman') || [];
+        var allNutrisi = getData('cozycs_nutrisi') || [];
+        var allPanen = getData('cozycs_panen') || [];
+        var allBuah = getData('cozycs_buah') || [];
 
-        var filteredLogs = (selectedGh === 'ALL') ? logs : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
-
-        if (filteredLogs.length === 0) {
-            el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">${t('no_logs')}</div>`;
-            return;
-        }
-
-        var html = '';
-        filteredLogs.slice(-5).reverse().forEach(function(l) {
-            var jamStr = l.jam || l.time || l.waktu || 'Baru';
-            var textStr = l.text || l.kegiatan || l.keterangan || l.judul || 'Aktivitas tercatat';
-            html += `
-                <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 6px; margin-bottom: 4px;">
-                    <span style="font-weight: bold; color: #0277BD; width: 65px; flex-shrink: 0; font-size: 10px; background: #E1F5FE; padding: 2px 4px; border-radius: 4px; text-align: center;">${jamStr}</span>
-                    <span style="color: var(--text-color, #333);">${textStr}</span>
-                </div>
-            `;
+        allTanaman.forEach(function(item) {
+            logs.push({ jam: item.waktu || item.tanggal || 'Baru', text: 'Input Tanaman: ' + (item.varietas || 'Melon') + ' (' + (item.gh || 'GH') + ')', gh: item.gh });
         });
-
-        el.innerHTML = html;
+        allNutrisi.forEach(function(item) {
+            logs.push({ jam: item.jam || item.tanggal || 'Baru', text: 'Update Nutrisi: ' + (item.ppm || 0) + ' ppm (' + (item.gh || 'GH') + ')', gh: item.gh });
+        });
+        allPanen.forEach(function(item) {
+            logs.push({ jam: item.tanggal || 'Baru', text: 'Catatan Panen / Buah Fix', gh: item.gh });
+        });
+        allBuah.forEach(function(item) {
+            logs.push({ jam: item.tanggal || 'Baru', text: 'Pemeliharaan Buah: ' + (item.tindakan || 'Monitoring') + ' (' + (item.gh || 'GH') + ')', gh: item.gh });
+        });
     }
+
+    // 3. Filter berdasarkan Greenhouse aktif
+    var filteredLogs = (typeof selectedGh === 'undefined' || selectedGh === 'ALL') 
+        ? logs 
+        : logs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
+
+    if (filteredLogs.length === 0) {
+        el.innerHTML = `<div style="font-size: 11px; color: #888; text-align: center; padding: 8px 0;">${typeof t === 'function' ? t('no_logs') : 'Belum ada aktivitas'}</div>`;
+        return;
+    }
+
+    // 4. Render 5 log aktivitas terbaru
+    var html = '';
+    filteredLogs.slice(-5).reverse().forEach(function(l) {
+        var jamStr = l.jam || l.time || l.waktu || l.tanggal || 'Baru';
+        var mainText = l.judul || l.text || l.kegiatan || l.keterangan || 'Aktivitas tercatat';
+        var descText = l.deskripsi ? (' - ' + l.deskripsi) : '';
+
+        html += `
+            <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 6px; margin-bottom: 4px;">
+                <span style="font-weight: bold; color: #0277BD; width: 65px; flex-shrink: 0; font-size: 10px; background: #E1F5FE; padding: 2px 4px; border-radius: 4px; text-align: center;">${jamStr}</span>
+                <span style="color: var(--text-color, #333);"><strong>${mainText}</strong><span style="color: #666;">${descText}</span></span>
+            </div>
+        `;
+    });
+
+    el.innerHTML = html;
+}
+    
 
     function toggleIotSection() {
         isIotCollapsed = !isIotCollapsed;
