@@ -1,12 +1,13 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (WITH ANTI DOUBLE-CLICK & CONFIRMATION PROTECTION)
+// (WITH CUSTOM PROFESSIONAL MODAL POPUP & ANTI DOUBLE-CLICK)
 // ==========================================
 
 var racikan = (function() {
 
     var STORAGE_KEY_TEMPLATES = 'cozycs_racikan_templates';
-    var isProcessingStok = false; // Flag Pengaman Anti Double-Click
+    var isProcessingStok = false;
+    var pendingDeductItems = []; // Menampung item sementara untuk diproses modal
 
     var LIST_PUPUK = [
         "CALNIT",
@@ -186,6 +187,39 @@ var racikan = (function() {
 
                     <div id="containerSavedTemplates">
                         <!-- Saved Templates List -->
+                    </div>
+                </div>
+
+                <!-- 5. CUSTOM PROFESSIONAL MODAL POPUP (TANPA HEADER URL) -->
+                <div id="racikConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; backdrop-filter: blur(3px);">
+                    <div style="background: var(--card-bg, #fff); width: 100%; max-width: 420px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #eee);">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="background: #E8F5E9; color: #2E7D32; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-color, #222);">Konfirmasi Potong Stok</h3>
+                                <div style="font-size: 11px; color: #777; margin-top: 2px;">Gudang Utama • Cozycs Farm</div>
+                            </div>
+                        </div>
+
+                        <p style="font-size: 13px; color: var(--text-color, #444); margin-bottom: 12px; line-height: 1.4;">
+                            Apakah kamu yakin ingin memotong stok gudang sesuai racikan ini?
+                        </p>
+
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 12px; border-radius: 10px; max-height: 220px; overflow-y: auto; font-size: 12px; color: var(--text-color, #333); margin-bottom: 16px; border: 1px solid var(--border-color, #eee);">
+                            <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 8px; text-transform: uppercase;">Detail Bahan yang Akan Dipotong:</div>
+                            <div id="racikModalItemList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="racikan.closeConfirmModal()" style="flex: 1; background: var(--inner-card-bg, #f0f0f0); color: var(--text-color, #444); border: 1px solid var(--border-color, #ccc); padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                Batal
+                            </button>
+                            <button type="button" onclick="racikan.executePotongStok()" id="btnExecuteDeduct" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                Ya, Potong Stok
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -566,9 +600,9 @@ var racikan = (function() {
         container.innerHTML = html;
     }
 
-    // PEMOTONGAN STOK GUDANG DENGAN ANTI DOUBLE-CLICK & KONFIRMASI DETIL
+    // MEMBUKA CUSTOM MODAL CONFIRMATION (REPLACES BROWSER CONFIRM)
     function potongStokGudang() {
-        if (isProcessingStok) return; // Kunci jika sedang berjalan
+        if (isProcessingStok) return;
 
         if (typeof gudang === 'undefined' || typeof gudang.potongStokOtomatis !== 'function') {
             alert('Modul Gudang belum terhubung.');
@@ -590,30 +624,56 @@ var racikan = (function() {
             return;
         }
 
-        // BUAT DETIL DAFTAR BAHAN UNTUK POP-UP KONFIRMASI
-        var confirmMsg = "Apakah kamu yakin ingin memotong stok gudang sesuai racikan ini?\n\nDetail Bahan yang Akan Dipotong:\n";
-        validItems.forEach(function(v) {
-            confirmMsg += "• " + v.name + ": " + v.kg.toFixed(2) + " Kg (" + v.gram.toLocaleString('id-ID') + " Gram)\n";
-        });
+        pendingDeductItems = validItems;
 
-        if (!confirm(confirmMsg)) {
-            return; // Batal jika pengguna menekan tombol Cancel
+        // Render item list secara rapi di dalam modal
+        var listContainer = document.getElementById('racikModalItemList');
+        if (listContainer) {
+            var listHtml = '';
+            validItems.forEach(function(v) {
+                listHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--border-color, #e0e0e0);">
+                        <span style="font-weight: 600;">• ${v.name}</span>
+                        <span style="font-weight: 700; color: #C62828;">${v.kg.toFixed(2)} Kg <span style="font-size: 10px; color: #777;">(${v.gram.toLocaleString('id-ID')} Gram)</span></span>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = listHtml;
         }
 
-        // KUNCI TOMBOL ANTI DOUBLE-CLICK
+        // Tampilkan Custom Modal
+        var modal = document.getElementById('racikConfirmModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeConfirmModal() {
+        var modal = document.getElementById('racikConfirmModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        pendingDeductItems = [];
+    }
+
+    // EKSEKUSI PEMOTONGAN STOK SETELAH KLIK "YA, POTONG STOK" DI MODAL
+    function executePotongStok() {
+        if (isProcessingStok || pendingDeductItems.length === 0) return;
+
         isProcessingStok = true;
-        var btnEl = document.getElementById('btnPotongGudang');
+        var btnEl = document.getElementById('btnExecuteDeduct');
         if (btnEl) {
             btnEl.disabled = true;
-            btnEl.style.opacity = '0.6';
-            btnEl.style.cursor = 'not-allowed';
+            btnEl.innerText = 'Memproses...';
         }
 
         var count = 0;
-        validItems.forEach(function(item) {
+        pendingDeductItems.forEach(function(item) {
             var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
             if (success) count++;
         });
+
+        closeConfirmModal();
 
         if (count > 0) {
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
@@ -623,15 +683,13 @@ var racikan = (function() {
             }
         }
 
-        // BUKA KEMBALI KUNCI TOMBOL SETELAH 2 DETIK
         setTimeout(function() {
             isProcessingStok = false;
             if (btnEl) {
                 btnEl.disabled = false;
-                btnEl.style.opacity = '1';
-                btnEl.style.cursor = 'pointer';
+                btnEl.innerText = 'Ya, Potong Stok';
             }
-        }, 2000);
+        }, 1500);
     }
 
     return {
@@ -646,7 +704,9 @@ var racikan = (function() {
         applyTemplate: applyTemplate,
         editTemplate: editTemplate,
         deleteTemplate: deleteTemplate,
-        potongStokGudang: potongStokGudang
+        potongStokGudang: potongStokGudang,
+        closeConfirmModal: closeConfirmModal,
+        executePotongStok: executePotongStok
     };
 
 })();
