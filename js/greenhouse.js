@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL MANAJEMEN GREENHOUSE (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL MANAJEMEN GREENHOUSE (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var greenhouse = (function() {
@@ -7,7 +7,7 @@ var greenhouse = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -285,6 +285,11 @@ var greenhouse = (function() {
     function init() {
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formGh');
+        }
+
         var form = document.getElementById('formGh');
         var btnCancel = document.getElementById('btnCancelGhEdit');
 
@@ -338,6 +343,23 @@ var greenhouse = (function() {
                         }
                     }
 
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Data GH' : 'Registrasi GH Baru',
+                            deskripsi: (kode || 'GH') + ' - ' + (nama || 'Greenhouse') + ' (' + (status || 'Aktif') + ')',
+                            tanggal: now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Greenhouse',
+                            icon: 'fas fa-warehouse',
+                            color: '#2E7D32'
+                        });
+                    }
+
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast(t('toast_saved'), 'success');
                     }
@@ -387,7 +409,6 @@ var greenhouse = (function() {
             return;
         }
 
-        // 1. Filter data berdasarkan kata kunci pencarian
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
@@ -411,7 +432,6 @@ var greenhouse = (function() {
             return;
         }
 
-        // 2. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -420,13 +440,11 @@ var greenhouse = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 3. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card: Kode GH & Status -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 15px; color: #2E7D32;">${item.kode || '-'}</strong>
@@ -435,10 +453,7 @@ var greenhouse = (function() {
                         <span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">${item.status || '-'}</span>
                     </div>
 
-                    <!-- Grid 4 Kotak (2x2) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        
-                        <!-- 1. Kapasitas & Sistem -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_cap_system')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -447,7 +462,6 @@ var greenhouse = (function() {
                             </div>
                         </div>
 
-                        <!-- 2. Dimensi & Infrastruktur -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_dim_fac')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -456,7 +470,6 @@ var greenhouse = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Tanggal Operasi -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_date_op')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -464,7 +477,6 @@ var greenhouse = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Siklus Tanam & Panen -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_crop_cycle')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -472,13 +484,10 @@ var greenhouse = (function() {
                                 <div style="margin-top: 3px;"><i class="fas fa-shopping-basket" style="color: #C62828; width: 14px;"></i> <strong>${t('lbl_target')} ${item.tglPanen || '-'}</strong></div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Catatan Tambahan -->
                     ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${item.desc}</div>` : ''}
 
-                    <!-- Tombol Aksi -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="greenhouse.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="greenhouse.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -489,7 +498,6 @@ var greenhouse = (function() {
 
         container.innerHTML = html;
 
-        // 4. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -560,10 +568,9 @@ var greenhouse = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
