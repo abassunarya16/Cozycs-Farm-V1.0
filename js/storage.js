@@ -18,7 +18,9 @@ var Storage = (function() {
         LAPORAN: 'cozycs_laporan',
         GUDANG: 'cozycs_gudang',
         KEUANGAN: 'cozycs_keuangan',
-        SETTING: 'cozycs_setting'
+        SETTING: 'cozycs_setting',
+        AKTIVITAS: 'cozycs_aktivitas',
+        SCHEDULES: 'cozycs_schedules'
     };
 
     function init() {
@@ -48,7 +50,7 @@ var Storage = (function() {
 
     function saveAll(key, dataArray) {
         try {
-            localStorage.setItem(key, JSON.stringify(dataArray));
+            localStorage.setItem(key, JSON.stringify(dataArray || []));
             return true;
         } catch (e) {
             console.error('[Storage] Error saving key ' + key, e);
@@ -60,13 +62,14 @@ var Storage = (function() {
         var list = getAll(key);
         item.id = item.id || 'ID_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         item.created_at = item.created_at || new Date().toISOString();
-        list.push(item);
+        list.unshift(item); // Menyimpan data terbaru di posisi teratas
         return saveAll(key, list) ? item : null;
     }
 
     function update(key, updatedItem) {
+        if (!updatedItem || !updatedItem.id) return false;
         var list = getAll(key);
-        var index = list.findIndex(function(item) { return item.id === updatedItem.id; });
+        var index = list.findIndex(function(item) { return item && item.id === updatedItem.id; });
         if (index !== -1) {
             list[index] = Object.assign({}, list[index], updatedItem, { updated_at: new Date().toISOString() });
             return saveAll(key, list);
@@ -76,13 +79,13 @@ var Storage = (function() {
 
     function remove(key, id) {
         var list = getAll(key);
-        var filtered = list.filter(function(item) { return item.id !== id; });
+        var filtered = list.filter(function(item) { return item && item.id !== id; });
         return saveAll(key, filtered);
     }
 
     function getById(key, id) {
         var list = getAll(key);
-        return list.find(function(item) { return item.id === id; }) || null;
+        return list.find(function(item) { return item && item.id === id; }) || null;
     }
 
     function getStorageUsage() {
@@ -113,3 +116,7 @@ var Storage = (function() {
     };
 
 })();
+
+// Daftarkan ke global window & langsung inisialisasi brankas penyimpanan
+window.Storage = Storage;
+Storage.init();
