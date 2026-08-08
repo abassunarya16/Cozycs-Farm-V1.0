@@ -83,6 +83,78 @@ var Helper = (function() {
         return dayName + ', ' + dateNum + ' ' + monthName + ' ' + year + ' | ' + hours + ':' + minutes + ' WIB';
     }
 
+    // ==========================================
+// COZYCS FARM - GLOBAL FORM AUTO-SAVE DRAFT SYSTEM
+// (Mencegah Data Hilang di Seluruh Modul Aplikasi)
+// ==========================================
+
+(function() {
+    // 1. DENGARKAN SETIAP KETIKAN / PERUBAHAN DI FORM APAPUN SECARA OTOMATIS
+    document.addEventListener('input', function(e) {
+        var form = e.target.closest('form');
+        if (!form || !form.id) return;
+
+        saveFormDraftGlobal(form.id);
+    });
+
+    document.addEventListener('change', function(e) {
+        var form = e.target.closest('form');
+        if (!form || !form.id) return;
+
+        saveFormDraftGlobal(form.id);
+    });
+
+    // 2. FUNGSI MENYIMPAN DRAF FORM
+    function saveFormDraftGlobal(formId) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+
+        var formData = {};
+        var inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(function(input) {
+            // Hindari menyimpan input password / file / hidden ID bawaan edit
+            if (input.id && input.type !== 'password' && input.type !== 'file' && input.type !== 'hidden') {
+                formData[input.id] = input.value;
+            }
+        });
+
+        try {
+            localStorage.setItem('cozycs_global_draft_' + formId, JSON.stringify(formData));
+        } catch(e) {}
+    }
+
+    // 3. FUNGSI MEMULIHKAN DRAF FORM (AUTO-RESTORE)
+    window.restoreFormDraftGlobal = function(formId) {
+        var form = document.getElementById(formId);
+        if (!form) return;
+
+        try {
+            var rawData = localStorage.getItem('cozycs_global_draft_' + formId);
+            if (!rawData) return;
+
+            var formData = JSON.parse(rawData);
+            Object.keys(formData).forEach(function(inputId) {
+                var input = document.getElementById(inputId);
+                if (input && formData[inputId] !== undefined) {
+                    input.value = formData[inputId];
+                }
+            });
+        } catch(e) {}
+    };
+
+    // 4. FUNGSI BERSIHKAN DRAF SAAT FORM BERHASIL DI-SUBMIT
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        if (form && form.id) {
+            try {
+                localStorage.removeItem('cozycs_global_draft_' + form.id);
+            } catch(err) {}
+        }
+    });
+})();
+    
+
     return {
         VERSION: APP_VERSION,
         formatDate: formatDate,
