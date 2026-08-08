@@ -1,6 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL KEUANGAN (FINANCE)
-// (FIX DATA RESET + BILINGUAL & DARK MODE)
+// COZYCS FARM - MODUL KEUANGAN (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var keuangan = (function() {
@@ -135,7 +134,6 @@ var keuangan = (function() {
                     Storage.saveAll(getKey(), initialData);
                 }
             }
-            // tandai bahwa seeding awal sudah pernah dilakukan
             localStorage.setItem(KEY_SEEDED, 'true');
         }
     }
@@ -231,6 +229,11 @@ var keuangan = (function() {
         loadDashboard();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formKeuangan');
+        }
+
         var form = document.getElementById('formKeuangan');
         var btnCancel = document.getElementById('btnCancelKeuanganEdit');
 
@@ -268,6 +271,24 @@ var keuangan = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        var isInc = (jenis === 'Pemasukan' || jenis === 'Income');
+
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Transaksi Keuangan' : 'Pencatatan Keuangan',
+                            deskripsi: (jenis || 'Pemasukan') + ' Rp' + nominal.toLocaleString('id-ID') + ' (' + (kategori || 'Keuangan') + ')',
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Keuangan',
+                            icon: 'fas fa-wallet',
+                            color: isInc ? '#2E7D32' : '#C62828'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
