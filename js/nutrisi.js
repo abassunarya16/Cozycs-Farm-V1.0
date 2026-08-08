@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL NUTRISI & PPM (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var nutrisi = (function() {
@@ -7,7 +7,7 @@ var nutrisi = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -306,6 +306,11 @@ var nutrisi = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formNutrisi');
+        }
+
         var form = document.getElementById('formNutrisi');
         var btnCancel = document.getElementById('btnCancelNutrisiEdit');
 
@@ -360,6 +365,24 @@ var nutrisi = (function() {
                             gudang.potongStokOtomatis('AB Mix', 1, 'Nutrisi', gh || '-', 'Operator');
                         }
                     }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Cek Nutrisi' : 'Cek Nutrisi Harian',
+                            deskripsi: (gh || 'GH') + ' - PPM: ' + ppm + ' (Target: ' + targetPpm + '), pH: ' + ph,
+                            tanggal: date || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Nutrisi',
+                            icon: 'fas fa-tint',
+                            color: '#0277BD'
+                        });
+                    }
+
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast(t('toast_saved'), 'success');
                     }
@@ -600,10 +623,9 @@ var nutrisi = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
