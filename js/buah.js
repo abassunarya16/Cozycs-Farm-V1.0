@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PEMELIHARAAN & PEMBESARAN BUAH (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL PEMELIHARAAN & PEMBESARAN BUAH (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var buah = (function() {
@@ -7,7 +7,7 @@ var buah = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -273,6 +273,11 @@ var buah = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formBuah');
+        }
+
         var form = document.getElementById('formBuah');
         var btnCancel = document.getElementById('btnCancelBuahEdit');
 
@@ -314,6 +319,23 @@ var buah = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: 'Pemeliharaan Buah',
+                            deskripsi: tindakan + ' di ' + (gh || 'GH') + ' (' + (talang || 'Talang') + ')',
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Tanaman',
+                            icon: 'fas fa-apple-alt',
+                            color: '#E65100'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -365,14 +387,12 @@ var buah = (function() {
             return;
         }
 
-        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
             var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
             return dateB - dateA;
         });
 
-        // 2. Filter data berdasarkan kata kunci pencarian
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
@@ -392,7 +412,6 @@ var buah = (function() {
             return;
         }
 
-        // 3. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -401,7 +420,6 @@ var buah = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
@@ -416,7 +434,6 @@ var buah = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card: Tanggal, ID GH & Jenis Tindakan -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
@@ -425,10 +442,7 @@ var buah = (function() {
                         <span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">${valTindakan}</span>
                     </div>
 
-                    <!-- Grid 4 Kotak (2x2) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        
-                        <!-- 1. Lokasi & Netting -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_loc_netting')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -437,7 +451,6 @@ var buah = (function() {
                             </div>
                         </div>
 
-                        <!-- 2. Est. Bobot & Afkir -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_weight_reject')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -446,7 +459,6 @@ var buah = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Penanggung Jawab -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_petugas')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -454,20 +466,16 @@ var buah = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Modul Terkait -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_stage')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: #2E7D32; line-height: 1.4;">
                                 <div><i class="fas fa-seedling" style="color: #2E7D32; width: 14px;"></i> <strong>${t('val_fruit_enlargement')}</strong></div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Catatan Tambahan -->
                     ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${valDesc}</div>` : ''}
 
-                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="buah.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="buah.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -478,7 +486,6 @@ var buah = (function() {
 
         container.innerHTML = html;
 
-        // 5. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -546,10 +553,9 @@ var buah = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
