@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL POLINASI & SELEKSI BUAH (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL POLINASI & SELEKSI BUAH (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var polinasi = (function() {
@@ -7,7 +7,7 @@ var polinasi = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -269,6 +269,11 @@ var polinasi = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formPolinasi');
+        }
+
         var form = document.getElementById('formPolinasi');
         var btnCancel = document.getElementById('btnCancelPolinasiEdit');
 
@@ -318,6 +323,23 @@ var polinasi = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Data Polinasi' : 'Pencatatan Polinasi Bunga',
+                            deskripsi: (gh || 'GH') + ' - Talang: ' + (talang || '-') + ' (' + jumlah + ' Bunga) - Metode: ' + (metode || '-'),
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Polinasi',
+                            icon: 'fas fa-microscope',
+                            color: '#C2185B'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -556,10 +578,9 @@ var polinasi = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
