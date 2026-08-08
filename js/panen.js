@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - DATA PANEN MODULE (CRUD & ERP CONNECTED - BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - DATA PANEN MODULE (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var panen = (function() {
@@ -7,7 +7,7 @@ var panen = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -288,6 +288,11 @@ var panen = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formPanen');
+        }
+
         var form = document.getElementById('formPanen');
         var btnCancel = document.getElementById('btnCancelPanenEdit');
 
@@ -337,7 +342,6 @@ var panen = (function() {
                         }
 
                         // --- AUTOCUT & MASUK STOK GUDANG OTOMATIS ---
-                        // Tambahkan Stok Buah Hasil Panen ke Gudang Inventaris
                         if (typeof Storage !== 'undefined') {
                             var keyGudang = (Storage.KEYS && Storage.KEYS.GUDANG) ? Storage.KEYS.GUDANG : 'cozycs_gudang';
                             var dataGudang = Storage.getAll(keyGudang) || [];
@@ -368,6 +372,23 @@ var panen = (function() {
                                 });
                             }
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Data Panen' : 'Pencatatan Panen Melon',
+                            deskripsi: (gh || 'GH') + ' - ' + (varietas || 'Melon') + ' (' + beratTotal + ' Kg / ' + pcs + ' Pcs) - Brix: ' + (brix || '-') + '°',
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Panen',
+                            icon: 'fas fa-shopping-basket',
+                            color: '#2E7D32'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -470,7 +491,6 @@ var panen = (function() {
             var valGrade = item.grade ? item.grade : 'Grade A';
             var valDesc = item.desc ? item.desc : '';
 
-            // Hitung rata-rata berat per buah
             var avgWeight = (parseFloat(item.beratTotal) > 0 && parseFloat(item.pcs) > 0) ? (item.beratTotal / item.pcs).toFixed(2) : '-';
 
             html += `
@@ -610,10 +630,9 @@ var panen = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
