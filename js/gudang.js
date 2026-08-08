@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH DECIMAL ROUNDING FIX)
 // ==========================================
 
 var gudang = (function() {
@@ -9,7 +9,7 @@ var gudang = (function() {
     var selectedCategory = '';
     var selectedStatus = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -160,6 +160,12 @@ var gudang = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
+    // HELPER PEMBULATAN ANGKA DESIMAL AGAR TIDAK MUNCUL ANOMALI 1.8499999999999999
+    function roundNumber(val) {
+        var num = parseFloat(val) || 0;
+        return parseFloat(num.toFixed(2));
+    }
+
     function getKeyBarang() {
         return (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GUDANG) ? Storage.KEYS.GUDANG : 'cozycs_gudang';
     }
@@ -198,6 +204,9 @@ var gudang = (function() {
         var jumlah = parseFloat(jumlahDipotong) || 0;
         var stokBaru = Math.max(0, stokLama - jumlah);
 
+        // Pembulatan angka persis 2 desimal
+        stokBaru = roundNumber(stokBaru);
+
         item.stok = stokBaru;
         if (stokBaru <= 0) item.status = 'Habis';
         else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
@@ -209,7 +218,7 @@ var gudang = (function() {
             barangId: item.id,
             namaBarang: item.nama,
             jenis: 'Keluar',
-            jumlah: jumlah,
+            jumlah: roundNumber(jumlah),
             satuan: item.satuan,
             alasan: t('log_reason_used') + ' ' + modulPengirim,
             gh: idGh || '-',
@@ -237,7 +246,7 @@ var gudang = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-boxes" style="color: #E65100;"></i> ${t('module_title')}</div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS KEUANGAN PERSISI) -->
+                <!-- 1. DASHBOARD STATISTIK UTAMA -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="gudangStatCards">
                     <!-- Dynamic Stat Cards -->
                 </div>
@@ -248,7 +257,6 @@ var gudang = (function() {
                     <form id="formGudang">
                         <input type="hidden" id="barangId">
 
-                        <!-- Tanggal Beli & Kategori -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date_buy')}</label>
@@ -272,7 +280,6 @@ var gudang = (function() {
                             </div>
                         </div>
 
-                        <!-- Nama Barang & Merek -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_item_name')}</label>
@@ -284,7 +291,6 @@ var gudang = (function() {
                             </div>
                         </div>
 
-                        <!-- Stok, Satuan & Stok Min -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_stock_initial')}</label>
@@ -308,7 +314,6 @@ var gudang = (function() {
                             </div>
                         </div>
 
-                        <!-- Harga Beli & Supplier -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_price_per_unit')}</label>
@@ -320,7 +325,6 @@ var gudang = (function() {
                             </div>
                         </div>
 
-                        <!-- Lokasi Spesifik & Expired -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_location')}</label>
@@ -332,7 +336,6 @@ var gudang = (function() {
                             </div>
                         </div>
 
-                        <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
                             <textarea id="barangDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);"></textarea>
@@ -345,10 +348,9 @@ var gudang = (function() {
                     </form>
                 </div>
 
-                <!-- 3. REKAP KATALOG STOK GUDANG TITLE -->
+                <!-- 3. REKAP KATALOG STOK GUDANG -->
                 <div class="section-title"><i class="fas fa-cubes" style="color: #E65100;"></i> ${t('recap_catalog_title')}</div>
 
-                <!-- PENCARIAN & FILTER KATEGORI/STATUS -->
                 <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
                     <div style="margin-bottom: 8px;">
                         <input type="text" id="inputSearchGudang" 
@@ -380,13 +382,10 @@ var gudang = (function() {
                     </div>
                 </div>
 
-                <!-- Container Cards Inventaris Gudang -->
                 <div id="containerGudangCards"></div>
-
-                <!-- Kontrol Navigasi Paginasi -->
                 <div id="paginationGudangControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 24px; font-size: 12px;"></div>
 
-                <!-- 4. RIWAYAT MUTASI STOK (LOG AUDIT) -->
+                <!-- 4. RIWAYAT MUTASI STOK -->
                 <div class="section-title"><i class="fas fa-history" style="color: #0277BD;"></i> ${t('recap_mutation_title')}</div>
                 <div id="containerMutasiLog"></div>
             </div>
@@ -410,9 +409,9 @@ var gudang = (function() {
                 var kategori = getVal('barangKategori');
                 var nama = getVal('barangNama');
                 var merek = getVal('barangMerek');
-                var stok = parseFloat(getVal('barangStok')) || 0;
+                var stok = roundNumber(getVal('barangStok'));
                 var satuan = getVal('barangSatuan');
-                var stokMin = parseFloat(getVal('barangStokMin')) || 0;
+                var stokMin = roundNumber(getVal('barangStokMin'));
                 var harga = parseFloat(getVal('barangHarga')) || 0;
                 var supplier = getVal('barangSupplier');
                 var lokasi = getVal('barangLokasi');
@@ -487,7 +486,6 @@ var gudang = (function() {
         }
     }
 
-    // DASHBOARD 4 STAT CARDS - DIJAAMIN 100% SAMA PERSIS DENGAN KEUANGAN (FOTO 1)
     function loadDashboard() {
         var container = document.getElementById('gudangStatCards');
         if (!container) return;
@@ -501,9 +499,9 @@ var gudang = (function() {
         var today = new Date();
 
         data.forEach(function(item) {
-            var stok = parseFloat(item.stok) || 0;
+            var stok = roundNumber(item.stok);
             var harga = parseFloat(item.harga) || 0;
-            var stokMin = parseFloat(item.stokMin) || 0;
+            var stokMin = roundNumber(item.stokMin);
 
             nilaiPersediaan += (stok * harga);
 
@@ -517,14 +515,9 @@ var gudang = (function() {
         });
 
         var formatRupiah = function(val) {
-            return 'Rp' + val.toLocaleString('id-ID');
+            return 'Rp' + Math.round(val).toLocaleString('id-ID');
         };
 
-        // SUSUNAN SAMA PERSIS KEUANGAN:
-        // Card 1: Title Grey (#777), Value Green (#2E7D32)
-        // Card 2: Title Green (#2E7D32), Value Green (#2E7D32)
-        // Card 3: Title Red (#C62828), Value Red (#C62828)
-        // Card 4: Title Blue (#0277BD), Value Blue (#0277BD)
         container.innerHTML = `
             <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
                 <div style="font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_total_items')}</div>
@@ -558,7 +551,6 @@ var gudang = (function() {
             return;
         }
 
-        // 1. Filter data berdasarkan Pencarian & Dropdown Filters
         var today = new Date();
         var filteredData = data.filter(function(item) {
             var kw = searchQuery.toLowerCase();
@@ -572,8 +564,8 @@ var gudang = (function() {
             var matchSearch = !searchQuery || nama.includes(kw) || merek.includes(kw) || supplier.includes(kw) || lokasi.includes(kw) || kategori.includes(kw) || desc.includes(kw);
             var matchKat = !selectedCategory || item.kategori === selectedCategory;
 
-            var stok = parseFloat(item.stok) || 0;
-            var stokMin = parseFloat(item.stokMin) || 0;
+            var stok = roundNumber(item.stok);
+            var stokMin = roundNumber(item.stokMin);
             var isKritis = stok <= stokMin;
 
             var isExpiredSoon = false;
@@ -596,7 +588,6 @@ var gudang = (function() {
             return;
         }
 
-        // 2. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -605,11 +596,11 @@ var gudang = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 3. Render HTML Kartu Inventaris
         var html = '';
         pageData.forEach(function(item) {
-            var stok = parseFloat(item.stok) || 0;
-            var stokMin = parseFloat(item.stokMin) || 0;
+            // Menggunakan helper pembulatan agar angka desimal rapi
+            var stok = roundNumber(item.stok);
+            var stokMin = roundNumber(item.stokMin);
             var isKritis = stok <= stokMin;
 
             var badgeBg = isKritis ? '#FFEBEE' : '#E8F5E9';
@@ -618,7 +609,6 @@ var gudang = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card: Nama Barang, Kategori & Status Badge -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 15px; color: var(--text-color, #222);">${item.nama}</strong>
@@ -627,7 +617,6 @@ var gudang = (function() {
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold;">${badgeText}</span>
                     </div>
 
-                    <!-- Grid 2 Kotak: Sisa Stok & Harga -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_remaining_stock')}</div>
@@ -643,14 +632,12 @@ var gudang = (function() {
                         </div>
                     </div>
 
-                    <!-- Detail Tambahan (Lokasi, Supplier, Expired) -->
                     <div style="font-size: 11px; color: #777; margin-bottom: 6px; line-height: 1.5;">
                         <div><i class="fas fa-map-marker-alt" style="color: #E65100; width: 14px;"></i> ${t('lbl_location_card')} <strong>${item.lokasi || t('default_location')}</strong></div>
                         <div><i class="fas fa-truck" style="color: #0277BD; width: 14px;"></i> ${t('lbl_supplier_card')} <strong>${item.supplier || '-'}</strong> | ${t('lbl_brand_card')} <strong>${item.merek || '-'}</strong></div>
                         ${item.expired && item.expired !== '-' ? `<div><i class="fas fa-hourglass-half" style="color: #C62828; width: 14px;"></i> ${t('lbl_expired_card')} <strong>${item.expired}</strong></div>` : ''}
                     </div>
 
-                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="gudang.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="gudang.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -661,7 +648,6 @@ var gudang = (function() {
 
         container.innerHTML = html;
 
-        // 4. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -695,6 +681,7 @@ var gudang = (function() {
         var html = '';
         logs.slice(0, 10).forEach(function(m) {
             var isMasuk = m.jenis === 'Masuk';
+            var jumlahFormatted = roundNumber(m.jumlah);
             html += `
                 <div style="background: var(--card-bg, #fff); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color, #eee); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
                     <div>
@@ -702,7 +689,7 @@ var gudang = (function() {
                         <div style="font-size: 10px; color: #888;">${m.tanggal} | ${m.gh || 'Gudang'} | ${t('log_by')} ${m.petugas || 'Sistem'}</div>
                     </div>
                     <div style="font-weight: bold; color: ${isMasuk ? '#2E7D32' : '#C62828'}; font-size: 13px;">
-                        ${isMasuk ? '+' : '-'}${m.jumlah} ${m.satuan}
+                        ${isMasuk ? '+' : '-'}${jumlahFormatted} ${m.satuan}
                     </div>
                 </div>
             `;
@@ -721,9 +708,9 @@ var gudang = (function() {
         setVal('barangKategori', item.kategori || 'Nutrisi');
         setVal('barangNama', item.nama || '');
         setVal('barangMerek', item.merek === '-' ? '' : item.merek);
-        setVal('barangStok', item.stok || '');
+        setVal('barangStok', roundNumber(item.stok));
         setVal('barangSatuan', item.satuan || 'Kg');
-        setVal('barangStokMin', item.stokMin || '');
+        setVal('barangStokMin', roundNumber(item.stokMin));
         setVal('barangHarga', item.harga || '');
         setVal('barangSupplier', item.supplier === '-' ? '' : item.supplier);
         setVal('barangLokasi', item.lokasi === t('default_location') ? '' : item.lokasi);
@@ -752,7 +739,6 @@ var gudang = (function() {
         }
     }
 
-    // FUNGSI PENANGAN SEARCH, FILTER & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
         currentPage = 1;
