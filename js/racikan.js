@@ -371,49 +371,67 @@ var racikan = (function() {
     }
 
     function simpanTemplate() {
-        var nameInput = state.racikName.trim();
-        if (!nameInput) {
-            alert('Harap isi Nama Racikan Nutrisi terlebih dahulu.');
-            return;
-        }
-
-        if (state.itemsA.length === 0 && state.itemsB.length === 0) {
-            alert('Harap tambahkan setidaknya satu bahan pupuk pada Pekatan A atau B.');
-            return;
-        }
-
-        var templates = getSavedTemplates();
-
-        if (state.editingId) {
-            var idx = templates.findIndex(function(t) { return t.id === state.editingId; });
-            if (idx !== -1) {
-                templates[idx].name = nameInput;
-                templates[idx].volStock = state.volStock;
-                templates[idx].itemsA = JSON.parse(JSON.stringify(state.itemsA));
-                templates[idx].itemsB = JSON.parse(JSON.stringify(state.itemsB));
-                templates[idx].updatedAt = new Date().toISOString().split('T')[0];
-            }
-        } else {
-            var newTpl = {
-                id: 'RACIK-' + Date.now(),
-                name: nameInput,
-                volStock: state.volStock,
-                itemsA: JSON.parse(JSON.stringify(state.itemsA)),
-                itemsB: JSON.parse(JSON.stringify(state.itemsB)),
-                createdAt: new Date().toISOString().split('T')[0]
-            };
-            templates.unshift(newTpl);
-        }
-
-        saveTemplatesToStorage(templates);
-
-        if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-            Helper.showToast(t('toast_saved'), 'success');
-        }
-
-        resetForm();
-        renderSavedTemplatesList();
+    var nameInput = state.racikName.trim();
+    if (!nameInput) {
+        alert('Harap isi Nama Racikan Nutrisi terlebih dahulu.');
+        return;
     }
+
+    if (state.itemsA.length === 0 && state.itemsB.length === 0) {
+        alert('Harap tambahkan setidaknya satu bahan pupuk pada Pekatan A atau B.');
+        return;
+    }
+
+    var templates = getSavedTemplates();
+
+    if (state.editingId) {
+        var idx = templates.findIndex(function(t) { return t.id === state.editingId; });
+        if (idx !== -1) {
+            templates[idx].name = nameInput;
+            templates[idx].volStock = state.volStock;
+            templates[idx].itemsA = JSON.parse(JSON.stringify(state.itemsA));
+            templates[idx].itemsB = JSON.parse(JSON.stringify(state.itemsB));
+            templates[idx].updatedAt = new Date().toISOString().split('T')[0];
+        }
+    } else {
+        var newTpl = {
+            id: 'RACIK-' + Date.now(),
+            name: nameInput,
+            volStock: state.volStock,
+            itemsA: JSON.parse(JSON.stringify(state.itemsA)),
+            itemsB: JSON.parse(JSON.stringify(state.itemsB)),
+            createdAt: new Date().toISOString().split('T')[0]
+        };
+        templates.unshift(newTpl);
+    }
+
+    saveTemplatesToStorage(templates);
+
+    // TAMBAHAN: Catat ke Aktivitas Terakhir Dasbor
+    if (typeof Storage !== 'undefined' && Storage.add) {
+        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+        var now = new Date();
+        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        
+        Storage.add(keyAktivitas, {
+            judul: 'Menyimpan Racikan Nutrisi',
+            deskripsi: 'Menyimpan template "' + nameInput + '" (' + (state.volStock || 0) + ' Liter)',
+            tanggal: now.toISOString().split('T')[0],
+            jam: timeStr,
+            kategori: 'Nutrisi',
+            icon: 'fas fa-calculator',
+            color: '#2E7D32'
+        });
+    }
+
+    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+        Helper.showToast(t('toast_saved'), 'success');
+    }
+
+    resetForm();
+    renderSavedTemplatesList();
+}
+
 
     function resetForm() {
         state.editingId = null;
