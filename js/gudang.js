@@ -188,47 +188,65 @@ var gudang = (function() {
     // API OTOMATISASI LINTAS MODUL
     // ==========================================
     function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas) {
-        if (typeof Storage === 'undefined' || !Storage.getAll) return false;
+    if (typeof Storage === 'undefined' || !Storage.getAll) return false;
 
-        var dataBarang = Storage.getAll(getKeyBarang()) || [];
-        var item = dataBarang.find(function(b) {
-            return b && b.nama && b.nama.toLowerCase().trim() === namaBarang.toLowerCase().trim();
-        });
+    var dataBarang = Storage.getAll(getKeyBarang()) || [];
+    var item = dataBarang.find(function(b) {
+        return b && b.nama && b.nama.toLowerCase().trim() === namaBarang.toLowerCase().trim();
+    });
 
-        if (!item) {
-            console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
-            return false;
-        }
-
-        var stokLama = parseFloat(item.stok) || 0;
-        var jumlah = parseFloat(jumlahDipotong) || 0;
-        var stokBaru = Math.max(0, stokLama - jumlah);
-
-        // Pembulatan angka persis 2 desimal
-        stokBaru = roundNumber(stokBaru);
-
-        item.stok = stokBaru;
-        if (stokBaru <= 0) item.status = 'Habis';
-        else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
-        else item.status = 'Aktif';
-
-        Storage.update(getKeyBarang(), item);
-
-        catatMutasi({
-            barangId: item.id,
-            namaBarang: item.nama,
-            jenis: 'Keluar',
-            jumlah: roundNumber(jumlah),
-            satuan: item.satuan,
-            alasan: t('log_reason_used') + ' ' + modulPengirim,
-            gh: idGh || '-',
-            petugas: namaPetugas || 'Sistem Otomatis',
-            tanggal: new Date().toISOString().split('T')[0]
-        });
-
-        loadTable();
-        return true;
+    if (!item) {
+        console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
+        return false;
     }
+
+    var stokLama = parseFloat(item.stok) || 0;
+    var jumlah = parseFloat(jumlahDipotong) || 0;
+    var stokBaru = Math.max(0, stokLama - jumlah);
+
+    stokBaru = roundNumber(stokBaru);
+
+    item.stok = stokBaru;
+    if (stokBaru <= 0) item.status = 'Habis';
+    else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
+    else item.status = 'Aktif';
+
+    Storage.update(getKeyBarang(), item);
+
+    // 1. Catat ke Mutasi Gudang
+    catatMutasi({
+        barangId: item.id,
+        namaBarang: item.nama,
+        jenis: 'Keluar',
+        jumlah: roundNumber(jumlah),
+        satuan: item.satuan,
+        alasan: t('log_reason_used') + ' ' + modulPengirim,
+        gh: idGh || '-',
+        petugas: namaPetugas || 'Sistem Otomatis',
+        tanggal: new Date().toISOString().split('T')[0]
+    });
+
+    // 2. TAMBAHAN: Catat ke Aktivitas Terakhir Dasbor
+    if (typeof Storage !== 'undefined' && Storage.add) {
+        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+        var now = new Date();
+        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        
+        Storage.add(keyAktivitas, {
+            judul: 'Pemotongan Stok Gudang',
+            deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + modulPengirim + ')',
+            tanggal: now.toISOString().split('T')[0],
+            jam: timeStr,
+            kategori: 'Gudang',
+            icon: 'fas fa-boxes',
+            color: '#E65100'
+        });
+    }
+
+    loadTable();
+    return true;
+}
+
 
     function catatMutasi(payload) {
         if (typeof Storage === 'undefined') return;
