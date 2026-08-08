@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var spray = (function() {
@@ -7,7 +7,7 @@ var spray = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -270,6 +270,11 @@ var spray = (function() {
         populateGhDropdown();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formSpray');
+        }
+
         var form = document.getElementById('formSpray');
         var btnCancel = document.getElementById('btnCancelSprayEdit');
 
@@ -352,6 +357,26 @@ var spray = (function() {
                     if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                         Helper.showToast(t('toast_added'), 'success');
                     }
+                }
+
+                // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                if (typeof Storage !== 'undefined' && Storage.add) {
+                    var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                    var now = new Date();
+                    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    
+                    var prodSummary = (payload.productBubuk !== '-' ? payload.productBubuk : '') + (payload.productCairan !== '-' ? (' ' + payload.productCairan) : '');
+                    if (!prodSummary.trim()) prodSummary = 'Spray Rutin';
+
+                    Storage.add(keyAktivitas, {
+                        judul: id ? 'Perbarui Jadwal Spray' : 'Pencatatan Jadwal Spray',
+                        deskripsi: (payload.gh || 'GH') + ' - ' + prodSummary.trim() + ' (' + (payload.timeSlot || 'Spray') + ')',
+                        tanggal: payload.date || now.toISOString().split('T')[0],
+                        jam: timeStr,
+                        kategori: 'Spray',
+                        icon: 'fas fa-spray-can',
+                        color: '#6A1B9A'
+                    });
                 }
 
                 form.reset();
@@ -611,10 +636,9 @@ var spray = (function() {
         Storage.saveAll('cozycs_schedules', filtered);
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
