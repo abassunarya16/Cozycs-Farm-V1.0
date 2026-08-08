@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH DECIMAL ROUNDING FIX)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var gudang = (function() {
@@ -160,7 +160,7 @@ var gudang = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // HELPER PEMBULATAN ANGKA DESIMAL AGAR TIDAK MUNCUL ANOMALI 1.8499999999999999
+    // HELPER PEMBULATAN ANGKA DESIMAL
     function roundNumber(val) {
         var num = parseFloat(val) || 0;
         return parseFloat(num.toFixed(2));
@@ -188,65 +188,64 @@ var gudang = (function() {
     // API OTOMATISASI LINTAS MODUL
     // ==========================================
     function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas) {
-    if (typeof Storage === 'undefined' || !Storage.getAll) return false;
+        if (typeof Storage === 'undefined' || !Storage.getAll) return false;
 
-    var dataBarang = Storage.getAll(getKeyBarang()) || [];
-    var item = dataBarang.find(function(b) {
-        return b && b.nama && b.nama.toLowerCase().trim() === namaBarang.toLowerCase().trim();
-    });
-
-    if (!item) {
-        console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
-        return false;
-    }
-
-    var stokLama = parseFloat(item.stok) || 0;
-    var jumlah = parseFloat(jumlahDipotong) || 0;
-    var stokBaru = Math.max(0, stokLama - jumlah);
-
-    stokBaru = roundNumber(stokBaru);
-
-    item.stok = stokBaru;
-    if (stokBaru <= 0) item.status = 'Habis';
-    else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
-    else item.status = 'Aktif';
-
-    Storage.update(getKeyBarang(), item);
-
-    // 1. Catat ke Mutasi Gudang
-    catatMutasi({
-        barangId: item.id,
-        namaBarang: item.nama,
-        jenis: 'Keluar',
-        jumlah: roundNumber(jumlah),
-        satuan: item.satuan,
-        alasan: t('log_reason_used') + ' ' + modulPengirim,
-        gh: idGh || '-',
-        petugas: namaPetugas || 'Sistem Otomatis',
-        tanggal: new Date().toISOString().split('T')[0]
-    });
-
-    // 2. TAMBAHAN: Catat ke Aktivitas Terakhir Dasbor
-    if (typeof Storage !== 'undefined' && Storage.add) {
-        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
-        var now = new Date();
-        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        
-        Storage.add(keyAktivitas, {
-            judul: 'Pemotongan Stok Gudang',
-            deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + modulPengirim + ')',
-            tanggal: now.toISOString().split('T')[0],
-            jam: timeStr,
-            kategori: 'Gudang',
-            icon: 'fas fa-boxes',
-            color: '#E65100'
+        var dataBarang = Storage.getAll(getKeyBarang()) || [];
+        var item = dataBarang.find(function(b) {
+            return b && b.nama && b.nama.toLowerCase().trim() === namaBarang.toLowerCase().trim();
         });
+
+        if (!item) {
+            console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
+            return false;
+        }
+
+        var stokLama = parseFloat(item.stok) || 0;
+        var jumlah = parseFloat(jumlahDipotong) || 0;
+        var stokBaru = Math.max(0, stokLama - jumlah);
+
+        stokBaru = roundNumber(stokBaru);
+
+        item.stok = stokBaru;
+        if (stokBaru <= 0) item.status = 'Habis';
+        else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
+        else item.status = 'Aktif';
+
+        Storage.update(getKeyBarang(), item);
+
+        // 1. Catat ke Mutasi Gudang
+        catatMutasi({
+            barangId: item.id,
+            namaBarang: item.nama,
+            jenis: 'Keluar',
+            jumlah: roundNumber(jumlah),
+            satuan: item.satuan,
+            alasan: t('log_reason_used') + ' ' + modulPengirim,
+            gh: idGh || '-',
+            petugas: namaPetugas || 'Sistem Otomatis',
+            tanggal: new Date().toISOString().split('T')[0]
+        });
+
+        // 2. Catat ke Aktivitas Terakhir Dasbor
+        if (typeof Storage !== 'undefined' && Storage.add) {
+            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            
+            Storage.add(keyAktivitas, {
+                judul: 'Pemotongan Stok Gudang',
+                deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + modulPengirim + ')',
+                tanggal: now.toISOString().split('T')[0],
+                jam: timeStr,
+                kategori: 'Gudang',
+                icon: 'fas fa-boxes',
+                color: '#E65100'
+            });
+        }
+
+        loadTable();
+        return true;
     }
-
-    loadTable();
-    return true;
-}
-
 
     function catatMutasi(payload) {
         if (typeof Storage === 'undefined') return;
@@ -415,6 +414,11 @@ var gudang = (function() {
         loadTable();
         loadMutasiLog();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formGudang');
+        }
+
         var form = document.getElementById('formGudang');
         var btnCancel = document.getElementById('btnCancelGudangEdit');
 
@@ -474,6 +478,23 @@ var gudang = (function() {
                         gh: t('default_location'),
                         petugas: 'Admin',
                         tanggal: tglBeli || new Date().toISOString().split('T')[0]
+                    });
+                }
+
+                // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                if (typeof Storage !== 'undefined' && Storage.add) {
+                    var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                    var now = new Date();
+                    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    
+                    Storage.add(keyAktivitas, {
+                        judul: id ? 'Perbarui Barang Gudang' : 'Restock / Input Gudang',
+                        deskripsi: nama + ' (' + stok + ' ' + satuan + ') - ' + (kategori || 'Inventaris'),
+                        tanggal: tglBeli || now.toISOString().split('T')[0],
+                        jam: timeStr,
+                        kategori: 'Gudang',
+                        icon: 'fas fa-boxes',
+                        color: '#E65100'
                     });
                 }
 
@@ -616,7 +637,6 @@ var gudang = (function() {
 
         var html = '';
         pageData.forEach(function(item) {
-            // Menggunakan helper pembulatan agar angka desimal rapi
             var stok = roundNumber(item.stok);
             var stokMin = roundNumber(item.stokMin);
             var isKritis = stok <= stokMin;
