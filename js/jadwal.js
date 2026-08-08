@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (CRUD BILINGUAL, SEARCH & PAGINATION)
+// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var jadwal = (function() {
@@ -7,7 +7,7 @@ var jadwal = (function() {
     // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
-    var itemsPerPage = 20; // Dibatasi 20 data per halaman
+    var itemsPerPage = 20;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -146,7 +146,7 @@ var jadwal = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-calendar-alt" style="color: #2E7D32;"></i> ${t('module_title')}</div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS - DARK MODE COMPATIBLE) -->
+                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="jadwalStatCards">
                     <!-- Dynamic Stat Cards -->
                 </div>
@@ -265,6 +265,11 @@ var jadwal = (function() {
         loadDashboard();
         loadTable();
 
+        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formJadwal');
+        }
+
         var form = document.getElementById('formJadwal');
         var btnCancel = document.getElementById('btnCancelJadwalEdit');
 
@@ -306,6 +311,23 @@ var jadwal = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
+
+                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Jadwal Operasional' : 'Jadwal / Tugas Baru',
+                            deskripsi: (judul || 'Tugas Kebun') + ' (' + (gh || 'Seluruh Kebun') + ') - Status: ' + (status || 'Pending'),
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Jadwal',
+                            icon: 'fas fa-calendar-alt',
+                            color: '#2E7D32'
+                        });
                     }
 
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -536,10 +558,9 @@ var jadwal = (function() {
         }
     }
 
-    // FUNGSI PENANGAN INPUT SEARCH & NAVIGASI HALAMAN
     function handleSearch(val) {
         searchQuery = val || '';
-        currentPage = 1; // Reset ke halaman 1 saat pencarian berubah
+        currentPage = 1;
         loadTable();
     }
 
