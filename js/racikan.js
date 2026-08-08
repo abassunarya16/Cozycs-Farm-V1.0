@@ -1,14 +1,13 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (TAMPILAN FORM TERSTUKTUR, RAPI & SIMETRIS)
+// (WITH ANTI DOUBLE-CLICK & CONFIRMATION PROTECTION)
 // ==========================================
 
 var racikan = (function() {
 
-    // KEY STORAGE TEMPLATE RACIKAN
     var STORAGE_KEY_TEMPLATES = 'cozycs_racikan_templates';
+    var isProcessingStok = false; // Flag Pengaman Anti Double-Click
 
-    // DAFTAR NAMA PUPUK UTAMA
     var LIST_PUPUK = [
         "CALNIT",
         "KNO3",
@@ -23,7 +22,6 @@ var racikan = (function() {
         "Lainnya"
     ];
 
-    // STATE RACIKAN UTAMA
     var state = {
         editingId: null,
         racikName: '',
@@ -32,7 +30,6 @@ var racikan = (function() {
         itemsB: []
     };
 
-    // KAMUS TERJEMAHAN DUAL BAHASA
     var i18nDict = {
         'id': {
             'module_title': 'Kalkulator Meracik AB Mix',
@@ -111,7 +108,7 @@ var racikan = (function() {
                     <i class="fas fa-calculator" style="color: #2E7D32;"></i> ${t('module_title')}
                 </div>
 
-                <!-- 1. FORM SETUP UTAMA (DIBUAT STRUKTUR VERTIKAL PRESISI & SIMETRIS) -->
+                <!-- 1. FORM SETUP UTAMA -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="display: flex; flex-direction: column; gap: 14px;">
                         <div>
@@ -175,7 +172,7 @@ var racikan = (function() {
                             <i class="fas fa-save"></i> <span id="lblBtnSaveTpl">${t('btn_save_template')}</span>
                         </button>
                         
-                        <button type="button" onclick="racikan.potongStokGudang()" style="width: 100%; background: #2E7D32; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <button type="button" id="btnPotongGudang" onclick="racikan.potongStokGudang()" style="width: 100%; background: #2E7D32; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                             <i class="fas fa-boxes"></i> ${t('btn_apply_gudang')}
                         </button>
                     </div>
@@ -286,7 +283,6 @@ var racikan = (function() {
 
             html += `
                 <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color, #eee); display: grid; grid-template-columns: 2.2fr 1.2fr 1.5fr 1.2fr 24px; gap: 6px; align-items: end;">
-                    <!-- Nama Bahan -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Nama Pupuk</label>
                         <select onchange="racikan.updateItem('${group}', ${idx}, 'name', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
@@ -294,19 +290,16 @@ var racikan = (function() {
                         </select>
                     </div>
 
-                    <!-- Berat (Gram) -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Berat (Gram)</label>
                         <input type="number" id="input_amount_${group}_${idx}" value="${item.amount}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'amount', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                     </div>
 
-                    <!-- Harga / Kg (Rp) -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Harga/Kg</label>
                         <input type="number" value="${item.pricePerUnit}" placeholder="0" oninput="racikan.updateItem('${group}', ${idx}, 'pricePerUnit', this.value)" style="width: 100%; padding: 7px 4px; border: 1px solid var(--border-color, #ccc); border-radius: 6px; font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333); box-sizing: border-box;">
                     </div>
 
-                    <!-- Subtotal -->
                     <div>
                         <label style="font-size: 10px; color: #777; font-weight: 600; display: block; margin-bottom: 3px;">Subtotal</label>
                         <div id="subtotal_${group}_${idx}" style="font-size: 11px; font-weight: 700; color: #2E7D32; padding: 7px 0; text-align: right; white-space: nowrap;">
@@ -314,7 +307,6 @@ var racikan = (function() {
                         </div>
                     </div>
 
-                    <!-- Hapus -->
                     <div style="text-align: center; padding-bottom: 6px;">
                         <i class="fas fa-trash-alt" onclick="racikan.removeItem('${group}', ${idx})" style="color: #C62828; cursor: pointer; font-size: 14px;" title="Hapus"></i>
                     </div>
@@ -371,67 +363,66 @@ var racikan = (function() {
     }
 
     function simpanTemplate() {
-    var nameInput = state.racikName.trim();
-    if (!nameInput) {
-        alert('Harap isi Nama Racikan Nutrisi terlebih dahulu.');
-        return;
-    }
-
-    if (state.itemsA.length === 0 && state.itemsB.length === 0) {
-        alert('Harap tambahkan setidaknya satu bahan pupuk pada Pekatan A atau B.');
-        return;
-    }
-
-    var templates = getSavedTemplates();
-
-    if (state.editingId) {
-        var idx = templates.findIndex(function(t) { return t.id === state.editingId; });
-        if (idx !== -1) {
-            templates[idx].name = nameInput;
-            templates[idx].volStock = state.volStock;
-            templates[idx].itemsA = JSON.parse(JSON.stringify(state.itemsA));
-            templates[idx].itemsB = JSON.parse(JSON.stringify(state.itemsB));
-            templates[idx].updatedAt = new Date().toISOString().split('T')[0];
+        var nameInput = state.racikName.trim();
+        if (!nameInput) {
+            alert('Harap isi Nama Racikan Nutrisi terlebih dahulu.');
+            return;
         }
-    } else {
-        var newTpl = {
-            id: 'RACIK-' + Date.now(),
-            name: nameInput,
-            volStock: state.volStock,
-            itemsA: JSON.parse(JSON.stringify(state.itemsA)),
-            itemsB: JSON.parse(JSON.stringify(state.itemsB)),
-            createdAt: new Date().toISOString().split('T')[0]
-        };
-        templates.unshift(newTpl);
+
+        if (state.itemsA.length === 0 && state.itemsB.length === 0) {
+            alert('Harap tambahkan setidaknya satu bahan pupuk pada Pekatan A atau B.');
+            return;
+        }
+
+        var templates = getSavedTemplates();
+
+        if (state.editingId) {
+            var idx = templates.findIndex(function(t) { return t.id === state.editingId; });
+            if (idx !== -1) {
+                templates[idx].name = nameInput;
+                templates[idx].volStock = state.volStock;
+                templates[idx].itemsA = JSON.parse(JSON.stringify(state.itemsA));
+                templates[idx].itemsB = JSON.parse(JSON.stringify(state.itemsB));
+                templates[idx].updatedAt = new Date().toISOString().split('T')[0];
+            }
+        } else {
+            var newTpl = {
+                id: 'RACIK-' + Date.now(),
+                name: nameInput,
+                volStock: state.volStock,
+                itemsA: JSON.parse(JSON.stringify(state.itemsA)),
+                itemsB: JSON.parse(JSON.stringify(state.itemsB)),
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+            templates.unshift(newTpl);
+        }
+
+        saveTemplatesToStorage(templates);
+
+        // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+        if (typeof Storage !== 'undefined' && Storage.add) {
+            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            
+            Storage.add(keyAktivitas, {
+                judul: 'Menyimpan Racikan Nutrisi',
+                deskripsi: 'Menyimpan template "' + nameInput + '" (' + (state.volStock || 0) + ' Liter)',
+                tanggal: now.toISOString().split('T')[0],
+                jam: timeStr,
+                kategori: 'Nutrisi',
+                icon: 'fas fa-calculator',
+                color: '#2E7D32'
+            });
+        }
+
+        if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+            Helper.showToast(t('toast_saved'), 'success');
+        }
+
+        resetForm();
+        renderSavedTemplatesList();
     }
-
-    saveTemplatesToStorage(templates);
-
-    // TAMBAHAN: Catat ke Aktivitas Terakhir Dasbor
-    if (typeof Storage !== 'undefined' && Storage.add) {
-        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
-        var now = new Date();
-        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        
-        Storage.add(keyAktivitas, {
-            judul: 'Menyimpan Racikan Nutrisi',
-            deskripsi: 'Menyimpan template "' + nameInput + '" (' + (state.volStock || 0) + ' Liter)',
-            tanggal: now.toISOString().split('T')[0],
-            jam: timeStr,
-            kategori: 'Nutrisi',
-            icon: 'fas fa-calculator',
-            color: '#2E7D32'
-        });
-    }
-
-    if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-        Helper.showToast(t('toast_saved'), 'success');
-    }
-
-    resetForm();
-    renderSavedTemplatesList();
-}
-
 
     function resetForm() {
         state.editingId = null;
@@ -575,26 +566,53 @@ var racikan = (function() {
         container.innerHTML = html;
     }
 
+    // PEMOTONGAN STOK GUDANG DENGAN ANTI DOUBLE-CLICK & KONFIRMASI DETIL
     function potongStokGudang() {
+        if (isProcessingStok) return; // Kunci jika sedang berjalan
+
         if (typeof gudang === 'undefined' || typeof gudang.potongStokOtomatis !== 'function') {
             alert('Modul Gudang belum terhubung.');
             return;
         }
 
+        var validItems = [];
         var allItems = state.itemsA.concat(state.itemsB);
-        if (allItems.length === 0) {
-            alert('Belum ada racikan bahan untuk dipotong.');
-            return;
-        }
 
-        var count = 0;
         allItems.forEach(function(item) {
             var amt = parseFloat(item.amount) || 0;
             if (amt > 0) {
-                var kg = amt / 1000;
-                gudang.potongStokOtomatis(item.name, kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
-                count++;
+                validItems.push({ name: item.name, gram: amt, kg: amt / 1000 });
             }
+        });
+
+        if (validItems.length === 0) {
+            alert('Belum ada racikan bahan bernilai positif untuk dipotong.');
+            return;
+        }
+
+        // BUAT DETIL DAFTAR BAHAN UNTUK POP-UP KONFIRMASI
+        var confirmMsg = "Apakah kamu yakin ingin memotong stok gudang sesuai racikan ini?\n\nDetail Bahan yang Akan Dipotong:\n";
+        validItems.forEach(function(v) {
+            confirmMsg += "• " + v.name + ": " + v.kg.toFixed(2) + " Kg (" + v.gram.toLocaleString('id-ID') + " Gram)\n";
+        });
+
+        if (!confirm(confirmMsg)) {
+            return; // Batal jika pengguna menekan tombol Cancel
+        }
+
+        // KUNCI TOMBOL ANTI DOUBLE-CLICK
+        isProcessingStok = true;
+        var btnEl = document.getElementById('btnPotongGudang');
+        if (btnEl) {
+            btnEl.disabled = true;
+            btnEl.style.opacity = '0.6';
+            btnEl.style.cursor = 'not-allowed';
+        }
+
+        var count = 0;
+        validItems.forEach(function(item) {
+            var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
+            if (success) count++;
         });
 
         if (count > 0) {
@@ -604,6 +622,16 @@ var racikan = (function() {
                 alert(t('toast_applied'));
             }
         }
+
+        // BUKA KEMBALI KUNCI TOMBOL SETELAH 2 DETIK
+        setTimeout(function() {
+            isProcessingStok = false;
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.style.opacity = '1';
+                btnEl.style.cursor = 'pointer';
+            }
+        }, 2000);
     }
 
     return {
