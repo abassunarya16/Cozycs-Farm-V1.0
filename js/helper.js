@@ -84,27 +84,10 @@ var Helper = (function() {
     }
 
     // ==========================================
-// COZYCS FARM - GLOBAL FORM AUTO-SAVE DRAFT SYSTEM
-// (Mencegah Data Hilang di Seluruh Modul Aplikasi)
-// ==========================================
+    // COZYCS FARM - GLOBAL FORM AUTO-SAVE DRAFT SYSTEM
+    // (Mencegah Data Hilang di Seluruh Modul Aplikasi)
+    // ==========================================
 
-(function() {
-    // 1. DENGARKAN SETIAP KETIKAN / PERUBAHAN DI FORM APAPUN SECARA OTOMATIS
-    document.addEventListener('input', function(e) {
-        var form = e.target.closest('form');
-        if (!form || !form.id) return;
-
-        saveFormDraftGlobal(form.id);
-    });
-
-    document.addEventListener('change', function(e) {
-        var form = e.target.closest('form');
-        if (!form || !form.id) return;
-
-        saveFormDraftGlobal(form.id);
-    });
-
-    // 2. FUNGSI MENYIMPAN DRAF FORM
     function saveFormDraftGlobal(formId) {
         var form = document.getElementById(formId);
         if (!form) return;
@@ -113,7 +96,7 @@ var Helper = (function() {
         var inputs = form.querySelectorAll('input, select, textarea');
         
         inputs.forEach(function(input) {
-            // Hindari menyimpan input password / file / hidden ID bawaan edit
+            // Hindari menyimpan input password, file, atau hidden ID bawaan edit
             if (input.id && input.type !== 'password' && input.type !== 'file' && input.type !== 'hidden') {
                 formData[input.id] = input.value;
             }
@@ -124,8 +107,7 @@ var Helper = (function() {
         } catch(e) {}
     }
 
-    // 3. FUNGSI MEMULIHKAN DRAF FORM (AUTO-RESTORE)
-    window.restoreFormDraftGlobal = function(formId) {
+    function restoreFormDraftGlobal(formId) {
         var form = document.getElementById(formId);
         if (!form) return;
 
@@ -141,19 +123,35 @@ var Helper = (function() {
                 }
             });
         } catch(e) {}
-    };
+    }
 
-    // 4. FUNGSI BERSIHKAN DRAF SAAT FORM BERHASIL DI-SUBMIT
+    function clearFormDraftGlobal(formId) {
+        try {
+            localStorage.removeItem('cozycs_global_draft_' + formId);
+        } catch(err) {}
+    }
+
+    // Dengarkan setiap ketikan / perubahan di form manapun secara otomatis
+    document.addEventListener('input', function(e) {
+        var form = e.target.closest('form');
+        if (form && form.id) saveFormDraftGlobal(form.id);
+    });
+
+    document.addEventListener('change', function(e) {
+        var form = e.target.closest('form');
+        if (form && form.id) saveFormDraftGlobal(form.id);
+    });
+
+    // Bersihkan draf otomatis saat form berhasil di-submit
     document.addEventListener('submit', function(e) {
         var form = e.target;
-        if (form && form.id) {
-            try {
-                localStorage.removeItem('cozycs_global_draft_' + form.id);
-            } catch(err) {}
-        }
+        if (form && form.id) clearFormDraftGlobal(form.id);
     });
-})();
-    
+
+    // Expose fungsi draf ke window object agar bisa dipanggil langsung tanpa prefix
+    window.saveFormDraftGlobal = saveFormDraftGlobal;
+    window.restoreFormDraftGlobal = restoreFormDraftGlobal;
+    window.clearFormDraftGlobal = clearFormDraftGlobal;
 
     return {
         VERSION: APP_VERSION,
@@ -162,7 +160,12 @@ var Helper = (function() {
         showToast: showToast,
         getTodayDate: getTodayDate,
         getGreeting: getGreeting,
-        getFullDateTime: getFullDateTime
+        getFullDateTime: getFullDateTime,
+        saveFormDraftGlobal: saveFormDraftGlobal,
+        restoreFormDraftGlobal: restoreFormDraftGlobal,
+        clearFormDraftGlobal: clearFormDraftGlobal
     };
 
 })();
+
+window.Helper = Helper;
