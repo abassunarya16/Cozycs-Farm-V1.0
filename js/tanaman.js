@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL UNIFIED MONITORING & PERAWATAN TANAMAN
-// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - ULTRA SAFE & SORTING)
+// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN TEXT ONLY)
 // ==========================================
 
 var tanaman = (function() {
@@ -79,21 +79,22 @@ var tanaman = (function() {
             'toast_saved': 'Data perawatan tanaman berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus catatan kegiatan ini?',
             'toast_deleted': 'Data perawatan berhasil dihapus',
-            'ph_search': '🔍 Cari varietas, GH, talang, kategori...',
-            'btn_prev': '⬅️ Sebelum',
-            'btn_next': 'Selanjutnya ➡️',
+            'ph_search': 'Cari varietas, GH, talang, kategori...',
+            'btn_prev': 'Sebelumnya',
+            'btn_next': 'Selanjutnya',
             'page_lbl': 'Halaman',
             'total_lbl': 'Total Data',
-            'btn_generate_batch': '⚡ Generate Custom Lubang',
+            'btn_generate_batch': 'Generate Custom Lubang',
             'confirm_generate': 'Apakah kamu yakin ingin memuat data lubang tanam otomatis untuk Greenhouse ini?',
             'toast_generated': 'Berhasil membuat data lubang tanam!',
 
-            'opt_sort_newest': '📅 Terbaru ➔ Terlama',
-            'opt_sort_oldest': '📅 Terlama ➔ Terbaru',
-            'opt_sort_talang_asc': '🔤 Talang / Lubang (A-Z)',
-            'opt_sort_variety_asc': '🍉 Varietas Melon (A-Z)',
-            'opt_sort_variety_desc': '🍉 Varietas Melon (Z-A)',
-            'opt_sort_gh_asc': '🏢 Greenhouse (GH-01, GH-02)'
+            // LABEL URUTKAN (SIMPEL TANPA IKON/EMOJI)
+            'opt_sort_newest': 'Terbaru ➔ Terlama',
+            'opt_sort_oldest': 'Terlama ➔ Terbaru',
+            'opt_sort_talang_asc': 'Talang / Lubang (A-Z)',
+            'opt_sort_variety_asc': 'Varietas Melon (A-Z)',
+            'opt_sort_variety_desc': 'Varietas Melon (Z-A)',
+            'opt_sort_gh_asc': 'Greenhouse (GH-01, GH-02)'
         },
         'en': {
             'module_title': 'Unified Crop Database & Care',
@@ -161,21 +162,22 @@ var tanaman = (function() {
             'toast_saved': 'Crop care record saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this activity record?',
             'toast_deleted': 'Care record deleted successfully',
-            'ph_search': '🔍 Search variety, GH, gutter, category...',
-            'btn_prev': '⬅️ Prev',
-            'btn_next': 'Next ➡️',
+            'ph_search': 'Search variety, GH, gutter, category...',
+            'btn_prev': 'Previous',
+            'btn_next': 'Next',
             'page_lbl': 'Page',
             'total_lbl': 'Total Items',
-            'btn_generate_batch': '⚡ Generate Custom Holes',
+            'btn_generate_batch': 'Generate Custom Holes',
             'confirm_generate': 'Are you sure you want to generate plant hole records for this Greenhouse?',
             'toast_generated': 'Successfully generated plant hole records!',
 
-            'opt_sort_newest': '📅 Newest ➔ Oldest',
-            'opt_sort_oldest': '📅 Oldest ➔ Newest',
-            'opt_sort_talang_asc': '🔤 Gutter / Hole (A-Z)',
-            'opt_sort_variety_asc': '🍉 Variety (A-Z)',
-            'opt_sort_variety_desc': '🍉 Variety (Z-A)',
-            'opt_sort_gh_asc': '🏢 Greenhouse (GH-01, GH-02)'
+            // SORT LABELS (CLEAN TEXT ONLY)
+            'opt_sort_newest': 'Newest ➔ Oldest',
+            'opt_sort_oldest': 'Oldest ➔ Newest',
+            'opt_sort_talang_asc': 'Gutter / Hole (A-Z)',
+            'opt_sort_variety_asc': 'Variety (A-Z)',
+            'opt_sort_variety_desc': 'Variety (Z-A)',
+            'opt_sort_gh_asc': 'Greenhouse (GH-01, GH-02)'
         }
     };
 
@@ -435,7 +437,7 @@ var tanaman = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <div style="font-size: 14px; font-weight: 700; color: #2E7D32;" id="formTitleTanaman">${t('form_title_add')}</div>
                         <button type="button" onclick="tanaman.openGenerateModal()" style="background: #E8F5E9; color: #2E7D32; border: 1px solid #2E7D32; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
-                            <i class="fas fa-bolt"></i> ${t('btn_generate_batch')}
+                            ${t('btn_generate_batch')}
                         </button>
                     </div>
 
@@ -570,7 +572,7 @@ var tanaman = (function() {
                 <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SORTING -->
+                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SORTING (CLEAN TEXT) -->
                 <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
                     <div style="flex: 2; min-width: 180px;">
                         <input type="text" id="inputSearchTanaman" 
@@ -602,7 +604,7 @@ var tanaman = (function() {
                 <div id="modalGenerateCustom" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box;">
                     <div style="background: var(--card-bg, #fff); border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; border: 1px solid var(--border-color, #ccc);">
                         <div style="font-size: 15px; font-weight: 700; color: #2E7D32; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                            <span><i class="fas fa-bolt"></i> Custom Auto-Generate</span>
+                            <span>Custom Auto-Generate</span>
                             <span onclick="tanaman.closeGenerateModal()" style="cursor: pointer; color: #888; font-size: 18px;">&times;</span>
                         </div>
 
@@ -641,7 +643,7 @@ var tanaman = (function() {
                 <div id="modalHistoryTanaman" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box;">
                     <div style="background: var(--card-bg, #fff); border-radius: 12px; width: 100%; max-width: 450px; padding: 18px; border: 1px solid var(--border-color, #ccc); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <div style="font-size: 15px; font-weight: 700; color: #2E7D32; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px;">
-                            <span id="titleModalHistoryTanaman"><i class="fas fa-history"></i> Riwayat Rekam Jejak</span>
+                            <span id="titleModalHistoryTanaman">Riwayat Rekam Jejak</span>
                             <span onclick="tanaman.closeHistoryModal()" style="cursor: pointer; color: #888; font-size: 20px;">&times;</span>
                         </div>
 
