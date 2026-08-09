@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL UNIFIED MONITORING & PERAWATAN TANAMAN
-// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH)
+// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN VERSION)
 // ==========================================
 
 var tanaman = (function() {
@@ -21,10 +21,13 @@ var tanaman = (function() {
             'gh_default': 'GH-01 (Default)',
             'lbl_date': 'Tanggal Kegiatan',
             'lbl_category': 'Kategori Perawatan',
-            'opt_cat_growth': '🌿 Monitoring Pertumbuhan (Vegetatif)',
-            'opt_cat_polinasi': '🧡 Polinasi Bunga Betina',
-            'opt_cat_pruning': '✂️ Pruning / Rempes Cabang & Daun',
-            'opt_cat_buah': '🍎 Seleksi & Pembesaran Buah',
+            
+            // OPSI DROPDOWN SIMPEL TANPA IKON
+            'opt_cat_growth': 'Monitoring Pertumbuhan',
+            'opt_cat_polinasi': 'Polinasi Bunga',
+            'opt_cat_pruning': 'Pruning',
+            'opt_cat_buah': 'Monitoring Pembuahan',
+
             'lbl_gutter': 'Posisi Talang / Lubang',
             'ph_gutter': 'Contoh: J1-T1-L01 atau Line A',
             'lbl_variety': 'Varietas Melon',
@@ -46,7 +49,6 @@ var tanaman = (function() {
             'ph_stem': 'Contoh: 8.5',
             'lbl_population': 'Populasi (Pohon)',
             'ph_population': 'Contoh: 1',
-            // METRIK KHUSUS POLINASI, PRUNING, BUAH
             'lbl_flower_num': 'Posisi Daun / Cabang Bunga',
             'ph_flower_num': 'Contoh: Cabang Daun Ke-9 s/d 13',
             'lbl_pol_status': 'Hasil Polinasi',
@@ -95,10 +97,12 @@ var tanaman = (function() {
             'gh_default': 'GH-01 (Default)',
             'lbl_date': 'Activity Date',
             'lbl_category': 'Care Category',
-            'opt_cat_growth': '🌿 Growth Monitoring (Vegetative)',
-            'opt_cat_polinasi': '🧡 Female Flower Pollination',
-            'opt_cat_pruning': '✂️ Pruning Side Shoots & Leaves',
-            'opt_cat_buah': '🍎 Fruit Selection & Sizing',
+            
+            'opt_cat_growth': 'Growth Monitoring',
+            'opt_cat_polinasi': 'Flower Pollination',
+            'opt_cat_pruning': 'Pruning',
+            'opt_cat_buah': 'Fruit Monitoring',
+
             'lbl_gutter': 'Gutter / Hole Position',
             'ph_gutter': 'e.g., J1-T1-L01 or Line A',
             'lbl_variety': 'Melon Variety',
@@ -212,7 +216,6 @@ var tanaman = (function() {
         selectEl.innerHTML = optionsHtml;
     }
 
-    // TOGGLE BIDANG FORM SESUAI KATEGORI YANG DIPILIH
     function toggleKategoriFields(cat) {
         var secGrowth = document.getElementById('secMetrikGrowth');
         var secPolinasi = document.getElementById('secMetrikPolinasi');
@@ -225,9 +228,6 @@ var tanaman = (function() {
         if (secBuah) secBuah.style.display = (cat === 'Buah') ? 'grid' : 'none';
     }
 
-    // ==========================================
-    // LOGIKA FITUR: CUSTOM AUTO-GENERATE LUBANG TANAM
-    // ==========================================
     function openGenerateModal() {
         var modalEl = document.getElementById('modalGenerateCustom');
         if (modalEl) {
@@ -327,9 +327,6 @@ var tanaman = (function() {
         loadTable();
     }
 
-    // ==========================================
-    // LOGIKA FITUR: TIMELINE TERPADU PER-LUBANG TANAM
-    // ==========================================
     function showHistoryModal(kodeTalang, kodeGh) {
         var storageKey = getKey();
         var allData = [];
@@ -366,17 +363,16 @@ var tanaman = (function() {
             var kat = h.kategori || 'Growth';
             var badgeBg = '#E8F5E9';
             var badgeColor = '#2E7D32';
-            var katIcon = 'fas fa-seedling';
             var detailText = '';
 
             if (kat === 'Polinasi') {
-                badgeBg = '#FFF3E0'; badgeColor = '#E65100'; katIcon = 'fas fa-heart';
+                badgeBg = '#FFF3E0'; badgeColor = '#E65100';
                 detailText = `<div>Posisi: <strong>${h.posisiBunga || '-'}</strong> | Status: <strong>${h.statusPolinasi || 'Sukses'}</strong></div>`;
             } else if (kat === 'Pruning') {
-                badgeBg = '#E1F5FE'; badgeColor = '#0288D1'; katIcon = 'fas fa-cut';
+                badgeBg = '#E1F5FE'; badgeColor = '#0288D1';
                 detailText = `<div>Perlakuan: <strong>${h.tipePruning || 'Rempes Cabang Air'}</strong></div>`;
             } else if (kat === 'Buah') {
-                badgeBg = '#F3E5F5'; badgeColor = '#6A1B9A'; katIcon = 'fas fa-apple-alt';
+                badgeBg = '#F3E5F5'; badgeColor = '#6A1B9A';
                 detailText = `<div>Bobot: <strong>${h.bobotBuah || 0} Gram</strong> | Brix: <strong>${h.brixBuah || 0}°</strong></div>`;
             } else {
                 detailText = `<div>Tinggi: <strong>${h.tinggi || 0} cm</strong> | Daun: <strong>${h.daun || 0} lmbr</strong> | Ø <strong>${h.batang || 0} mm</strong></div>`;
@@ -386,7 +382,7 @@ var tanaman = (function() {
                 <div style="background: var(--inner-card-bg, #f9f9f9); border-left: 4px solid ${badgeColor}; border-radius: 8px; padding: 10px; font-size: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <strong style="color: ${badgeColor};"><i class="far fa-calendar-alt"></i> ${h.tanggal || '-'}</strong>
-                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 10px;"><i class="${katIcon}"></i> ${kat}</span>
+                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 10px;">${kat}</span>
                     </div>
                     <div style="background: #fff; padding: 6px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 6px; font-size: 11px;">
                         ${detailText}
@@ -422,7 +418,6 @@ var tanaman = (function() {
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <div style="font-size: 14px; font-weight: 700; color: #2E7D32;" id="formTitleTanaman">${t('form_title_add')}</div>
-                        <!-- Tombol Pintas Custom Generate -->
                         <button type="button" onclick="tanaman.openGenerateModal()" style="background: #E8F5E9; color: #2E7D32; border: 1px solid #2E7D32; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
                             <i class="fas fa-bolt"></i> ${t('btn_generate_batch')}
                         </button>
@@ -431,7 +426,7 @@ var tanaman = (function() {
                     <form id="formTanaman">
                         <input type="hidden" id="tanamanId">
                         
-                        <!-- Kategori Perawatan (Driver Utama Form) -->
+                        <!-- Kategori Perawatan (Dropdown Tanpa Ikon) -->
                         <div style="margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: 600; color: #2E7D32;">${t('lbl_category')}</label>
                             <select id="tanamanKategori" onchange="tanaman.toggleKategoriFields(this.value)" style="width: 100%; padding: 10px; border: 1.5px solid #2E7D32; border-radius: 8px; font-size: 13px; margin-top: 4px; background: #E8F5E9; font-weight: bold; color: #2E7D32;">
@@ -486,7 +481,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- METRIK A: MONITORING PERTUMBUHAN (VEGETATIF) -->
+                        <!-- METRIK A: MONITORING PERTUMBUHAN -->
                         <div id="secMetrikGrowth">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                                 <div>
@@ -510,7 +505,7 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- METRIK B: POLINASI BUNGA BETINA -->
+                        <!-- METRIK B: POLINASI BUNGA -->
                         <div id="secMetrikPolinasi" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_flower_num')}</label>
@@ -525,13 +520,13 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- METRIK C: PRUNING / REMPES -->
+                        <!-- METRIK C: PRUNING -->
                         <div id="secMetrikPruning" style="display: none; margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_prune_type')}</label>
                             <input type="text" id="tanamanTipePruning" placeholder="${t('ph_prune_type')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                         </div>
 
-                        <!-- METRIK D: SELEKSI & PEMBESARAN BUAH -->
+                        <!-- METRIK D: MONITORING PEMBUAHAN -->
                         <div id="secMetrikBuah" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_fruit_weight')}</label>
@@ -661,7 +656,6 @@ var tanaman = (function() {
                 var fase = getVal('tanamanFase');
                 var petugas = getVal('tanamanPetugas');
                 
-                // Ambil Nilai Khusus Berdasarkan Kategori
                 var tinggi = parseFloat(getVal('tanamanTinggi')) || 0;
                 var daun = parseFloat(getVal('tanamanDaun')) || 0;
                 var batang = parseFloat(getVal('tanamanBatang')) || 0;
@@ -719,7 +713,7 @@ var tanaman = (function() {
                             tanggal: tanggal || now.toISOString().split('T')[0],
                             jam: timeStr,
                             kategori: 'Tanaman',
-                            icon: kat === 'Polinasi' ? 'fas fa-heart' : (kat === 'Pruning' ? 'fas fa-cut' : (kat === 'Buah' ? 'fas fa-apple-alt' : 'fas fa-seedling')),
+                            icon: 'fas fa-seedling',
                             color: '#2E7D32'
                         });
                     }
@@ -824,7 +818,6 @@ var tanaman = (function() {
             else if (valKat === 'Pruning') { badgeBg = '#E1F5FE'; badgeColor = '#0288D1'; }
             else if (valKat === 'Buah') { badgeBg = '#F3E5F5'; badgeColor = '#6A1B9A'; }
 
-            // Render Tampilan Metrik Berdasarkan Kategori
             var metricsHtml = '';
             if (valKat === 'Polinasi') {
                 metricsHtml = `<div><i class="fas fa-heart" style="color: #E65100; width: 14px;"></i> <strong>${item.posisiBunga || 'Bunga Betina'}</strong></div>
@@ -842,7 +835,6 @@ var tanaman = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
@@ -851,10 +843,8 @@ var tanaman = (function() {
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">${valKat}</span>
                     </div>
 
-                    <!-- Grid 4 Kotak (2x2) Standard Rekapan -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
                         
-                        <!-- 1. Varietas & Lokasi Talang -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_loc_variety')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -863,7 +853,6 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 2. Metrik Perilaku/Hasil -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_metrics')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -871,7 +860,6 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Petugas & Fase -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_pop_petugas')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -880,7 +868,6 @@ var tanaman = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Status Siklus -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_status')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: #2E7D32; line-height: 1.4;">
@@ -890,10 +877,8 @@ var tanaman = (function() {
 
                     </div>
 
-                    <!-- Catatan Tambahan -->
                     ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${valDesc}</div>` : ''}
 
-                    <!-- Tombol Aksi Logo & Timeline -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="tanaman.showHistoryModal('${valTalang}', '${valGh}')" title="Lihat Riwayat Rekam Jejak" style="cursor: pointer; color: #0277BD; font-size: 13px; padding: 4px; font-weight: bold;">
                             <i class="fas fa-history"></i> Riwayat Rekam Jejak
