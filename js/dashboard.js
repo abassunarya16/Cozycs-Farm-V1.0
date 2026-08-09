@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISED & FULL FIX)
+// COZYCS FARM - EXECUTIVE DASHBOARD (FULL FIX FIX TIMEZONE & FUTURE TANAM)
 // ==========================================
 
 var dashboard = (function() {
@@ -105,6 +105,30 @@ var dashboard = (function() {
     function t(key) {
         var lang = localStorage.getItem('cozycs_lang') || 'id';
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
+
+    // HELPER: PARSE DATE MURNI (TANPA JAM UNTUK MENCEGAH TIMEZONE SHIFT)
+    function parseLocalDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) {
+            var d = new Date(dateStr.getTime());
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+        var cleanStr = String(dateStr).split('T')[0];
+        var parts = cleanStr.split('-');
+        if (parts.length === 3) {
+            var y = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10) - 1;
+            var day = parseInt(parts[2], 10);
+            return new Date(y, m, day, 0, 0, 0, 0);
+        }
+        var parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) {
+            parsed.setHours(0, 0, 0, 0);
+            return parsed;
+        }
+        return null;
     }
 
     function render() {
@@ -472,6 +496,8 @@ var dashboard = (function() {
             themeIndex: 0
         });
 
+        var todayMurni = parseLocalDate(new Date());
+
         dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
             
@@ -486,18 +512,17 @@ var dashboard = (function() {
             var tPop = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
 
             var subtitle = 'Masa Sterilisasi (Kosong)';
-            if (filteredTanaman.length > 0) {
-                var latestPlant = filteredTanaman[0];
-                var varietasName = (latestPlant.varietas && latestPlant.varietas !== '-') ? latestPlant.varietas : (g.varietas || 'Melon');
-                
-                var hst = 0;
-                if (latestPlant.tanggal) {
-                    var tglTanam = new Date(latestPlant.tanggal);
-                    var tglSekarang = new Date();
-                    var diffTime = tglSekarang - tglTanam;
-                    hst = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+            var tTanamGH = parseLocalDate(g.tanam || g.tglTanam || (filteredTanaman[0] ? filteredTanaman[0].tanggal : null));
+
+            if (tTanamGH) {
+                var varietasName = (filteredTanaman[0] && filteredTanaman[0].varietas) ? filteredTanaman[0].varietas : (g.varietas || 'Melon');
+                if (todayMurni < tTanamGH) {
+                    var hMinus = Math.round((tTanamGH - todayMurni) / (1000 * 60 * 60 * 24));
+                    subtitle = varietasName + ' (H-' + hMinus + ' Tanam)';
+                } else {
+                    var hst = Math.max(0, Math.floor((todayMurni - tTanamGH) / (1000 * 60 * 60 * 24)));
+                    subtitle = varietasName + ' (' + hst + ' HST)';
                 }
-                subtitle = varietasName + ' (' + hst + ' HST)';
             } else if (g.varietas) {
                 subtitle = g.varietas + ' (0 HST)';
             }
@@ -785,27 +810,8 @@ var dashboard = (function() {
     }
 
     // ==========================================
-    // PERBAIKAN INTEGRASI TANGGAL SIKLUS TANAM GREENHOUSE
+    // INTEGRASI TANGGAL PANEN & PERHITUNGAN HST PRESISI
     // ==========================================
-    function parseGhDates(gh) {
-        if (!gh) return { tanam: null, target: null };
-        var targetStr = gh.target || gh.targetPanen || gh.tglTarget || gh.estimasiPanen || gh.tglPanen || gh.siklusTarget || gh.targetDate || gh.tanggalTarget || gh.tanggalPanen;
-        var tanamStr = gh.tanam || gh.tglTanam || gh.tanggalTanam || gh.beroperasi || gh.siklusTanam || gh.tanamDate;
-        
-        if (gh.siklus) {
-            targetStr = targetStr || gh.siklus.target || gh.siklus.targetPanen;
-            tanamStr = tanamStr || gh.siklus.tanam || gh.siklus.tglTanam;
-        }
-
-        var dTarget = targetStr ? new Date(targetStr) : null;
-        var dTanam = tanamStr ? new Date(tanamStr) : null;
-
-        return {
-            tanam: (dTanam && !isNaN(dTanam.getTime())) ? dTanam : null,
-            target: (dTarget && !isNaN(dTarget.getTime())) ? dTarget : null
-        };
-    }
-
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -814,40 +820,38 @@ var dashboard = (function() {
         var dataTanaman = getData('cozycs_tanaman');
         var dataBuah = getData('cozycs_buah');
 
-        // 1. Tentukan Greenhouse Target
-        var targetGhList = [];
-        if (selectedGh === 'ALL') {
-            targetGhList = dataGh;
-        } else {
-            targetGhList = dataGh.filter(function(g) {
-                return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh);
-            });
-        }
+        // Hari Ini Murni 00:00:00 (Misal 09 Agustus 2026)
+        var today = parseLocalDate(new Date());
 
-        // 2. Ekstrak Tanggal Tanam & Tanggal Target Panen Eksplisit
-        var explicitHarvestDate = null;
-        var explicitTanamDate = null;
-
-        for (var i = 0; i < targetGhList.length; i++) {
-            var gDates = parseGhDates(targetGhList[i]);
-            if (gDates.target) {
-                explicitHarvestDate = gDates.target;
-                explicitTanamDate = gDates.tanam;
-                break;
-            }
-        }
+        var targetGhList = (selectedGh === 'ALL') 
+            ? dataGh 
+            : dataGh.filter(function(g) { return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh); });
 
         var filteredTanaman = (selectedGh === 'ALL') 
             ? dataTanaman 
             : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
 
-        // Jika tanggal belum ada di data GH, cari dari data tanaman
+        var explicitTanamDate = null;
+        var explicitHarvestDate = null;
+
+        // 1. Ekstrak Tanggal Tanam & Target dari GH
+        for (var i = 0; i < targetGhList.length; i++) {
+            var g = targetGhList[i];
+            var tTarget = parseLocalDate(g.target || g.targetPanen || g.tglTarget || g.estimasiPanen);
+            var tTanam = parseLocalDate(g.tanam || g.tglTanam || g.tanggalTanam || g.beroperasi);
+
+            if (tTarget) explicitHarvestDate = tTarget;
+            if (tTanam) explicitTanamDate = tTanam;
+            if (explicitTanamDate && explicitHarvestDate) break;
+        }
+
+        // Jika belum ada di data GH, cari dari data Tanaman
         if (!explicitTanamDate || !explicitHarvestDate) {
             filteredTanaman.forEach(function(t) {
-                var tglT = t.tanggal || t.tanam || t.tglTanam;
-                var tglH = t.target || t.targetPanen || t.tglTarget;
-                if (tglT && !explicitTanamDate) explicitTanamDate = new Date(tglT);
-                if (tglH && !explicitHarvestDate) explicitHarvestDate = new Date(tglH);
+                var tglT = parseLocalDate(t.tanggal || t.tanam || t.tglTanam);
+                var tglH = parseLocalDate(t.target || t.targetPanen || t.tglTarget);
+                if (tglT && !explicitTanamDate) explicitTanamDate = tglT;
+                if (tglH && !explicitHarvestDate) explicitHarvestDate = tglH;
             });
         }
 
@@ -860,29 +864,41 @@ var dashboard = (function() {
             return;
         }
 
-        // 3. Hitung HST Terkini & Target Hari Total (Misal 13 Aug - 15 Oct = 63 Hari)
-        var now = new Date();
-        var tanamRef = explicitTanamDate || now;
-        var maxHst = Math.max(0, Math.floor((now - tanamRef) / (1000 * 60 * 60 * 24)));
-
-        var totalTargetDays = 75;
-        if (explicitHarvestDate && tanamRef && explicitHarvestDate > tanamRef) {
-            totalTargetDays = Math.round((explicitHarvestDate - tanamRef) / (1000 * 60 * 60 * 24));
+        // 2. Hitung Siklus Panen & HST Real
+        var totalTargetDays = 63; // Fallback standar (misal 13 Ags ke 15 Okt)
+        if (explicitHarvestDate && explicitTanamDate && explicitHarvestDate > explicitTanamDate) {
+            totalTargetDays = Math.round((explicitHarvestDate - explicitTanamDate) / (1000 * 60 * 60 * 24));
         }
 
-        var sisaHari = Math.max(0, totalTargetDays - maxHst);
+        var isBelumTanam = false;
+        var daysToTanam = 0;
+        var maxHst = 0;
+
+        if (explicitTanamDate) {
+            if (today < explicitTanamDate) {
+                // KONDISI: TANGGAL TANAM BELUM TIBA (Misal Hari ini 9 Ags, Tanam 13 Ags)
+                isBelumTanam = true;
+                daysToTanam = Math.round((explicitTanamDate - today) / (1000 * 60 * 60 * 24));
+                maxHst = 0; // Tetap 0 HST
+            } else {
+                // KONDISI: SUDAH MASUK MASA TANAM
+                maxHst = Math.floor((today - explicitTanamDate) / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        var sisaHari = isBelumTanam ? totalTargetDays : Math.max(0, totalTargetDays - maxHst);
 
         // Format Tampilan Tanggal Panen
         var estHarvestDateStr = "-";
-        if (explicitHarvestDate && !isNaN(explicitHarvestDate.getTime())) {
+        if (explicitHarvestDate) {
             estHarvestDateStr = explicitHarvestDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-        } else if (tanamRef) {
-            var targetPanen = new Date(tanamRef);
+        } else if (explicitTanamDate) {
+            var targetPanen = new Date(explicitTanamDate.getTime());
             targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
             estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
-        // 4. Hitung Populasi Aktif
+        // 3. Populasi & Varietas
         var uniqueHoles = new Set();
         var varietasSet = new Set();
 
@@ -892,43 +908,46 @@ var dashboard = (function() {
         });
 
         var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
-
         if (totalPopulasi === 0 && targetGhList.length > 0) {
             targetGhList.forEach(function(g) {
                 totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || 0);
                 if (g.varietas) varietasSet.add(g.varietas);
             });
         }
-
         var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
 
-        // 5. Deteksi Fase Tanam
-        var ratio = totalTargetDays > 0 ? (maxHst / totalTargetDays) : 0;
-        var currentStep = 1; 
+        // 4. Deteksi Fase Tanam
         var phaseTitle = "Vegetatif Awal";
+        var currentStep = 1;
 
-        if (ratio > 0.20 && ratio <= 0.40) {
-            currentStep = 2;
-            phaseTitle = "Vegetatif Lanjutan";
-        } else if (ratio > 0.40 && ratio <= 0.60) {
-            currentStep = 3;
-            phaseTitle = "Masa Polinasi";
-        } else if (ratio > 0.60) {
-            currentStep = 4;
-            phaseTitle = "Pembesaran & Panen";
+        if (isBelumTanam) {
+            phaseTitle = "Persiapan Tanam (H-" + daysToTanam + ")";
+            currentStep = 1;
+        } else {
+            var ratio = totalTargetDays > 0 ? (maxHst / totalTargetDays) : 0;
+            if (ratio > 0.20 && ratio <= 0.40) {
+                currentStep = 2;
+                phaseTitle = "Vegetatif Lanjutan";
+            } else if (ratio > 0.40 && ratio <= 0.60) {
+                currentStep = 3;
+                phaseTitle = "Masa Polinasi";
+            } else if (ratio > 0.60) {
+                currentStep = 4;
+                phaseTitle = "Pembesaran & Panen";
+            }
         }
 
-        // 6. Hitung Buah Fix (Setelah Polinasi)
+        // 5. Buah Fix
         var totalBuahFix = 0;
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
-        // 7. Render Tampilan Dashboard
+        // 6. Render UI
         el.innerHTML = `
             <!-- HEADER RINGKAS -->
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px;">
                 <div>
-                    <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${phaseTitle}</span>
+                    <span style="font-size: 10px; background: ${isBelumTanam ? '#FFF3E0' : '#E8F5E9'}; color: ${isBelumTanam ? '#E65100' : '#2E7D32'}; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${phaseTitle}</span>
                     <div style="font-size: 18px; font-weight: 800; color: #1B5E20; margin-top: 4px;">
                         ${maxHst} <span style="font-size: 12px; font-weight: normal; color: #666;">/ ${totalTargetDays} HST</span>
                     </div>
@@ -936,7 +955,7 @@ var dashboard = (function() {
                 <div style="text-align: right;">
                     <div style="font-size: 10px; color: #888;">Estimasi Panen</div>
                     <div style="font-size: 12px; font-weight: bold; color: #0277BD;">📅 ${estHarvestDateStr}</div>
-                    <div style="font-size: 10px; color: #666;">(${sisaHari} Hari Lagi)</div>
+                    <div style="font-size: 10px; color: #666;">(${sisaHari} Hari Siklus)</div>
                 </div>
             </div>
 
