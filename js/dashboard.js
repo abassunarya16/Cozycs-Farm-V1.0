@@ -785,142 +785,166 @@ var dashboard = (function() {
     }
 
     // ==========================================
-    // REVISI TOTAL: WIDGET FASE TANAM & TARGET PANEN MANAJERIAL
+    // INTEGRASI DENGAN GREENHOUSE.JS & DINAMIS TANKI TARGET
     // ==========================================
-    
     function loadProgressMusim() {
-    var el = document.getElementById('dashProgressMusim');
-    if (!el) return;
+        var el = document.getElementById('dashProgressMusim');
+        if (!el) return;
 
-    var dataTanaman = getData('cozycs_tanaman');
-    var dataBuah = getData('cozycs_buah');
+        var dataGh = getData('cozycs_greenhouse');
+        var dataTanaman = getData('cozycs_tanaman');
+        var dataBuah = getData('cozycs_buah');
 
-    var filteredTanaman = (selectedGh === 'ALL') 
-        ? dataTanaman 
-        : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
+        var filteredTanaman = (selectedGh === 'ALL') 
+            ? dataTanaman 
+            : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
 
-    if (filteredTanaman.length === 0) {
-        el.innerHTML = `
-            <div style="background: #FAFFA0; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 11px; border: 1px dashed #DDD;">
-                Belum ada tanaman aktif di <strong>${selectedGh}</strong>.
-            </div>
-        `;
-        return;
-    }
-
-    // 1. HITUNG HST & TANGGAL PANEN
-    var maxHst = 0;
-    var earliestDate = null;
-    var uniqueHoles = new Set();
-    var varietasSet = new Set();
-
-    filteredTanaman.forEach(function(t) {
-        if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
-        if (t.varietas) varietasSet.add(t.varietas);
-
-        if (t.tanggal) {
-            var dTanam = new Date(t.tanggal);
-            if (!earliestDate || dTanam < earliestDate) earliestDate = dTanam;
-            var diff = new Date() - dTanam;
-            var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
-            if (hstVal > maxHst) maxHst = hstVal;
-        } else {
-            var hstNum = parseFloat(t.hst) || 0;
-            if (hstNum > maxHst) maxHst = hstNum;
+        if (filteredTanaman.length === 0) {
+            el.innerHTML = `
+                <div style="background: #FAFFA0; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 11px; border: 1px dashed #DDD;">
+                    Belum ada tanaman aktif di <strong>${selectedGh}</strong>.
+                </div>
+            `;
+            return;
         }
-    });
 
-    var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
-    var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
-    var totalTargetDays = 75;
-    var sisaHari = Math.max(0, totalTargetDays - maxHst);
-    var percentHst = Math.min(Math.round((maxHst / totalTargetDays) * 100), 100);
+        // 1. Dapatkan Target Umur Panen Langsung dari Data Greenhouse/Tanaman
+        var totalTargetDays = 0;
 
-    var estHarvestDateStr = "-";
-    if (earliestDate) {
-        var targetPanen = new Date(earliestDate);
-        targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
-        estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-    }
+        if (selectedGh !== 'ALL') {
+            var activeGh = dataGh.find(function(g) { return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh); });
+            if (activeGh) {
+                totalTargetDays = parseFloat(activeGh.umurPanen) || parseFloat(activeGh.targetHst) || parseFloat(activeGh.masaTanam) || parseFloat(activeGh.lamaTanam) || 0;
+            }
+        }
 
-    // 2. DETEKSI FASE AKSI
-    var currentStep = 1; // 1: Veg Awal, 2: Vegetatif, 3: Polinasi, 4: Pembesaran/Panen
-    var phaseTitle = "Vegetatif Awal";
+        if (!totalTargetDays || totalTargetDays <= 0) {
+            for (var i = 0; i < filteredTanaman.length; i++) {
+                var p = filteredTanaman[i];
+                var pDays = parseFloat(p.umurPanen) || parseFloat(p.targetHst) || parseFloat(p.masaTanam) || parseFloat(p.lamaTanam) || 0;
+                if (pDays > 0) {
+                    totalTargetDays = pDays;
+                    break;
+                }
+            }
+        }
 
-    if (maxHst > 14 && maxHst <= 30) {
-        currentStep = 2;
-        phaseTitle = "Vegetatif Lanjutan";
-    } else if (maxHst > 30 && maxHst <= 45) {
-        currentStep = 3;
-        phaseTitle = "Masa Polinasi";
-    } else if (maxHst > 45) {
-        currentStep = 4;
-        phaseTitle = "Pembesaran & Panen";
-    }
+        // Nilai fallback standar jika belum diset di Greenhouse.js
+        if (!totalTargetDays || totalTargetDays <= 0) {
+            totalTargetDays = 75;
+        }
 
-    // 3. HITUNG BUAH FIX (JIKA SUDAH POLINASI)
-    var totalBuahFix = 0;
-    var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
-    filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
+        // 2. HITUNG HST & TANGGAL PANEN
+        var maxHst = 0;
+        var earliestDate = null;
+        var uniqueHoles = new Set();
+        var varietasSet = new Set();
 
-    // 4. RENDER TAMPILAN MINIMALIS & STRUKTURAL
-    el.innerHTML = `
-        <!-- HEADER RINGKAS -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px;">
-            <div>
-                <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${phaseTitle}</span>
-                <div style="font-size: 18px; font-weight: 800; color: #1B5E20; margin-top: 4px;">
-                    ${maxHst} <span style="font-size: 12px; font-weight: normal; color: #666;">/ ${totalTargetDays} HST</span>
+        filteredTanaman.forEach(function(t) {
+            if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
+            if (t.varietas) varietasSet.add(t.varietas);
+
+            if (t.tanggal) {
+                var dTanam = new Date(t.tanggal);
+                if (!earliestDate || dTanam < earliestDate) earliestDate = dTanam;
+                var diff = new Date() - dTanam;
+                var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+                if (hstVal > maxHst) maxHst = hstVal;
+            } else {
+                var hstNum = parseFloat(t.hst) || 0;
+                if (hstNum > maxHst) maxHst = hstNum;
+            }
+        });
+
+        var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
+        var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
+        var sisaHari = Math.max(0, totalTargetDays - maxHst);
+
+        var estHarvestDateStr = "-";
+        if (earliestDate) {
+            var targetPanen = new Date(earliestDate);
+            targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
+            estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // 3. DETEKSI FASE BERDASARKAN RASIO HST
+        var ratio = maxHst / totalTargetDays;
+        var currentStep = 1; 
+        var phaseTitle = "Vegetatif Awal";
+
+        if (ratio > 0.20 && ratio <= 0.40) {
+            currentStep = 2;
+            phaseTitle = "Vegetatif Lanjutan";
+        } else if (ratio > 0.40 && ratio <= 0.60) {
+            currentStep = 3;
+            phaseTitle = "Masa Polinasi";
+        } else if (ratio > 0.60) {
+            currentStep = 4;
+            phaseTitle = "Pembesaran & Panen";
+        }
+
+        // 4. HITUNG BUAH FIX
+        var totalBuahFix = 0;
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
+        filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
+
+        // 5. RENDER TAMPILAN
+        el.innerHTML = `
+            <!-- HEADER RINGKAS -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px;">
+                <div>
+                    <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${phaseTitle}</span>
+                    <div style="font-size: 18px; font-weight: 800; color: #1B5E20; margin-top: 4px;">
+                        ${maxHst} <span style="font-size: 12px; font-weight: normal; color: #666;">/ ${totalTargetDays} HST</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 10px; color: #888;">Estimasi Panen</div>
+                    <div style="font-size: 12px; font-weight: bold; color: #0277BD;">📅 ${estHarvestDateStr}</div>
+                    <div style="font-size: 10px; color: #666;">(${sisaHari} Hari Lagi)</div>
                 </div>
             </div>
-            <div style="text-align: right;">
-                <div style="font-size: 10px; color: #888;">Estimasi Panen</div>
-                <div style="font-size: 12px; font-weight: bold; color: #0277BD;">📅 ${estHarvestDateStr}</div>
-                <div style="font-size: 10px; color: #666;">(${sisaHari} Hari Lagi)</div>
-            </div>
-        </div>
 
-        <!-- TIMELINE 4 FASE (STEPPER) -->
-        <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 14px; padding: 0 5px;">
-            <div style="position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: #E0E0E0; z-index: 1;"></div>
-            <div style="position: absolute; top: 10px; left: 10px; width: ${((currentStep - 1) / 3) * 100}%; height: 3px; background: #2E7D32; z-index: 1; transition: width 0.3s ease;"></div>
+            <!-- TIMELINE 4 FASE (STEPPER) -->
+            <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 14px; padding: 0 5px;">
+                <div style="position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: #E0E0E0; z-index: 1;"></div>
+                <div style="position: absolute; top: 10px; left: 10px; width: ${((currentStep - 1) / 3) * 100}%; height: 3px; background: #2E7D32; z-index: 1; transition: width 0.3s ease;"></div>
 
-            <div style="text-align: center; position: relative; z-index: 2;">
-                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 1 ? '#2E7D32' : '#FFF'}; border: 2px solid #2E7D32; color: ${currentStep >= 1 ? '#FFF' : '#2E7D32'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">1</div>
-                <span style="font-size: 9px; color: ${currentStep === 1 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 1 ? 'bold' : 'normal'};">Veg Awal</span>
+                <div style="text-align: center; position: relative; z-index: 2;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 1 ? '#2E7D32' : '#FFF'}; border: 2px solid #2E7D32; color: ${currentStep >= 1 ? '#FFF' : '#2E7D32'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">1</div>
+                    <span style="font-size: 9px; color: ${currentStep === 1 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 1 ? 'bold' : 'normal'};">Veg Awal</span>
+                </div>
+
+                <div style="text-align: center; position: relative; z-index: 2;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 2 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">2</div>
+                    <span style="font-size: 9px; color: ${currentStep === 2 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 2 ? 'bold' : 'normal'};">Vegetatif</span>
+                </div>
+
+                <div style="text-align: center; position: relative; z-index: 2;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 3 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">3</div>
+                    <span style="font-size: 9px; color: ${currentStep === 3 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 3 ? 'bold' : 'normal'};">Polinasi</span>
+                </div>
+
+                <div style="text-align: center; position: relative; z-index: 2;">
+                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 4 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">4</div>
+                    <span style="font-size: 9px; color: ${currentStep === 4 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 4 ? 'bold' : 'normal'};">Pembesaran</span>
+                </div>
             </div>
 
-            <div style="text-align: center; position: relative; z-index: 2;">
-                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 2 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">2</div>
-                <span style="font-size: 9px; color: ${currentStep === 2 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 2 ? 'bold' : 'normal'};">Vegetatif</span>
+            <!-- KETERANGAN KONDISIONAL (POPULASI / OMZET) -->
+            <div style="background: #F9F9F9; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <div>
+                    <span style="color: #666;">Populasi Aktif:</span>
+                    <strong style="color: #333;">${totalPopulasi} Pohon</strong> (${varietasStr})
+                </div>
+                ${
+                    totalBuahFix > 0
+                    ? `<div><span style="color: #666;">Buah Fix:</span> <strong style="color: #E65100;">${totalBuahFix} Buah (~${Math.round(totalBuahFix * 1.5)} Kg)</strong></div>`
+                    : `<div style="color: #888; font-size: 10px; font-style: italic;">*Estimasi panen dihitung setelah Polinasi</div>`
+                }
             </div>
-
-            <div style="text-align: center; position: relative; z-index: 2;">
-                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 3 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">3</div>
-                <span style="font-size: 9px; color: ${currentStep === 3 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 3 ? 'bold' : 'normal'};">Polinasi</span>
-            </div>
-
-            <div style="text-align: center; position: relative; z-index: 2;">
-                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 4 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">4</div>
-                <span style="font-size: 9px; color: ${currentStep === 4 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 4 ? 'bold' : 'normal'};">Pembesaran</span>
-            </div>
-        </div>
-
-        <!-- KETERANGAN KONDISIONAL (POPULASI / OMZET) -->
-        <div style="background: #F9F9F9; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-            <div>
-                <span style="color: #666;">Populasi Aktif:</span>
-                <strong style="color: #333;">${totalPopulasi} Pohon</strong> (${varietasStr})
-            </div>
-            ${
-                totalBuahFix > 0
-                ? `<div><span style="color: #666;">Buah Fix:</span> <strong style="color: #E65100;">${totalBuahFix} Buah (~${Math.round(totalBuahFix * 1.5)} Kg)</strong></div>`
-                : `<div style="color: #888; font-size: 10px; style="font-style: italic;">*Estimasi panen dihitung setelah Polinasi</div>`
-            }
-        </div>
-    `;
-     }
-    
+        `;
+    }
 
     // ==========================================
     // REVISI AUDIT LOG: DE-DUPLIKASI & SINKRONISASI REAL-TIME
@@ -931,7 +955,6 @@ var dashboard = (function() {
 
         var allLogs = [];
 
-        // 1. Ambil dari log aktivitas eksplisit (Prioritas Utama)
         var explicitLogs = getData('cozycs_aktivitas');
         if (explicitLogs.length === 0) explicitLogs = getData('cozycs_activities');
         if (explicitLogs.length === 0) explicitLogs = getData('cozycs_logs');
@@ -947,14 +970,12 @@ var dashboard = (function() {
                 });
             });
         } else {
-            // 2. Jika log khusus belum ada, gabungkan & DE-DUPLIKASI data dari modul-modul lain
             var allTanaman = getData('cozycs_tanaman') || [];
             var allNutrisi = getData('cozycs_nutrisi') || [];
             var allPanen = getData('cozycs_panen') || [];
             var allBuah = getData('cozycs_buah') || [];
             var allSpray = getData('cozycs_spray') || [];
 
-            // DE-DUPLIKASI BATANAG TANAMAN (Mencegah input 5x muncul 5 baris identik)
             var plantGroupMap = {};
             allTanaman.forEach(function(item) {
                 var groupKey = (item.varietas || 'Melon') + '_' + (item.gh || 'GH') + '_' + (item.tanggal || 'Today');
@@ -1021,7 +1042,6 @@ var dashboard = (function() {
             });
         }
 
-        // Filter berdasarkan Greenhouse terpilih
         var filteredLogs = (selectedGh === 'ALL') 
             ? allLogs 
             : allLogs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
@@ -1031,12 +1051,10 @@ var dashboard = (function() {
             return;
         }
 
-        // Urutkan dari aktivitas paling baru (Descending)
         filteredLogs.sort(function(a, b) {
             return new Date(b.timestamp) - new Date(a.timestamp);
         });
 
-        // Ambil 5 aktivitas terbaru
         var html = '';
         filteredLogs.slice(0, 5).forEach(function(l) {
             var jamStr = (l.jam && l.jam !== 'Tercatat') ? l.jam : parseJamFromTimestamp(l.timestamp);
