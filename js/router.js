@@ -4,15 +4,12 @@
 
 var Router = (function() {
     
-    // Daftar halaman yang tersedia di aplikasi
+    // Daftar halaman yang tersedia di aplikasi (Modul terpadu)
     var routes = {
         'dashboard': { title: 'Dashboard', render: typeof dashboard !== 'undefined' ? dashboard.render : function() { return '<div>Dashboard belum dimuat</div>'; }, init: typeof dashboard !== 'undefined' ? dashboard.init : null },
         'greenhouse': { title: 'Greenhouse', render: typeof greenhouse !== 'undefined' ? greenhouse.render : function() { return '<div>Halaman Greenhouse</div>'; }, init: typeof greenhouse !== 'undefined' ? greenhouse.init : null },
-        'tanaman': { title: 'Manajemen Tanaman', render: typeof tanaman !== 'undefined' ? tanaman.render : function() { return '<div>Halaman Tanaman</div>'; }, init: typeof tanaman !== 'undefined' ? tanaman.init : null },
-        'polinasi': { title: 'Polinasi', render: typeof polinasi !== 'undefined' ? polinasi.render : function() { return '<div>Halaman Polinasi</div>'; }, init: typeof polinasi !== 'undefined' ? polinasi.init : null },
-        'buah': { title: 'Seleksi Buah', render: typeof buah !== 'undefined' ? buah.render : function() { return '<div>Halaman Buah</div>'; }, init: typeof buah !== 'undefined' ? buah.init : null },
+        'tanaman': { title: 'Database & Perawatan Tanaman', render: typeof tanaman !== 'undefined' ? tanaman.render : function() { return '<div>Halaman Tanaman</div>'; }, init: typeof tanaman !== 'undefined' ? tanaman.init : null },
         'nutrisi': { title: 'Nutrisi & PPM', render: typeof nutrisi !== 'undefined' ? nutrisi.render : function() { return '<div>Halaman Nutrisi</div>'; }, init: typeof nutrisi !== 'undefined' ? nutrisi.init : null },
-        'pruning': { title: 'Pruning / Perempelan', render: typeof pruning !== 'undefined' ? pruning.render : function() { return '<div>Halaman Pruning</div>'; }, init: typeof pruning !== 'undefined' ? pruning.init : null },
         'hama': { title: 'Hama & Penyakit', render: typeof hama !== 'undefined' ? hama.render : function() { return '<div>Halaman Hama</div>'; }, init: typeof hama !== 'undefined' ? hama.init : null },
         'spray': { title: 'Penyemprotan (Spray)', render: typeof spray !== 'undefined' ? spray.render : function() { return '<div>Halaman Spray</div>'; }, init: typeof spray !== 'undefined' ? spray.init : null },
         'jadwal': { title: 'Jadwal & Tugas', render: typeof jadwal !== 'undefined' ? jadwal.render : function() { return '<div>Halaman Jadwal</div>'; }, init: typeof jadwal !== 'undefined' ? jadwal.init : null },
@@ -31,6 +28,11 @@ var Router = (function() {
     }
 
     function navigate(pageName) {
+        // Redirect jika mengakses modul lama yang sudah digabung ke tanaman
+        if (pageName === 'polinasi' || pageName === 'buah' || pageName === 'pruning') {
+            pageName = 'tanaman';
+        }
+
         if (!routes[pageName]) {
             pageName = 'dashboard';
         }
@@ -118,18 +120,18 @@ var Router = (function() {
     }
 
     function renderNavigationUI() {
-        // Render Bottom Nav (5 menu utama di bawah)
+        // Render Bottom Nav (5 menu utama)
         var bottomNav = document.getElementById('bottomNav');
         if (bottomNav) {
             bottomNav.innerHTML = 
                 '<button class="bottom-nav-item" data-page="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></button>' +
                 '<button class="bottom-nav-item" data-page="tanaman"><i class="fas fa-seedling"></i><span>Tanaman</span></button>' +
-                '<button class="bottom-nav-item" data-page="polinasi"><i class="fas fa-feather"></i><span>Polinasi</span></button>' +
                 '<button class="bottom-nav-item" data-page="nutrisi"><i class="fas fa-flask"></i><span>Nutrisi</span></button>' +
+                '<button class="bottom-nav-item" data-page="panen"><i class="fas fa-box"></i><span>Panen</span></button>' +
                 '<button class="bottom-nav-item" data-page="setting"><i class="fas fa-cog"></i><span>Pengaturan</span></button>';
         }
 
-        // Render Sidebar Menu (Semua menu lengkap)
+        // Render Sidebar Menu
         var sidebarMenu = document.getElementById('sidebarMenu');
         if (sidebarMenu) {
             sidebarMenu.innerHTML = 
@@ -140,11 +142,8 @@ var Router = (function() {
                 '</div>' +
                 '<div class="sidebar-group">' +
                     '<div class="sidebar-group-title">Budidaya Melon</div>' +
-                    '<a class="sidebar-link" data-page="tanaman"><i class="fas fa-seedling"></i> Tanaman & HST</a>' +
-                    '<a class="sidebar-link" data-page="polinasi"><i class="fas fa-feather"></i> Polinasi Bunga</a>' +
-                    '<a class="sidebar-link" data-page="buah"><i class="fas fa-apple-alt"></i> Seleksi Buah</a>' +
+                    '<a class="sidebar-link" data-page="tanaman"><i class="fas fa-seedling"></i> Database & Perawatan Tanaman</a>' +
                     '<a class="sidebar-link" data-page="nutrisi"><i class="fas fa-flask"></i> Nutrisi & PPM/pH</a>' +
-                    '<a class="sidebar-link" data-page="pruning"><i class="fas fa-cut"></i> Pruning & Perempelan</a>' +
                     '<a class="sidebar-link" data-page="hama"><i class="fas fa-bug"></i> Hama & Penyakit</a>' +
                     '<a class="sidebar-link" data-page="spray"><i class="fas fa-spray-can"></i> Penyemprotan</a>' +
                 '</div>' +
@@ -161,7 +160,6 @@ var Router = (function() {
     }
 
     function updateActiveMenuUI(pageName) {
-        // Tandai tombol bawah yang aktif
         var bottomItems = document.querySelectorAll('.bottom-nav-item');
         bottomItems.forEach(function(item) {
             if (item.getAttribute('data-page') === pageName) {
@@ -171,7 +169,6 @@ var Router = (function() {
             }
         });
 
-        // Tandai link sidebar yang aktif
         var sidebarLinks = document.querySelectorAll('.sidebar-link');
         sidebarLinks.forEach(function(link) {
             if (link.getAttribute('data-page') === pageName) {
@@ -189,4 +186,3 @@ var Router = (function() {
     };
 
 })();
-                                               
