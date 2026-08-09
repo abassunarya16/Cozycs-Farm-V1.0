@@ -187,12 +187,21 @@ var dashboard = (function() {
         fetchWeatherByCoords(currentLocation.lat, currentLocation.lon, currentLocation.city);
     }
 
+    // FUNGSI PEMBACA DATA MULTI-FALLBACK (SANGAT AMAN)
     function getData(key) {
         try {
-            if (typeof Storage !== 'undefined' && Storage.getAll) {
-                return Storage.getAll(key) || [];
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
+                var res = Storage.getAll(key);
+                if (Array.isArray(res) && res.length > 0) return res;
             }
-        } catch(e) {}
+            var raw = localStorage.getItem(key);
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        } catch(e) {
+            console.error('[Dashboard] Gagal membaca data ' + key, e);
+        }
         return [];
     }
 
@@ -372,7 +381,6 @@ var dashboard = (function() {
 
         var cardsList = [];
 
-        // Hitung Populasi, Polinasi, & Buah ALL dari database terpadu
         var uniqueHolesALL = new Set();
         var tPolALL = 0;
         var tBuahALL = 0;
@@ -389,7 +397,6 @@ var dashboard = (function() {
             }
         });
 
-        // Fallback data legacy jika ada
         dataPolinasi.forEach(function(p) { tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0); });
         dataBuah.forEach(function(b) { tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
@@ -405,7 +412,6 @@ var dashboard = (function() {
             themeIndex: 0
         });
 
-        // Hitung Per-Greenhouse
         dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
             
@@ -413,14 +419,12 @@ var dashboard = (function() {
                 return t.gh === gId || t.ghId === gId;
             });
 
-            // 1. Hitung total populasi (Lubang Tanam Unik / Total Record)
             var uniqueHoles = new Set();
             filteredTanaman.forEach(function(t) {
                 if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
             });
             var tPop = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
 
-            // 2. Varietas & Kalkulasi HST Otomatis
             var subtitle = 'Masa Sterilisasi (Kosong)';
             if (filteredTanaman.length > 0) {
                 var latestPlant = filteredTanaman[0];
@@ -438,7 +442,6 @@ var dashboard = (function() {
                 subtitle = g.varietas + ' (0 HST)';
             }
 
-            // 3. Hitung Polinasi & Buah
             var tPol = 0;
             var tBuah = 0;
 
