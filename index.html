@@ -315,13 +315,9 @@ body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
             
             <div class="sidebar-group-title" data-i18n="group_plants">Tanaman</div>
             <button class="sidebar-item" data-page="tanaman"><i class="fas fa-seedling" style="color: #2E7D32;"></i> <span data-i18n="nav_plant_db">Database Tanaman</span></button>
-            <button class="sidebar-item" data-page="polinasi"><i class="fas fa-heart" style="color: #E65100;"></i> <span data-i18n="nav_pollination">Polinasi Bunga</span></button>
-            <button class="sidebar-item" data-page="buah"><i class="fas fa-apple-alt" style="color: #1565C0;"></i> <span data-i18n="nav_fruit_select">Seleksi Buah</span></button>
-            <button class="sidebar-item" data-page="pruning"><i class="fas fa-cut" style="color: #4E342E;"></i> <span data-i18n="nav_pruning">Pruning / Rempes</span></button>
             
             <div class="sidebar-group-title" data-i18n="group_monitoring">Monitoring & Perawatan</div>
             <button class="sidebar-item" data-page="nutrisi"><i class="fas fa-flask" style="color: #0277BD;"></i> <span data-i18n="nav_nutrition">Nutrisi & PPM</span></button>
-            <!-- MENU KALKULATOR RACIK AB MIX TERDAFTAR DI SINI -->
             <button class="sidebar-item" data-page="racikan"><i class="fas fa-calculator" style="color: #2E7D32;"></i> <span data-i18n="nav_racikan">Kalkulator Racik AB Mix</span></button>
             <button class="sidebar-item" data-page="hama"><i class="fas fa-bug" style="color: #C62828;"></i> <span data-i18n="nav_pests">Hama & Penyakit</span></button>
             <button class="sidebar-item" data-page="spray"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> <span data-i18n="nav_spray">Jadwal Spray</span></button>
@@ -357,10 +353,7 @@ body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
 <script src="js/dashboard.js"></script>
 <script src="js/greenhouse.js"></script>
 <script src="js/tanaman.js"></script>
-<script src="js/polinasi.js"></script>
-<script src="js/buah.js"></script>
 <script src="js/nutrisi.js"></script>
-<script src="js/pruning.js"></script>
 <script src="js/hama.js"></script>
 <script src="js/spray.js"></script>
 <script src="js/notifikasi.js"></script>
@@ -395,9 +388,6 @@ var globalDict = {
         'nav_greenhouse': 'Greenhouse',
         'nav_warehouse': 'Stok Gudang',
         'nav_plant_db': 'Database Tanaman',
-        'nav_pollination': 'Polinasi Bunga',
-        'nav_fruit_select': 'Seleksi Buah',
-        'nav_pruning': 'Pruning / Rempes',
         'nav_nutrition': 'Nutrisi & PPM',
         'nav_racikan': 'Kalkulator Racik AB Mix',
         'nav_pests': 'Hama & Penyakit',
@@ -424,9 +414,6 @@ var globalDict = {
         'nav_greenhouse': 'Greenhouse',
         'nav_warehouse': 'Warehouse Stock',
         'nav_plant_db': 'Plant Database',
-        'nav_pollination': 'Flower Pollination',
-        'nav_fruit_select': 'Fruit Selection',
-        'nav_pruning': 'Pruning',
         'nav_nutrition': 'Nutrition & PPM',
         'nav_racikan': 'AB Mix Calculator',
         'nav_pests': 'Pests & Diseases',
@@ -458,7 +445,6 @@ window.applyAppLanguage = function(langCode) {
         }
     });
 
-    // Refresh halaman aktif agar kontennya menyesuaikan bahasa
     if (typeof navigateTo === 'function') {
         navigateTo(currentPage, true);
     }
@@ -493,7 +479,6 @@ function navigateTo(pageName, isBackNav) {
             targetModule.init();
         }
         
-        // Update status tombol aktif di Bottom Nav
         var navItems = document.querySelectorAll('.bottom-nav .nav-item');
         navItems.forEach(function(item) {
             if (item.getAttribute('data-page') === pageName) {
@@ -505,7 +490,6 @@ function navigateTo(pageName, isBackNav) {
         
         window.scrollTo(0, 0);
 
-        // Rekam jejak ke History Browser jika bukan navigasi Back HP
         if (!isBackNav) {
             var newHash = '#' + pageName;
             if (window.location.hash !== newHash) {
@@ -529,15 +513,12 @@ function toggleNotifikasiPage() {
 window.addEventListener('popstate', function(event) {
     var state = event.state;
 
-    // Jika pengguna kembali menyentuh titik paling dasar (Root Anchor) dari Dasbor
     if (state && state.page === 'root') {
         var now = Date.now();
 
         if (now - lastBackPressTime < 2000) {
-            // Ketukan ke-2 dalam 2 detik: Biarkan keluar aplikasi
             return;
         } else {
-            // Ketukan ke-1: Tahan, beri peringatan toast, dan dorong ulang Dasbor ke tumpukan atas
             lastBackPressTime = now;
             
             var msg = (localStorage.getItem('cozycs_lang') === 'en') ? 'Press back again to exit app' : 'Tekan sekali lagi untuk keluar aplikasi';
@@ -545,14 +526,12 @@ window.addEventListener('popstate', function(event) {
                 Helper.showToast(msg, 'error');
             }
             
-            // Kembalikan posisi history ke status dashboard
             history.pushState({ page: 'dashboard' }, '', '#dashboard');
             currentPage = 'dashboard';
             return;
         }
     }
 
-    // Navigasi normal antar modul saat tombol Back ditekan
     var targetPage = (state && state.page) ? state.page : (window.location.hash.replace('#', '') || 'dashboard');
     if (pages[targetPage]) {
         navigateTo(targetPage, true);
@@ -562,14 +541,12 @@ window.addEventListener('popstate', function(event) {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Sinkronisasi Mode Gelap Global saat aplikasi dibuka
     window.applyDarkModeGlobal();
 
     if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
         Storage.init();
     }
 
-    // Set versi otomatis di Judul Sidebar
     var sidebarTitle = document.getElementById('sidebarTitle');
     if (sidebarTitle) {
         var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0');
@@ -580,11 +557,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'dashboard': dashboard,
         'greenhouse': greenhouse,
         'tanaman': tanaman,
-        'polinasi': polinasi,
-        'buah': buah,
         'nutrisi': nutrisi,
         'racikan': racikan,
-        'pruning': pruning,
         'hama': hama,
         'spray': spray,
         'notifikasi': notifikasi,
@@ -597,7 +571,6 @@ document.addEventListener('DOMContentLoaded', function() {
         'cctv': cctv
     };
     
-    // INISIALISASI HISTORY STACK (Jangkar Root + Dashboard)
     if (!history.state || history.state.page !== 'root') {
         history.replaceState({ page: 'root' }, '', '#');
         history.pushState({ page: 'dashboard' }, '', '#dashboard');
@@ -605,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navigateTo('dashboard', true);
 
-    // 2. Terapkan Bahasa ke Seluruh Navigasi
     window.applyAppLanguage();
     
     var btnNotif = document.getElementById('btnHeaderNotif');
@@ -675,16 +647,13 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').then(function(reg) {
             console.log('✅ SW registered:', reg.scope);
             
-            // Cek update SEGERA saat aplikasi dibuka
             reg.update();
             
-            // Cek apakah sudah ada SW waiting
             if (reg.waiting) {
                 console.log('🔄 SW waiting detected!');
                 window.showUpdateToast(reg.waiting);
             }
             
-            // Deteksi update baru
             reg.addEventListener('updatefound', function() {
                 var newWorker = reg.installing;
                 if (!newWorker) return;
@@ -697,7 +666,6 @@ if ('serviceWorker' in navigator) {
                 });
             });
             
-            // Cek update berkala tiap 5 menit
             setInterval(function() {
                 reg.update();
                 console.log('🔍 Memeriksa pembaruan...');
@@ -707,7 +675,6 @@ if ('serviceWorker' in navigator) {
             console.log('❌ SW registration failed:', err);
         });
         
-        // Reload saat controller berubah
         var refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', function() {
             if (!refreshing) {
