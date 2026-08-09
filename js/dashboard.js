@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISED & FULL FIX)
+// COZYCS FARM - EXECUTIVE DASHBOARD (AUTO-AUDIT LOG & FULL FIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -785,7 +785,7 @@ var dashboard = (function() {
     }
 
     // ==========================================
-    // INTEGRASI DENGAN GREENHOUSE.JS & DINAMIS TANKI TARGET
+    // PERBAIKAN INTEGRASI TANGGAL GREENHOUSE (FIXED TO PARSE EXPLICIT DATES)
     // ==========================================
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
@@ -799,44 +799,41 @@ var dashboard = (function() {
             ? dataTanaman 
             : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
 
-        if (filteredTanaman.length === 0) {
-            el.innerHTML = `
-                <div style="background: #FAFFA0; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 11px; border: 1px dashed #DDD;">
-                    Belum ada tanaman aktif di <strong>${selectedGh}</strong>.
-                </div>
-            `;
-            return;
-        }
-
-        // 1. Dapatkan Target Umur Panen Langsung dari Data Greenhouse/Tanaman
+        // 1. CARI TANGGAL TANAM & TARGET HARVEST DARI DATA GREENHOUSE ATAU TANAMAN
+        var explicitHarvestDate = null;
+        var explicitTanamDate = null;
         var totalTargetDays = 0;
 
         if (selectedGh !== 'ALL') {
-            var activeGh = dataGh.find(function(g) { return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh); });
+            var activeGh = dataGh.find(function(g) { 
+                return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh); 
+            });
             if (activeGh) {
                 totalTargetDays = parseFloat(activeGh.umurPanen) || parseFloat(activeGh.targetHst) || parseFloat(activeGh.masaTanam) || parseFloat(activeGh.lamaTanam) || 0;
+                
+                var tTargetStr = activeGh.target || activeGh.targetPanen || activeGh.tglTarget || activeGh.estimasiPanen || activeGh.tglPanen;
+                var tTanamStr = activeGh.tanam || activeGh.tglTanam || activeGh.tanggalTanam || activeGh.beroperasi;
+
+                if (tTargetStr) explicitHarvestDate = new Date(tTargetStr);
+                if (tTanamStr) explicitTanamDate = new Date(tTanamStr);
             }
         }
 
-        if (!totalTargetDays || totalTargetDays <= 0) {
+        // Jika belum dapat dari activeGh, cari dari list tanaman
+        if (!explicitHarvestDate && filteredTanaman.length > 0) {
             for (var i = 0; i < filteredTanaman.length; i++) {
                 var p = filteredTanaman[i];
-                var pDays = parseFloat(p.umurPanen) || parseFloat(p.targetHst) || parseFloat(p.masaTanam) || parseFloat(p.lamaTanam) || 0;
-                if (pDays > 0) {
-                    totalTargetDays = pDays;
+                var pTarget = p.target || p.targetPanen || p.tglTarget || p.estimasiPanen || p.tglPanen;
+                if (pTarget) {
+                    explicitHarvestDate = new Date(pTarget);
                     break;
                 }
             }
         }
 
-        // Nilai fallback standar jika belum diset di Greenhouse.js
-        if (!totalTargetDays || totalTargetDays <= 0) {
-            totalTargetDays = 75;
-        }
-
-        // 2. HITUNG HST & TANGGAL PANEN
+        // Hitung tanggal tanam terawal (earliestDate)
+        var earliestDate = explicitTanamDate || null;
         var maxHst = 0;
-        var earliestDate = null;
         var uniqueHoles = new Set();
         var varietasSet = new Set();
 
@@ -844,8 +841,9 @@ var dashboard = (function() {
             if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
             if (t.varietas) varietasSet.add(t.varietas);
 
-            if (t.tanggal) {
-                var dTanam = new Date(t.tanggal);
+            var tglStr = t.tanggal || t.tanam || t.tglTanam;
+            if (tglStr) {
+                var dTanam = new Date(tglStr);
                 if (!earliestDate || dTanam < earliestDate) earliestDate = dTanam;
                 var diff = new Date() - dTanam;
                 var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
@@ -856,12 +854,29 @@ var dashboard = (function() {
             }
         });
 
+        // 2. HITUNG SELISIH HARITARGET REAL (Misal: 13 Aug ke 15 Oct = 63 Hari)
+        if (explicitHarvestDate && earliestDate && !isNaN(explicitHarvestDate.getTime()) && !isNaN(earliestDate.getTime())) {
+            var diffMs = explicitHarvestDate - earliestDate;
+            var calcDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            if (calcDays > 0) {
+                totalTargetDays = calcDays;
+            }
+        }
+
+        // Fallback jika tidak ada settingan sama sekali
+        if (!totalTargetDays || totalTargetDays <= 0) {
+            totalTargetDays = 75;
+        }
+
         var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
         var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
         var sisaHari = Math.max(0, totalTargetDays - maxHst);
 
+        // Format Tampilan Tanggal Panen
         var estHarvestDateStr = "-";
-        if (earliestDate) {
+        if (explicitHarvestDate && !isNaN(explicitHarvestDate.getTime())) {
+            estHarvestDateStr = explicitHarvestDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        } else if (earliestDate) {
             var targetPanen = new Date(earliestDate);
             targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
             estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -931,7 +946,7 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- KETERANGAN KONDISIONAL (POPULASI / OMZET) -->
+            <!-- KETERANGAN KONDISIONAL -->
             <div style="background: #F9F9F9; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
                 <div>
                     <span style="color: #666;">Populasi Aktif:</span>
