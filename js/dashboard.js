@@ -787,151 +787,140 @@ var dashboard = (function() {
     // ==========================================
     // REVISI TOTAL: WIDGET FASE TANAM & TARGET PANEN MANAJERIAL
     // ==========================================
+    
     function loadProgressMusim() {
-        var el = document.getElementById('dashProgressMusim');
-        if (!el) return;
+    var el = document.getElementById('dashProgressMusim');
+    if (!el) return;
 
-        var dataTanaman = getData('cozycs_tanaman');
-        var dataPolinasi = getData('cozycs_polinasi');
-        var dataBuah = getData('cozycs_buah');
+    var dataTanaman = getData('cozycs_tanaman');
+    var dataBuah = getData('cozycs_buah');
 
-        var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
-        
-        if (filteredTanaman.length === 0) {
-            el.innerHTML = `
-                <div style="background: #F9F9F9; border: 1px dashed #DDD; padding: 14px; border-radius: 10px; text-align: center; color: #777; font-size: 12px;">
-                    <i class="fas fa-info-circle" style="color: #0277BD; font-size: 18px; margin-bottom: 4px; display: block;"></i>
-                    Belum ada tanaman aktif di <strong>${selectedGh}</strong>. Silakan input tanam baru di modul Tanaman.
-                </div>
-            `;
-            return;
-        }
+    var filteredTanaman = (selectedGh === 'ALL') 
+        ? dataTanaman 
+        : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
 
-        var maxHst = 0;
-        var earlesDate = null;
-        var uniqueHoles = new Set();
-        var varietasSet = new Set();
-
-        filteredTanaman.forEach(function(t) {
-            if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
-            if (t.varietas) varietasSet.add(t.varietas);
-            
-            if (t.tanggal) {
-                var dTanam = new Date(t.tanggal);
-                if (!earlesDate || dTanam < earlesDate) earlesDate = dTanam;
-                
-                var diff = new Date() - dTanam;
-                var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
-                if (hstVal > maxHst) maxHst = hstVal;
-            } else {
-                var hstNum = parseFloat(t.hst) || 0;
-                if (hstNum > maxHst) maxHst = hstNum;
-            }
-        });
-
-        var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
-        var varietasStr = Array.from(varietasSet).join(', ') || 'Melon Premium';
-
-        var totalBuahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
-        filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
-
-        var targetBuah = totalBuahFix > 0 ? totalBuahFix : totalPopulasi;
-
-        // KALKULASI FASE TUMBUH BERDASARKAN HST REAL
-        var phaseName = "Vegetatif Awal";
-        var phaseIcon = "🌱";
-        var targetPpm = "800 - 1000 PPM";
-        var actionAdvice = "Fokus pembentukan perakaran & pertambahan daun.";
-
-        if (maxHst <= 14) {
-            phaseName = "Vegetatif Awal (Perakaran)";
-            phaseIcon = "🌱";
-            targetPpm = "800 - 1000 PPM";
-            actionAdvice = "Jaga kelembaban & berikan nutrisi tinggi Nitrogen.";
-        } else if (maxHst <= 30) {
-            phaseName = "Vegetatif Akhir (Pertumbuhan Batang)";
-            phaseIcon = "🌿";
-            targetPpm = "1000 - 1200 PPM";
-            actionAdvice = "Lakukan Wiwi (Pruning cabang air) & persiap pembungaan.";
-        } else if (maxHst <= 45) {
-            phaseName = "Generatif / Polinasi Bunga";
-            phaseIcon = "🌸";
-            targetPpm = "1200 - 1400 PPM";
-            actionAdvice = "Lakukan polinasi buatan di jam 07.00 - 10.00 pagi.";
-        } else if (maxHst <= 65) {
-            phaseName = "Pembesaran Buah & Netting";
-            phaseIcon = "🍈";
-            targetPpm = "1400 - 1800 PPM";
-            actionAdvice = "Seleksi 1 buah terbaik & gantung buah secara presisi.";
-        } else {
-            phaseName = "Pematangan Buah (Ripening / Brix)";
-            phaseIcon = "✨";
-            targetPpm = "1200 - 1400 PPM";
-            actionAdvice = "Turunkan air bertahap untuk menaikkan kadar kemanisan (Brix).";
-        }
-
-        var totalTargetDays = 75; // Standar Panen Melon Hidroponik
-        var percentHst = Math.min(Math.round((maxHst / totalTargetDays) * 100), 100);
-
-        var estHarvestDateStr = "Memuat...";
-        if (earlesDate) {
-            var targetPanen = new Date(earlesDate);
-            targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
-            estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-        } else {
-            estHarvestDateStr = totalTargetDays + " Hari dari Tanam";
-        }
-
-        var estKg = Math.round(targetBuah * 1.5); // Rata-rata 1.5 Kg / buah
-        var hargaPerKg = 25000; // Harga Melon Premium Hydroponic
-        var estOmzet = estKg * hargaPerKg;
-
+    if (filteredTanaman.length === 0) {
         el.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
-                <div style="background: #E8F5E9; padding: 10px; border-radius: 8px; border: 1px solid #C8E6C9;">
-                    <div style="font-size: 10px; color: #2E7D32; font-weight: bold; text-transform: uppercase;">Status Fase Tanam</div>
-                    <div style="font-size: 12px; font-weight: 800; color: #1B5E20; margin-top: 2px;">${phaseIcon} ${phaseName}</div>
-                    <div style="font-size: 10px; color: #4CAF50; margin-top: 2px; font-weight: 600;">HST ${maxHst} / ${totalTargetDays} Hari</div>
-                </div>
-
-                <div style="background: #E1F5FE; padding: 10px; border-radius: 8px; border: 1px solid #B3E5FC;">
-                    <div style="font-size: 10px; color: #0277BD; font-weight: bold; text-transform: uppercase;">Estimasi Tanggal Panen</div>
-                    <div style="font-size: 12px; font-weight: 800; color: #01579B; margin-top: 2px;">📅 ${estHarvestDateStr}</div>
-                    <div style="font-size: 10px; color: #0288D1; margin-top: 2px; font-weight: 600;">Varietas: ${varietasStr}</div>
-                </div>
-            </div>
-
-            <!-- Visual Progress Bar Fase -->
-            <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; font-weight: 700;">
-                    <span style="color: #333;">Progress Musim (${selectedGh})</span>
-                    <span style="color: #2E7D32;">${percentHst}%</span>
-                </div>
-                <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden;">
-                    <div style="width: ${percentHst}%; background: linear-gradient(90deg, #4CAF50 0%, #2E7D32 100%); height: 100%; transition: width 0.5s ease;"></div>
-                </div>
-            </div>
-
-            <!-- Target Nutrisi & Rekomendasi Fase -->
-            <div style="background: #FFF8E1; padding: 8px 10px; border-radius: 8px; border: 1px solid #FFE082; font-size: 11px; margin-bottom: 12px;">
-                <span style="font-weight: bold; color: #F57F17;"><i class="fas fa-lightbulb"></i> Rekomendasi Fase:</span>
-                <span style="color: #5D4037;">${actionAdvice} (Target Air: <strong>${targetPpm}</strong>)</span>
-            </div>
-
-            <!-- Omzet & Tonase Indicator -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #DDD; padding-top: 8px; font-size: 11px;">
-                <div>
-                    <span style="color: #777;">Proyeksi Hasil:</span> 
-                    <strong style="color: #333;">${targetBuah} Buah (~${estKg} Kg)</strong>
-                </div>
-                <div>
-                    <span style="color: #777;">Est. Omzet:</span> 
-                    <strong style="color: #2E7D32; font-size: 12px;">Rp ${estOmzet.toLocaleString('id-ID')}</strong>
-                </div>
+            <div style="background: #FAFFA0; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 11px; border: 1px dashed #DDD;">
+                Belum ada tanaman aktif di <strong>${selectedGh}</strong>.
             </div>
         `;
+        return;
     }
+
+    // 1. HITUNG HST & TANGGAL PANEN
+    var maxHst = 0;
+    var earliestDate = null;
+    var uniqueHoles = new Set();
+    var varietasSet = new Set();
+
+    filteredTanaman.forEach(function(t) {
+        if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
+        if (t.varietas) varietasSet.add(t.varietas);
+
+        if (t.tanggal) {
+            var dTanam = new Date(t.tanggal);
+            if (!earliestDate || dTanam < earliestDate) earliestDate = dTanam;
+            var diff = new Date() - dTanam;
+            var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+            if (hstVal > maxHst) maxHst = hstVal;
+        } else {
+            var hstNum = parseFloat(t.hst) || 0;
+            if (hstNum > maxHst) maxHst = hstNum;
+        }
+    });
+
+    var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
+    var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
+    var totalTargetDays = 75;
+    var sisaHari = Math.max(0, totalTargetDays - maxHst);
+    var percentHst = Math.min(Math.round((maxHst / totalTargetDays) * 100), 100);
+
+    var estHarvestDateStr = "-";
+    if (earliestDate) {
+        var targetPanen = new Date(earliestDate);
+        targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
+        estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // 2. DETEKSI FASE AKSI
+    var currentStep = 1; // 1: Veg Awal, 2: Vegetatif, 3: Polinasi, 4: Pembesaran/Panen
+    var phaseTitle = "Vegetatif Awal";
+
+    if (maxHst > 14 && maxHst <= 30) {
+        currentStep = 2;
+        phaseTitle = "Vegetatif Lanjutan";
+    } else if (maxHst > 30 && maxHst <= 45) {
+        currentStep = 3;
+        phaseTitle = "Masa Polinasi";
+    } else if (maxHst > 45) {
+        currentStep = 4;
+        phaseTitle = "Pembesaran & Panen";
+    }
+
+    // 3. HITUNG BUAH FIX (JIKA SUDAH POLINASI)
+    var totalBuahFix = 0;
+    var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
+    filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
+
+    // 4. RENDER TAMPILAN MINIMALIS & STRUKTURAL
+    el.innerHTML = `
+        <!-- HEADER RINGKAS -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px;">
+            <div>
+                <span style="font-size: 10px; background: #E8F5E9; color: #2E7D32; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase;">${phaseTitle}</span>
+                <div style="font-size: 18px; font-weight: 800; color: #1B5E20; margin-top: 4px;">
+                    ${maxHst} <span style="font-size: 12px; font-weight: normal; color: #666;">/ ${totalTargetDays} HST</span>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 10px; color: #888;">Estimasi Panen</div>
+                <div style="font-size: 12px; font-weight: bold; color: #0277BD;">📅 ${estHarvestDateStr}</div>
+                <div style="font-size: 10px; color: #666;">(${sisaHari} Hari Lagi)</div>
+            </div>
+        </div>
+
+        <!-- TIMELINE 4 FASE (STEPPER) -->
+        <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 14px; padding: 0 5px;">
+            <div style="position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: #E0E0E0; z-index: 1;"></div>
+            <div style="position: absolute; top: 10px; left: 10px; width: ${((currentStep - 1) / 3) * 100}%; height: 3px; background: #2E7D32; z-index: 1; transition: width 0.3s ease;"></div>
+
+            <div style="text-align: center; position: relative; z-index: 2;">
+                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 1 ? '#2E7D32' : '#FFF'}; border: 2px solid #2E7D32; color: ${currentStep >= 1 ? '#FFF' : '#2E7D32'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">1</div>
+                <span style="font-size: 9px; color: ${currentStep === 1 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 1 ? 'bold' : 'normal'};">Veg Awal</span>
+            </div>
+
+            <div style="text-align: center; position: relative; z-index: 2;">
+                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 2 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">2</div>
+                <span style="font-size: 9px; color: ${currentStep === 2 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 2 ? 'bold' : 'normal'};">Vegetatif</span>
+            </div>
+
+            <div style="text-align: center; position: relative; z-index: 2;">
+                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 3 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">3</div>
+                <span style="font-size: 9px; color: ${currentStep === 3 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 3 ? 'bold' : 'normal'};">Polinasi</span>
+            </div>
+
+            <div style="text-align: center; position: relative; z-index: 2;">
+                <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 4 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">4</div>
+                <span style="font-size: 9px; color: ${currentStep === 4 ? '#2E7D32' : '#888'}; font-weight: ${currentStep === 4 ? 'bold' : 'normal'};">Pembesaran</span>
+            </div>
+        </div>
+
+        <!-- KETERANGAN KONDISIONAL (POPULASI / OMZET) -->
+        <div style="background: #F9F9F9; padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+            <div>
+                <span style="color: #666;">Populasi Aktif:</span>
+                <strong style="color: #333;">${totalPopulasi} Pohon</strong> (${varietasStr})
+            </div>
+            ${
+                totalBuahFix > 0
+                ? `<div><span style="color: #666;">Buah Fix:</span> <strong style="color: #E65100;">${totalBuahFix} Buah (~${Math.round(totalBuahFix * 1.5)} Kg)</strong></div>`
+                : `<div style="color: #888; font-size: 10px; style="font-style: italic;">*Estimasi panen dihitung setelah Polinasi</div>`
+            }
+        </div>
+    `;
+     }
+    
 
     // ==========================================
     // REVISI AUDIT LOG: DE-DUPLIKASI & SINKRONISASI REAL-TIME
