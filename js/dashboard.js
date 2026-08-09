@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (FULL FIX FIX TIMEZONE & FUTURE TANAM)
+// COZYCS FARM - EXECUTIVE DASHBOARD (SINKRONISASI REAL-TIME & FULL FIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -107,7 +107,7 @@ var dashboard = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // HELPER: PARSE DATE MURNI (TANPA JAM UNTUK MENCEGAH TIMEZONE SHIFT)
+    // HELPER: PARSE TANGGAL MURNI KELAS LOKAL (MENCEGAH SHIFT TIMEZONE UTC)
     function parseLocalDate(dateStr) {
         if (!dateStr) return null;
         if (dateStr instanceof Date) {
@@ -129,6 +129,24 @@ var dashboard = (function() {
             return parsed;
         }
         return null;
+    }
+
+    // MEMBACA DATA LANGSUNG DARI LOCALSTORAGE (MENCEGAH CACHE LAMA)
+    function getData(key) {
+        try {
+            var raw = localStorage.getItem(key);
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
+                var res = Storage.getAll(key);
+                if (Array.isArray(res) && res.length > 0) return res;
+            }
+        } catch(e) {
+            console.error('[Dashboard] Gagal membaca data ' + key, e);
+        }
+        return [];
     }
 
     function render() {
@@ -225,6 +243,18 @@ var dashboard = (function() {
 
         window.removeEventListener('cozycs_data_changed', refreshAllDashboardData);
         window.addEventListener('cozycs_data_changed', refreshAllDashboardData);
+
+        window.removeEventListener('focus', refreshAllDashboardData);
+        window.addEventListener('focus', refreshAllDashboardData);
+
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    function handleVisibilityChange() {
+        if (!document.hidden) {
+            refreshAllDashboardData();
+        }
     }
 
     function logActivity(title, desc, gh, type) {
@@ -249,10 +279,9 @@ var dashboard = (function() {
             logs.unshift(newEntry);
             if (logs.length > 100) logs = logs.slice(0, 100);
 
+            localStorage.setItem('cozycs_aktivitas', JSON.stringify(logs));
             if (typeof Storage !== 'undefined' && Storage.saveAll) {
                 Storage.saveAll('cozycs_aktivitas', logs);
-            } else {
-                localStorage.setItem('cozycs_aktivitas', JSON.stringify(logs));
             }
 
             window.dispatchEvent(new Event('cozycs_data_changed'));
@@ -270,23 +299,6 @@ var dashboard = (function() {
         setTimeout(function() {
             if (iconEl) iconEl.classList.remove('spinning');
         }, 600);
-    }
-
-    function getData(key) {
-        try {
-            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
-                var res = Storage.getAll(key);
-                if (Array.isArray(res) && res.length > 0) return res;
-            }
-            var raw = localStorage.getItem(key);
-            if (raw) {
-                var parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) return parsed;
-            }
-        } catch(e) {
-            console.error('[Dashboard] Gagal membaca data ' + key, e);
-        }
-        return [];
     }
 
     function startLiveClock() {
@@ -512,7 +524,7 @@ var dashboard = (function() {
             var tPop = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
 
             var subtitle = 'Masa Sterilisasi (Kosong)';
-            var tTanamGH = parseLocalDate(g.tanam || g.tglTanam || (filteredTanaman[0] ? filteredTanaman[0].tanggal : null));
+            var tTanamGH = parseLocalDate(g.tanam || g.tglTanam || g.tanggalTanam || g.beroperasi || (filteredTanaman[0] ? filteredTanaman[0].tanggal : null));
 
             if (tTanamGH) {
                 var varietasName = (filteredTanaman[0] && filteredTanaman[0].varietas) ? filteredTanaman[0].varietas : (g.varietas || 'Melon');
@@ -810,8 +822,24 @@ var dashboard = (function() {
     }
 
     // ==========================================
-    // INTEGRASI TANGGAL PANEN & PERHITUNGAN HST PRESISI
+    // INTEGRASI PRESISI & PERHITUNGAN SINKRON DENGAN DATA GREENHOUSE
     // ==========================================
+    function parseGhDates(gh) {
+        if (!gh) return { tanam: null, target: null };
+        var targetStr = gh.target || gh.targetPanen || gh.tglTarget || gh.estimasiPanen || gh.tglPanen || gh.siklusTarget || gh.targetDate || gh.tanggalTarget || gh.tanggalPanen || gh.target_panen || gh.tgl_target;
+        var tanamStr = gh.tanam || gh.tglTanam || gh.tanggalTanam || gh.beroperasi || gh.siklusTanam || gh.tanamDate || gh.tgl_tanam || gh.tanggal_tanam;
+
+        if (gh.siklus) {
+            targetStr = targetStr || gh.siklus.target || gh.siklus.targetPanen;
+            tanamStr = tanamStr || gh.siklus.tanam || gh.siklus.tglTanam;
+        }
+
+        return {
+            tanam: parseLocalDate(tanamStr),
+            target: parseLocalDate(targetStr)
+        };
+    }
+
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -820,7 +848,6 @@ var dashboard = (function() {
         var dataTanaman = getData('cozycs_tanaman');
         var dataBuah = getData('cozycs_buah');
 
-        // Hari Ini Murni 00:00:00 (Misal 09 Agustus 2026)
         var today = parseLocalDate(new Date());
 
         var targetGhList = (selectedGh === 'ALL') 
@@ -834,18 +861,15 @@ var dashboard = (function() {
         var explicitTanamDate = null;
         var explicitHarvestDate = null;
 
-        // 1. Ekstrak Tanggal Tanam & Target dari GH
+        // 1. Ambil Tanggal Tanam & Target Langsung dari Data Greenhouse Terbaru
         for (var i = 0; i < targetGhList.length; i++) {
-            var g = targetGhList[i];
-            var tTarget = parseLocalDate(g.target || g.targetPanen || g.tglTarget || g.estimasiPanen);
-            var tTanam = parseLocalDate(g.tanam || g.tglTanam || g.tanggalTanam || g.beroperasi);
-
-            if (tTarget) explicitHarvestDate = tTarget;
-            if (tTanam) explicitTanamDate = tTanam;
-            if (explicitTanamDate && explicitHarvestDate) break;
+            var gDates = parseGhDates(targetGhList[i]);
+            if (gDates.target) explicitHarvestDate = gDates.target;
+            if (gDates.tanam) explicitTanamDate = gDates.tanam;
+            if (explicitHarvestDate && explicitTanamDate) break;
         }
 
-        // Jika belum ada di data GH, cari dari data Tanaman
+        // Jika belum ada di GH, fallback pencarian ke data Tanaman
         if (!explicitTanamDate || !explicitHarvestDate) {
             filteredTanaman.forEach(function(t) {
                 var tglT = parseLocalDate(t.tanggal || t.tanam || t.tglTanam);
@@ -864,8 +888,8 @@ var dashboard = (function() {
             return;
         }
 
-        // 2. Hitung Siklus Panen & HST Real
-        var totalTargetDays = 63; // Fallback standar (misal 13 Ags ke 15 Okt)
+        // 2. Hitung Target HST Secara Dinamis (Contoh: 13 Ags ke 17 Okt = 65 HST)
+        var totalTargetDays = 65; 
         if (explicitHarvestDate && explicitTanamDate && explicitHarvestDate > explicitTanamDate) {
             totalTargetDays = Math.round((explicitHarvestDate - explicitTanamDate) / (1000 * 60 * 60 * 24));
         }
@@ -876,19 +900,17 @@ var dashboard = (function() {
 
         if (explicitTanamDate) {
             if (today < explicitTanamDate) {
-                // KONDISI: TANGGAL TANAM BELUM TIBA (Misal Hari ini 9 Ags, Tanam 13 Ags)
                 isBelumTanam = true;
                 daysToTanam = Math.round((explicitTanamDate - today) / (1000 * 60 * 60 * 24));
-                maxHst = 0; // Tetap 0 HST
+                maxHst = 0;
             } else {
-                // KONDISI: SUDAH MASUK MASA TANAM
                 maxHst = Math.floor((today - explicitTanamDate) / (1000 * 60 * 60 * 24));
             }
         }
 
         var sisaHari = isBelumTanam ? totalTargetDays : Math.max(0, totalTargetDays - maxHst);
 
-        // Format Tampilan Tanggal Panen
+        // Formating Tanggal Panen yang Sinkron
         var estHarvestDateStr = "-";
         if (explicitHarvestDate) {
             estHarvestDateStr = explicitHarvestDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -942,7 +964,7 @@ var dashboard = (function() {
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
-        // 6. Render UI
+        // 6. Render UI Dashboard
         el.innerHTML = `
             <!-- HEADER RINGKAS -->
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px;">
@@ -1169,10 +1191,9 @@ var dashboard = (function() {
                 item.status = 'Selesai';
                 item.completed = true;
             }
+            localStorage.setItem(keyName, JSON.stringify(schedules));
             if (typeof Storage !== 'undefined' && Storage.saveAll) {
                 Storage.saveAll(keyName, schedules);
-            } else {
-                localStorage.setItem(keyName, JSON.stringify(schedules));
             }
         }
         loadTodayAgenda();
