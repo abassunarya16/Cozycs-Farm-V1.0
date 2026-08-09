@@ -4,14 +4,14 @@
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[App] Cozycs Farm 1.0 starting...');
+    console.log('[App] Cozycs Farm starting...');
 
     // 1. Inisialisasi Storage & Database Lokal
     if (typeof Storage !== 'undefined' && typeof Storage.init === 'function') {
         Storage.init();
     }
 
-    // 2. Inisialisasi Router & Navigasi
+    // 2. Inisialisasi Router & Navigasi (Jika ada modul Router terpisah)
     if (typeof Router !== 'undefined' && typeof Router.init === 'function') {
         Router.init();
     }
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 5. Daftarkan Service Worker (PWA)
     registerServiceWorker();
 
-    // 6. Jalankan Animasi Splash Screen (Loading Pembuka)
+    // 6. Jalankan Animasi Splash Screen (Jika elemennya ada)
     runSplashScreen();
 });
 
@@ -59,7 +59,7 @@ function initGlobalDraftSystem() {
     });
 
     // C. Amati perubahan tampilan/modul agar form baru yang dirender otomatis memulihkan drafnya
-    var appContainer = document.getElementById('appContainer');
+    var appContainer = document.getElementById('mainContent') || document.getElementById('appContainer') || document.body;
     if (appContainer && window.MutationObserver) {
         var observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
@@ -108,6 +108,11 @@ window.restoreFormDraftGlobal = function(formId) {
             var input = document.getElementById(inputId);
             if (input && formData[inputId] !== undefined && formData[inputId] !== '') {
                 input.value = formData[inputId];
+                // Pemicu otomatis jika ada event listener onchange (seperti toggle kategori)
+                if (input.tagName === 'SELECT') {
+                    var event = new Event('change', { bubbles: true });
+                    input.dispatchEvent(event);
+                }
             }
         });
     } catch(e) {}
@@ -123,7 +128,7 @@ window.clearFormDraftGlobal = function(formId) {
 // Fungsi untuk mendaftarkan Service Worker
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
             .then(function(registration) {
                 console.log('[App] ServiceWorker registered with scope:', registration.scope);
             })
@@ -136,11 +141,11 @@ function registerServiceWorker() {
 // Fungsi animasi Splash Screen yang elegan
 function runSplashScreen() {
     var splash = document.getElementById('splashScreen');
-    var appContainer = document.getElementById('appContainer');
+    var appMain = document.getElementById('mainContent') || document.getElementById('appContainer');
     var loaderBar = document.getElementById('splashLoaderBar');
     var loadingText = document.getElementById('splashLoadingText');
 
-    if (!splash || !appContainer) return;
+    if (!splash) return;
 
     var progress = 0;
     var interval = setInterval(function() {
@@ -154,13 +159,15 @@ function runSplashScreen() {
             clearInterval(interval);
             setTimeout(function() {
                 splash.classList.add('hide');
-                appContainer.style.display = 'block';
+                if (appMain) appMain.style.display = 'block';
                 
                 // Pulihkan draf pada form aktif saat aplikasi selesai dimuat
-                var activeForms = appContainer.querySelectorAll('form[id]');
-                activeForms.forEach(function(f) {
-                    window.restoreFormDraftGlobal(f.id);
-                });
+                if (appMain) {
+                    var activeForms = appMain.querySelectorAll('form[id]');
+                    activeForms.forEach(function(f) {
+                        window.restoreFormDraftGlobal(f.id);
+                    });
+                }
 
                 setTimeout(function() {
                     splash.style.display = 'none';
@@ -168,4 +175,4 @@ function runSplashScreen() {
             }, 300);
         }
     }, 150);
-    }
+}
