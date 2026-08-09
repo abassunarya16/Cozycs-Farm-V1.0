@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (AUTO-AUDIT LOG & FULL FIX)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REVISED & FULL FIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -50,7 +50,7 @@ var dashboard = (function() {
             'today_agenda': 'Agenda Hari Ini',
             'today': 'Hari Ini',
             'no_agenda': 'Tidak ada agenda kegiatan untuk hari ini.',
-            'season_progress': 'Progress Musim & Estimasi Hasil',
+            'season_progress': 'Progress Musim & Analisis Fase Tanam',
             'recent_act': 'Aktivitas Terakhir (Audit Log)',
             'no_logs': 'Belum ada riwayat aktivitas tercatat.',
             'quick_action': 'Quick Action / Input Cepat',
@@ -89,7 +89,7 @@ var dashboard = (function() {
             'today_agenda': "Today's Agenda",
             'today': 'Today',
             'no_agenda': 'No scheduled activities for today.',
-            'season_progress': 'Season Progress & Estimated Yield',
+            'season_progress': 'Season Progress & Growth Phase Analysis',
             'recent_act': 'Recent Activities (Audit Log)',
             'no_logs': 'No activity logs recorded yet.',
             'quick_action': 'Quick Action / Fast Input',
@@ -112,6 +112,8 @@ var dashboard = (function() {
             <style>
                 .gh-slider::-webkit-scrollbar { display: none; }
                 .gh-slider { -ms-overflow-style: none; scrollbar-width: none; }
+                @keyframes spinIcon { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .spinning { animation: spinIcon 0.8s linear infinite; }
             </style>
 
             <div class="dashboard-container" style="padding-bottom: 30px;">
@@ -153,17 +155,19 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 4. PROGRESS MUSIM & ESTIMASI OMZET -->
+                <!-- 4. PROGRESS MUSIM & ANALISIS FASE TANAM (INTERAKTIF & MANAJERIAL) -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 700; color: #2E7D32; margin-bottom: 10px;"><i class="fas fa-seedling" style="margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 5. AKTIVITAS TERAKHIR (AUTO AUDIT LOG) -->
+                <!-- 5. AKTIVITAS TERAKHIR (AUDIT LOG - FIX REFRESH & SINKRON) -->
                 <div style="background: var(--card-bg, #fff); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 700; color: #424242;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
-                        <button onclick="dashboard.refreshAllDashboardData()" style="background: none; border: none; color: #0277BD; font-size: 11px; cursor: pointer; font-weight: bold;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        <button id="btnManualRefreshLog" onclick="dashboard.manualRefreshLogs()" style="background: #E1F5FE; border: 1px solid #B3E5FC; color: #0277BD; font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                            <i id="iconRefreshBtn" class="fas fa-sync-alt"></i> Refresh
+                        </button>
                     </div>
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
@@ -191,7 +195,6 @@ var dashboard = (function() {
         setupEventListeners();
     }
 
-    // LISTENER REFRESH OTOMATIS SAAT ADA EVENT DATA DARI MODUL LAIN
     function setupEventListeners() {
         window.removeEventListener('storage', refreshAllDashboardData);
         window.addEventListener('storage', refreshAllDashboardData);
@@ -200,7 +203,6 @@ var dashboard = (function() {
         window.addEventListener('cozycs_data_changed', refreshAllDashboardData);
     }
 
-    // FUNGSI UTAMA PENULISAN AUDIT LOG GLOBAL (BISA DIPANGGIL SELURUH MODUL)
     function logActivity(title, desc, gh, type) {
         try {
             var logs = getData('cozycs_aktivitas');
@@ -233,6 +235,17 @@ var dashboard = (function() {
         } catch(e) {
             console.error('[Dashboard] Gagal mencatat log aktivitas', e);
         }
+    }
+
+    function manualRefreshLogs() {
+        var iconEl = document.getElementById('iconRefreshBtn');
+        if (iconEl) iconEl.classList.add('spinning');
+        
+        refreshAllDashboardData();
+
+        setTimeout(function() {
+            if (iconEl) iconEl.classList.remove('spinning');
+        }, 600);
     }
 
     function getData(key) {
@@ -771,158 +784,255 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
+    // ==========================================
+    // REVISI TOTAL: WIDGET FASE TANAM & TARGET PANEN MANAJERIAL
+    // ==========================================
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
 
         var dataTanaman = getData('cozycs_tanaman');
         var dataPolinasi = getData('cozycs_polinasi');
+        var dataBuah = getData('cozycs_buah');
 
-        var totalBatang = 0;
-        var maxHst = 0;
         var filteredTanaman = (selectedGh === 'ALL') ? dataTanaman : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
         
+        if (filteredTanaman.length === 0) {
+            el.innerHTML = `
+                <div style="background: #F9F9F9; border: 1px dashed #DDD; padding: 14px; border-radius: 10px; text-align: center; color: #777; font-size: 12px;">
+                    <i class="fas fa-info-circle" style="color: #0277BD; font-size: 18px; margin-bottom: 4px; display: block;"></i>
+                    Belum ada tanaman aktif di <strong>${selectedGh}</strong>. Silakan input tanam baru di modul Tanaman.
+                </div>
+            `;
+            return;
+        }
+
+        var maxHst = 0;
+        var earlesDate = null;
         var uniqueHoles = new Set();
+        var varietasSet = new Set();
+
         filteredTanaman.forEach(function(t) {
             if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
+            if (t.varietas) varietasSet.add(t.varietas);
             
-            var hstVal = 0;
             if (t.tanggal) {
-                var diff = new Date() - new Date(t.tanggal);
-                hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+                var dTanam = new Date(t.tanggal);
+                if (!earlesDate || dTanam < earlesDate) earlesDate = dTanam;
+                
+                var diff = new Date() - dTanam;
+                var hstVal = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+                if (hstVal > maxHst) maxHst = hstVal;
             } else {
-                hstVal = parseFloat(t.hst) || 0;
+                var hstNum = parseFloat(t.hst) || 0;
+                if (hstNum > maxHst) maxHst = hstNum;
             }
-            if (hstVal > maxHst) maxHst = hstVal;
         });
 
-        totalBatang = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
+        var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
+        var varietasStr = Array.from(varietasSet).join(', ') || 'Melon Premium';
 
-        var totalPolinasi = 0;
-        var filteredPolinasi = (selectedGh === 'ALL') ? dataPolinasi : dataPolinasi.filter(function(p) { return (p.gh === selectedGh || p.ghId === selectedGh); });
-        filteredPolinasi.forEach(function(p) {
-            totalPolinasi += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || parseFloat(p.jumlahFix) || 0);
-        });
+        var totalBuahFix = 0;
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
+        filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
-        var percentHst = Math.min(Math.round((maxHst / 80) * 100), 100);
-        var estimasiKg = totalPolinasi > 0 ? (totalPolinasi * 1.5) : (totalBatang * 1.5);
-        var hargaPerKg = 20000;
-        var estimasiOmzet = estimasiKg * hargaPerKg;
+        var targetBuah = totalBuahFix > 0 ? totalBuahFix : totalPopulasi;
+
+        // KALKULASI FASE TUMBUH BERDASARKAN HST REAL
+        var phaseName = "Vegetatif Awal";
+        var phaseIcon = "🌱";
+        var targetPpm = "800 - 1000 PPM";
+        var actionAdvice = "Fokus pembentukan perakaran & pertambahan daun.";
+
+        if (maxHst <= 14) {
+            phaseName = "Vegetatif Awal (Perakaran)";
+            phaseIcon = "🌱";
+            targetPpm = "800 - 1000 PPM";
+            actionAdvice = "Jaga kelembaban & berikan nutrisi tinggi Nitrogen.";
+        } else if (maxHst <= 30) {
+            phaseName = "Vegetatif Akhir (Pertumbuhan Batang)";
+            phaseIcon = "🌿";
+            targetPpm = "1000 - 1200 PPM";
+            actionAdvice = "Lakukan Wiwi (Pruning cabang air) & persiap pembungaan.";
+        } else if (maxHst <= 45) {
+            phaseName = "Generatif / Polinasi Bunga";
+            phaseIcon = "🌸";
+            targetPpm = "1200 - 1400 PPM";
+            actionAdvice = "Lakukan polinasi buatan di jam 07.00 - 10.00 pagi.";
+        } else if (maxHst <= 65) {
+            phaseName = "Pembesaran Buah & Netting";
+            phaseIcon = "🍈";
+            targetPpm = "1400 - 1800 PPM";
+            actionAdvice = "Seleksi 1 buah terbaik & gantung buah secara presisi.";
+        } else {
+            phaseName = "Pematangan Buah (Ripening / Brix)";
+            phaseIcon = "✨";
+            targetPpm = "1200 - 1400 PPM";
+            actionAdvice = "Turunkan air bertahap untuk menaikkan kadar kemanisan (Brix).";
+        }
+
+        var totalTargetDays = 75; // Standar Panen Melon Hidroponik
+        var percentHst = Math.min(Math.round((maxHst / totalTargetDays) * 100), 100);
+
+        var estHarvestDateStr = "Memuat...";
+        if (earlesDate) {
+            var targetPanen = new Date(earlesDate);
+            targetPanen.setDate(targetPanen.getDate() + totalTargetDays);
+            estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        } else {
+            estHarvestDateStr = totalTargetDays + " Hari dari Tanam";
+        }
+
+        var estKg = Math.round(targetBuah * 1.5); // Rata-rata 1.5 Kg / buah
+        var hargaPerKg = 25000; // Harga Melon Premium Hydroponic
+        var estOmzet = estKg * hargaPerKg;
 
         el.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                <span><strong>Progress (${selectedGh})</strong>: ${percentHst}% (${maxHst} HST)</span>
-                <span style="font-weight: bold; color: #2E7D32;">Est: Rp ${estimasiOmzet.toLocaleString('id-ID')}</span>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
+                <div style="background: #E8F5E9; padding: 10px; border-radius: 8px; border: 1px solid #C8E6C9;">
+                    <div style="font-size: 10px; color: #2E7D32; font-weight: bold; text-transform: uppercase;">Status Fase Tanam</div>
+                    <div style="font-size: 12px; font-weight: 800; color: #1B5E20; margin-top: 2px;">${phaseIcon} ${phaseName}</div>
+                    <div style="font-size: 10px; color: #4CAF50; margin-top: 2px; font-weight: 600;">HST ${maxHst} / ${totalTargetDays} Hari</div>
+                </div>
+
+                <div style="background: #E1F5FE; padding: 10px; border-radius: 8px; border: 1px solid #B3E5FC;">
+                    <div style="font-size: 10px; color: #0277BD; font-weight: bold; text-transform: uppercase;">Estimasi Tanggal Panen</div>
+                    <div style="font-size: 12px; font-weight: 800; color: #01579B; margin-top: 2px;">📅 ${estHarvestDateStr}</div>
+                    <div style="font-size: 10px; color: #0288D1; margin-top: 2px; font-weight: 600;">Varietas: ${varietasStr}</div>
+                </div>
             </div>
-            <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">
-                <div style="width: ${percentHst}%; background: #2E7D32; height: 100%;"></div>
+
+            <!-- Visual Progress Bar Fase -->
+            <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; font-weight: 700;">
+                    <span style="color: #333;">Progress Musim (${selectedGh})</span>
+                    <span style="color: #2E7D32;">${percentHst}%</span>
+                </div>
+                <div style="width: 100%; background: #E0E0E0; height: 10px; border-radius: 5px; overflow: hidden;">
+                    <div style="width: ${percentHst}%; background: linear-gradient(90deg, #4CAF50 0%, #2E7D32 100%); height: 100%; transition: width 0.5s ease;"></div>
+                </div>
             </div>
-            <div style="font-size: 10px; color: #666;">*Calc: ${estimasiKg} Kg × Rp ${hargaPerKg.toLocaleString('id-ID')}/Kg</div>
+
+            <!-- Target Nutrisi & Rekomendasi Fase -->
+            <div style="background: #FFF8E1; padding: 8px 10px; border-radius: 8px; border: 1px solid #FFE082; font-size: 11px; margin-bottom: 12px;">
+                <span style="font-weight: bold; color: #F57F17;"><i class="fas fa-lightbulb"></i> Rekomendasi Fase:</span>
+                <span style="color: #5D4037;">${actionAdvice} (Target Air: <strong>${targetPpm}</strong>)</span>
+            </div>
+
+            <!-- Omzet & Tonase Indicator -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #DDD; padding-top: 8px; font-size: 11px;">
+                <div>
+                    <span style="color: #777;">Proyeksi Hasil:</span> 
+                    <strong style="color: #333;">${targetBuah} Buah (~${estKg} Kg)</strong>
+                </div>
+                <div>
+                    <span style="color: #777;">Est. Omzet:</span> 
+                    <strong style="color: #2E7D32; font-size: 12px;">Rp ${estOmzet.toLocaleString('id-ID')}</strong>
+                </div>
+            </div>
         `;
     }
 
-    // PEMBACAAN DAN PENGURUTAN AUDIT LOG SERTA AUTO-SINKRONISASI SEMUA MODUL
+    // ==========================================
+    // REVISI AUDIT LOG: DE-DUPLIKASI & SINKRONISASI REAL-TIME
+    // ==========================================
     function loadRecentActivities() {
         var el = document.getElementById('dashRecentActivities');
         if (!el) return;
 
         var allLogs = [];
 
-        // 1. Ambil dari log eksplisit
+        // 1. Ambil dari log aktivitas eksplisit (Prioritas Utama)
         var explicitLogs = getData('cozycs_aktivitas');
         if (explicitLogs.length === 0) explicitLogs = getData('cozycs_activities');
         if (explicitLogs.length === 0) explicitLogs = getData('cozycs_logs');
 
-        explicitLogs.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.timestamp || item.created_at || (item.tanggal ? (item.tanggal + 'T' + (item.jam || '00:00') + ':00') : new Date().toISOString()),
-                jam: item.jam || item.waktu || 'Baru',
-                text: item.judul || item.text || item.kegiatan || 'Aktivitas',
-                desc: item.deskripsi || item.keterangan || '',
-                gh: item.gh || 'ALL'
+        if (explicitLogs.length > 0) {
+            explicitLogs.forEach(function(item) {
+                allLogs.push({
+                    timestamp: item.timestamp || item.created_at || (item.tanggal ? (item.tanggal + 'T' + (item.jam || '00:00') + ':00') : new Date().toISOString()),
+                    jam: item.jam || item.waktu || 'Baru',
+                    text: item.judul || item.text || item.kegiatan || 'Aktivitas',
+                    desc: item.deskripsi || item.keterangan || '',
+                    gh: item.gh || 'ALL'
+                });
             });
-        });
+        } else {
+            // 2. Jika log khusus belum ada, gabungkan & DE-DUPLIKASI data dari modul-modul lain
+            var allTanaman = getData('cozycs_tanaman') || [];
+            var allNutrisi = getData('cozycs_nutrisi') || [];
+            var allPanen = getData('cozycs_panen') || [];
+            var allBuah = getData('cozycs_buah') || [];
+            var allSpray = getData('cozycs_spray') || [];
 
-        // 2. Auto-aggregate dari modul-modul lain jika data aktivitas terpisah
-        var allTanaman = getData('cozycs_tanaman') || [];
-        var allNutrisi = getData('cozycs_nutrisi') || [];
-        var allPanen = getData('cozycs_panen') || [];
-        var allBuah = getData('cozycs_buah') || [];
-        var allSpray = getData('cozycs_spray') || [];
-        var allHama = getData('cozycs_hama') || [];
-        var allGudang = getData('cozycs_gudang') || [];
-
-        allTanaman.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Tanam: ' + (item.varietas || 'Melon'),
-                desc: 'GH: ' + (item.gh || 'GH') + ' | Jumlah: ' + (item.jumlah || 1),
-                gh: item.gh || 'ALL'
+            // DE-DUPLIKASI BATANAG TANAMAN (Mencegah input 5x muncul 5 baris identik)
+            var plantGroupMap = {};
+            allTanaman.forEach(function(item) {
+                var groupKey = (item.varietas || 'Melon') + '_' + (item.gh || 'GH') + '_' + (item.tanggal || 'Today');
+                if (!plantGroupMap[groupKey]) {
+                    plantGroupMap[groupKey] = {
+                        timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                        jam: item.jam || item.waktu || 'Tercatat',
+                        varietas: item.varietas || 'Melon',
+                        gh: item.gh || 'GH',
+                        totalJumlah: 0
+                    };
+                }
+                plantGroupMap[groupKey].totalJumlah += (parseFloat(item.jumlah) || 1);
             });
-        });
 
-        allNutrisi.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Nutrisi: ' + (item.ppm || 0) + ' PPM',
-                desc: 'pH: ' + (item.ph || '-') + ' | GH: ' + (item.gh || 'GH'),
-                gh: item.gh || 'ALL'
+            Object.values(plantGroupMap).forEach(function(g) {
+                allLogs.push({
+                    timestamp: g.timestamp,
+                    jam: g.jam,
+                    text: 'Tanam: ' + g.varietas,
+                    desc: 'GH: ' + g.gh + ' | Total: ' + g.totalJumlah + ' Pohon',
+                    gh: g.gh
+                });
             });
-        });
 
-        allSpray.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Penyemprotan Spray',
-                desc: (item.bahan || item.pestisida || 'Aplikasi Spray') + ' (' + (item.gh || 'GH') + ')',
-                gh: item.gh || 'ALL'
+            allNutrisi.forEach(function(item) {
+                allLogs.push({
+                    timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                    jam: item.jam || item.waktu || 'Tercatat',
+                    text: 'Nutrisi: ' + (item.ppm || 0) + ' PPM',
+                    desc: 'pH: ' + (item.ph || '-') + ' | GH: ' + (item.gh || 'GH'),
+                    gh: item.gh || 'ALL'
+                });
             });
-        });
 
-        allPanen.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Panen Melon',
-                desc: (item.totalKg || item.jumlah || 0) + ' Kg (' + (item.gh || 'GH') + ')',
-                gh: item.gh || 'ALL'
+            allSpray.forEach(function(item) {
+                allLogs.push({
+                    timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                    jam: item.jam || item.waktu || 'Tercatat',
+                    text: 'Aplikasi Spray',
+                    desc: (item.bahan || item.pestisida || 'Penyemprotan') + ' (' + (item.gh || 'GH') + ')',
+                    gh: item.gh || 'ALL'
+                });
             });
-        });
 
-        allBuah.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Seleksi / Buah Fix',
-                desc: (item.tindakan || 'Monitoring Buah') + ' (' + (item.gh || 'GH') + ')',
-                gh: item.gh || 'ALL'
+            allPanen.forEach(function(item) {
+                allLogs.push({
+                    timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                    jam: item.jam || item.waktu || 'Tercatat',
+                    text: 'Panen Melon',
+                    desc: (item.totalKg || item.jumlah || 0) + ' Kg (' + (item.gh || 'GH') + ')',
+                    gh: item.gh || 'ALL'
+                });
             });
-        });
 
-        allHama.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Laporan Hama/Penyakit',
-                desc: (item.jenis || item.hama || 'Temuan Hama') + ' (' + (item.gh || 'GH') + ')',
-                gh: item.gh || 'ALL'
+            allBuah.forEach(function(item) {
+                allLogs.push({
+                    timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                    jam: item.jam || item.waktu || 'Tercatat',
+                    text: 'Seleksi Buah Fix',
+                    desc: (item.tindakan || 'Monitoring Buah') + ' (' + (item.gh || 'GH') + ')',
+                    gh: item.gh || 'ALL'
+                });
             });
-        });
+        }
 
-        allGudang.forEach(function(item) {
-            allLogs.push({
-                timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
-                jam: item.jam || item.waktu || 'Tercatat',
-                text: 'Stok Gudang: ' + (item.namaBarang || item.item || 'Barang'),
-                desc: (item.tipe || 'Update') + ' ' + (item.jumlah || 0) + ' ' + (item.satuan || ''),
-                gh: 'ALL'
-            });
-        });
-
-        // 3. Filter berdasarkan Greenhouse terpilih
+        // Filter berdasarkan Greenhouse terpilih
         var filteredLogs = (selectedGh === 'ALL') 
             ? allLogs 
             : allLogs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
@@ -932,21 +1042,21 @@ var dashboard = (function() {
             return;
         }
 
-        // 4. Urutkan berdasarkan timestamp terbaru ke terlama (Descending)
+        // Urutkan dari aktivitas paling baru (Descending)
         filteredLogs.sort(function(a, b) {
             return new Date(b.timestamp) - new Date(a.timestamp);
         });
 
-        // 5. Ambil 5 aktivitas paling baru
+        // Ambil 5 aktivitas terbaru
         var html = '';
         filteredLogs.slice(0, 5).forEach(function(l) {
-            var jamStr = l.jam && l.jam !== 'Tercatat' ? l.jam : parseJamFromTimestamp(l.timestamp);
+            var jamStr = (l.jam && l.jam !== 'Tercatat') ? l.jam : parseJamFromTimestamp(l.timestamp);
             var mainText = l.text || 'Aktivitas';
             var descText = l.desc ? (' - ' + l.desc) : '';
 
             html += `
                 <div style="display: flex; gap: 10px; font-size: 11px; align-items: center; border-bottom: 1px dashed #f0f0f0; padding-bottom: 6px; margin-bottom: 4px;">
-                    <span style="font-weight: bold; color: #0277BD; width: 65px; flex-shrink: 0; font-size: 10px; background: #E1F5FE; padding: 2px 4px; border-radius: 4px; text-align: center;">${jamStr}</span>
+                    <span style="font-weight: bold; color: #0277BD; width: 60px; flex-shrink: 0; font-size: 10px; background: #E1F5FE; padding: 2px 4px; border-radius: 4px; text-align: center;">${jamStr}</span>
                     <span style="color: var(--text-color, #333); flex-grow: 1;"><strong>${mainText}</strong><span style="color: #666;">${descText}</span></span>
                 </div>
             `;
@@ -1016,6 +1126,7 @@ var dashboard = (function() {
         toggleTask: toggleTask,
         detectUserLocation: detectUserLocation,
         refreshAllDashboardData: refreshAllDashboardData,
+        manualRefreshLogs: manualRefreshLogs,
         logActivity: logActivity
     };
 
