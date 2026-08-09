@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REVISED LAYOUT & ORDERED GRID)
+// COZYCS FARM - EXECUTIVE DASHBOARD (TIMESTAMPED MONITORING EDITION)
 // ==========================================
 
 var dashboard = (function() {
@@ -28,7 +28,6 @@ var dashboard = (function() {
             'see_all': 'Lihat Semua',
             'all_gh': '🌐 Semua GH',
             'water_env_mon': 'Monitoring Air Dan Lingkungan',
-            'latest': 'Terbaru',
             'water_param': '💧 Parameter Air Tandon',
             'env_param': '☀️ Parameter Lingkungan',
             'nutrition': 'Nutrisi',
@@ -67,7 +66,6 @@ var dashboard = (function() {
             'see_all': 'See All',
             'all_gh': '🌐 All GH',
             'water_env_mon': 'Water & Environment Monitoring',
-            'latest': 'Latest',
             'water_param': '💧 Water Tank Parameters',
             'env_param': '☀️ Environment Parameters',
             'nutrition': 'Nutrition',
@@ -130,7 +128,6 @@ var dashboard = (function() {
         return null;
     }
 
-    // MULTI-KEY DATA RETRIEVAL UNTUK MEMASTIKAN SINKRONISASI REAL-TIME
     function getData(key) {
         try {
             var altKeys = [key];
@@ -158,7 +155,6 @@ var dashboard = (function() {
         return [];
     }
 
-    // UTILITY: PENGURUTAN HIERARKIS GREENHOUSE (UTAMA -> KEDUA -> KETIGA DST)
     function sortGhList(list) {
         if (!Array.isArray(list)) return [];
         return list.slice().sort(function(a, b) {
@@ -179,6 +175,47 @@ var dashboard = (function() {
             if (rankA !== rankB) return rankA - rankB;
             return nameA.localeCompare(nameB);
         });
+    }
+
+    // HELPER: FORMAT WAKTU/TANGGAL PERUBAHAN SECARA SPESIFIK
+    function formatLastUpdated(item) {
+        if (!item || Object.keys(item).length === 0) return 'Belum Ada Data';
+
+        var dateStr = item.updatedAt || item.timestamp || item.createdAt || item.tanggal || item.tgl;
+        var jamStr = item.jam || item.waktu;
+
+        if (!dateStr && !jamStr) return 'Tercatat';
+
+        var timeText = jamStr || '';
+
+        if (dateStr) {
+            var d = parseLocalDate(dateStr);
+            if (!d) {
+                var parsed = new Date(dateStr);
+                if (!isNaN(parsed.getTime())) d = parsed;
+            }
+
+            if (d) {
+                var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+                var day = d.getDate();
+                var month = monthNames[d.getMonth()];
+
+                if (!timeText && String(dateStr).includes('T')) {
+                    try {
+                        var dt = new Date(dateStr);
+                        if (!isNaN(dt.getTime())) {
+                            var h = String(dt.getHours()).padStart(2, '0');
+                            var m = String(dt.getMinutes()).padStart(2, '0');
+                            timeText = h + ':' + m;
+                        }
+                    } catch(e) {}
+                }
+
+                return timeText ? (day + ' ' + month + ', ' + timeText) : (day + ' ' + month);
+            }
+        }
+
+        return jamStr ? ('Jam ' + jamStr) : 'Terbaru';
     }
 
     function render() {
@@ -202,7 +239,7 @@ var dashboard = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 800; color: #006064;"><i class="fas fa-tint" style="margin-right: 4px; color: #0288D1;"></i> ${t('water_env_mon')}</span>
-                            <span style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">${t('latest')}</span>
+                            <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">-</span>
                         </div>
                         
                         <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #FFF; border: 1px solid #B2EBF2; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
@@ -219,13 +256,13 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM (DIPINDAH KE ATAS AGENDA) -->
+                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFF8E1 0%, #F1F8E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 10px;"><i class="fas fa-seedling" style="color: #2E7D32; margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 4. AGENDA HARI INI (DIPINDAH KE BAWAH PROGRESS MUSIM) -->
+                <!-- 4. AGENDA HARI INI -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -480,15 +517,12 @@ var dashboard = (function() {
         `;
     }
 
-    // ==========================================
-    // GRID MATRIX 2 KOLOM (TERURUT UTAMA -> KEDUA)
-    // ==========================================
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
         if (!el) return;
 
         var rawGh = getData('cozycs_greenhouse');
-        var dataGh = sortGhList(rawGh); // Mengurutkan GH Utama, GH Kedua, dst.
+        var dataGh = sortGhList(rawGh);
         var dataTanaman = getData('cozycs_tanaman');
         var dataPolinasi = getData('cozycs_polinasi');
         var dataBuah = getData('cozycs_buah');
@@ -505,7 +539,6 @@ var dashboard = (function() {
 
         var todayMurni = parseLocalDate(new Date());
 
-        // 1. HITUNG DATA KESELURUHAN (ALL GH OVERVIEW)
         var uniqueHolesALL = new Set();
         var tPolALL = 0;
         var tBuahALL = 0;
@@ -528,7 +561,6 @@ var dashboard = (function() {
         var tPopALL = uniqueHolesALL.size > 0 ? uniqueHolesALL.size : dataTanaman.length;
         var isAllActive = (selectedGh === 'ALL');
 
-        // 2. SPANDUK OVERVIEW KESELURUHAN (FULL-WIDTH)
         var html = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
                 <div style="font-size: 13px; font-weight: 800; color: #1B5E20;"><i class="fas fa-th-large" style="margin-right: 6px; color: #2E7D32;"></i> Monitoring Greenhouse</div>
@@ -561,7 +593,6 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- GRID MATRIX 2 KOLOM INDIVIDUAL GH -->
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
         `;
 
@@ -664,11 +695,17 @@ var dashboard = (function() {
 
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
+        var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
         if (!el) return;
 
         var dataNutrisi = getData('cozycs_nutrisi');
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
+
+        // UPDATE BADGE TANGGAL/WAKTU PERUBAHAN TERAKHIR
+        if (lastUpdatedEl) {
+            lastUpdatedEl.textContent = formatLastUpdated(latest);
+        }
 
         var valPpm = (latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
         var valPh = (latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
@@ -857,7 +894,6 @@ var dashboard = (function() {
         el.innerHTML = html;
     }
 
-    // HELPER: MEMBACA SELURUH VARIASI NAMA PROPERTY TANGGAL DARI GREENHOUSE.JS
     function parseGhDates(gh) {
         if (!gh) return { tanam: null, target: null };
         var targetStr = gh.target || gh.targetPanen || gh.tglTarget || gh.estimasiPanen || 
