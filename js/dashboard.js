@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (TIMESTAMPED MONITORING EDITION)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REAL-TIME TIMESTAMP & ORDERED MATRIX)
 // ==========================================
 
 var dashboard = (function() {
@@ -177,14 +177,14 @@ var dashboard = (function() {
         });
     }
 
-    // HELPER: FORMAT WAKTU/TANGGAL PERUBAHAN SECARA SPESIFIK
+    // FORMAT TIMESTAMP UPDATE MONITORING SPESIFIK
     function formatLastUpdated(item) {
         if (!item || Object.keys(item).length === 0) return 'Belum Ada Data';
 
         var dateStr = item.updatedAt || item.timestamp || item.createdAt || item.tanggal || item.tgl;
         var jamStr = item.jam || item.waktu;
 
-        if (!dateStr && !jamStr) return 'Tercatat';
+        if (!dateStr && !jamStr) return 'Data Terrekam';
 
         var timeText = jamStr || '';
 
@@ -215,7 +215,7 @@ var dashboard = (function() {
             }
         }
 
-        return jamStr ? ('Jam ' + jamStr) : 'Terbaru';
+        return jamStr ? ('Jam ' + jamStr) : 'Baru Saja';
     }
 
     function render() {
@@ -231,7 +231,7 @@ var dashboard = (function() {
                 <!-- 0. WELCOME BANNER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 14px;"></div>
 
-                <!-- 1. GRID MATRIX GREENHOUSE (2 KOLOM) -->
+                <!-- 1. GRID MATRIX GREENHOUSE (UTAMA -> KEDUA) -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
@@ -239,7 +239,7 @@ var dashboard = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 800; color: #006064;"><i class="fas fa-tint" style="margin-right: 4px; color: #0288D1;"></i> ${t('water_env_mon')}</span>
-                            <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">-</span>
+                            <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">Menghitung...</span>
                         </div>
                         
                         <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #FFF; border: 1px solid #B2EBF2; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
@@ -256,13 +256,13 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM -->
+                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM (DI ATAS AGENDA) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFF8E1 0%, #F1F8E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 10px;"><i class="fas fa-seedling" style="color: #2E7D32; margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 4. AGENDA HARI INI -->
+                <!-- 4. AGENDA HARI INI (DI BAWAH PROGRESS MUSIM) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -567,6 +567,7 @@ var dashboard = (function() {
                 <span style="font-size: 10px; color: #2E7D32; font-weight: bold; background: #E8F5E9; padding: 2px 8px; border-radius: 10px;">${dataGh.length} GH Aktif</span>
             </div>
 
+            <!-- SPANDUK UTAMA KESELURHAN -->
             <div onclick="dashboard.selectGhFilter('ALL')" style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); border-radius: 14px; padding: 12px 14px; color: #fff; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(27,94,32,0.25); cursor: pointer; border: ${isAllActive ? '2px solid #FFD54F' : '2px solid transparent'}; position: relative; overflow: hidden; transition: all 0.2s ease;">
                 <i class="fas fa-globe-asia" style="position: absolute; right: -8px; bottom: -8px; font-size: 60px; opacity: 0.12;"></i>
                 
@@ -593,6 +594,7 @@ var dashboard = (function() {
                 </div>
             </div>
 
+            <!-- GRID MATRIX 2 KOLOM (TERURUT UTAMA -> KEDUA) -->
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
         `;
 
@@ -702,7 +704,7 @@ var dashboard = (function() {
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
-        // UPDATE BADGE TANGGAL/WAKTU PERUBAHAN TERAKHIR
+        // SINKRONISASI BADGE WAKTU DI HEADER MONITORING
         if (lastUpdatedEl) {
             lastUpdatedEl.textContent = formatLastUpdated(latest);
         }
@@ -752,7 +754,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valWaterTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('recorded')}</span></div>
+                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -1034,7 +1036,6 @@ var dashboard = (function() {
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
         el.innerHTML = `
-            <!-- HEADER RINGKAS -->
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px dashed #FFE082; padding-bottom: 10px;">
                 <div>
                     <span style="font-size: 10px; background: ${isBelumTanam ? '#FFF3E0' : '#E8F5E9'}; color: ${isBelumTanam ? '#E65100' : '#2E7D32'}; padding: 3px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">${phaseTitle}</span>
@@ -1049,7 +1050,6 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- TIMELINE 4 FASE (STEPPER) -->
             <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 14px; padding: 0 5px;">
                 <div style="position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: #FFE082; z-index: 1;"></div>
                 <div style="position: absolute; top: 10px; left: 10px; width: ${((currentStep - 1) / 3) * 100}%; height: 3px; background: #2E7D32; z-index: 1; transition: width 0.3s ease;"></div>
@@ -1075,7 +1075,6 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- KETERANGAN KONDISIONAL -->
             <div style="background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE082; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
                 <div>
                     <span style="color: #666;">Populasi Aktif:</span>
