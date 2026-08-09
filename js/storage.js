@@ -38,10 +38,14 @@ var Storage = (function() {
         console.log('[Storage] Local storage securely initialized and locked.');
     }
 
+    // FUNGSI PEMBACAAN ULTRA-AMAN (GARANSI PASTI ARRAY)
     function getAll(key) {
         try {
             var data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : [];
+            if (!data) return [];
+            var parsed = JSON.parse(data);
+            // Pastikan hasil parse SELALU berbentuk Array
+            return Array.isArray(parsed) ? parsed : [];
         } catch (e) {
             console.error('[Storage] Error reading key ' + key, e);
             return [];
@@ -50,7 +54,8 @@ var Storage = (function() {
 
     function saveAll(key, dataArray) {
         try {
-            localStorage.setItem(key, JSON.stringify(dataArray || []));
+            var arrayToSave = Array.isArray(dataArray) ? dataArray : [];
+            localStorage.setItem(key, JSON.stringify(arrayToSave));
             return true;
         } catch (e) {
             console.error('[Storage] Error saving key ' + key, e);
@@ -59,6 +64,7 @@ var Storage = (function() {
     }
 
     function add(key, item) {
+        if (!item || typeof item !== 'object') return null;
         var list = getAll(key);
         item.id = item.id || 'ID_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         item.created_at = item.created_at || new Date().toISOString();
@@ -78,12 +84,14 @@ var Storage = (function() {
     }
 
     function remove(key, id) {
+        if (!id) return false;
         var list = getAll(key);
         var filtered = list.filter(function(item) { return item && item.id !== id; });
         return saveAll(key, filtered);
     }
 
     function getById(key, id) {
+        if (!id) return null;
         var list = getAll(key);
         return list.find(function(item) { return item && item.id === id; }) || null;
     }
