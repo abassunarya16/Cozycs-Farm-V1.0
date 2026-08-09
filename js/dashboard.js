@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (COLORFUL GRADIENT EDITION)
+// COZYCS FARM - EXECUTIVE DASHBOARD (GRID MATRIX 2-COLUMN EDITION)
 // ==========================================
 
 var dashboard = (function() {
@@ -150,8 +150,6 @@ var dashboard = (function() {
     function render() {
         return `
             <style>
-                .gh-slider::-webkit-scrollbar { display: none; }
-                .gh-slider { -ms-overflow-style: none; scrollbar-width: none; }
                 @keyframes spinIcon { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 .spinning { animation: spinIcon 0.8s linear infinite; }
                 .dash-card-shadow { box-shadow: 0 4px 14px rgba(0,0,0,0.05); }
@@ -159,13 +157,13 @@ var dashboard = (function() {
 
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. WELCOME BANNER (FRESH GREEN GRADIENT) -->
+                <!-- 0. WELCOME BANNER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 14px;"></div>
 
-                <!-- 1. KARTU SWIPE GREENHOUSE -->
+                <!-- 1. GRID MATRIX GREENHOUSE (2 KOLOM) -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
-                <!-- 2. MONITORING AIR DAN LINGKUNGAN (AQUA CYAN GRADIENT) -->
+                <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); padding: 15px; border-radius: 16px; border: 1px solid #B2EBF2; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -187,7 +185,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. AGENDA HARI INI (MINT EMERALD GRADIENT) -->
+                <!-- 3. AGENDA HARI INI -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -196,13 +194,13 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 4. PROGRESS MUSIM & ANALISIS FASE TANAM (WARM SUNSET/AMBER GRADIENT) -->
+                <!-- 4. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFF8E1 0%, #F1F8E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 10px;"><i class="fas fa-seedling" style="color: #2E7D32; margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 5. AKTIVITAS TERAKHIR (SOFT PURPLE/BLUE GRADIENT) -->
+                <!-- 5. AKTIVITAS TERAKHIR (AUDIT LOG) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC; margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 800; color: #283593;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
@@ -213,7 +211,7 @@ var dashboard = (function() {
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 6. QUICK ACTION BUTTONS (WARM SLATE GRADIENT) -->
+                <!-- 6. QUICK ACTION BUTTONS -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #F5F5F5 0%, #E8EAF6 100%); padding: 14px; border-radius: 16px; border: 1px solid #C5CAE9;">
                     <div style="font-size: 11px; font-weight: 800; color: #3F51B5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">${t('quick_action')}</div>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
@@ -448,6 +446,9 @@ var dashboard = (function() {
         `;
     }
 
+    // ==========================================
+    // IMPLEMENTASI GRID MATRIX 2 KOLOM (ESTETIK & RESPONSIF)
+    // ==========================================
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
         if (!el) return;
@@ -459,7 +460,7 @@ var dashboard = (function() {
 
         if (dataGh.length === 0) {
             el.innerHTML = `
-                <div style="background: #F5F5F5; border-radius: 16px; padding: 14px 16px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
+                <div style="background: rgba(255,255,255,0.85); border-radius: 16px; padding: 14px; text-align: center; border: 1px dashed #CCC; color: #777; font-size: 12px;">
                     <i class="fas fa-warehouse" style="font-size: 20px; color: #888; margin-bottom: 6px; display: block;"></i>
                     Belum ada Greenhouse terdaftar.
                 </div>
@@ -467,15 +468,9 @@ var dashboard = (function() {
             return;
         }
 
-        var html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
-                <div style="font-size: 14px; font-weight: 800; color: #1B5E20;">${t('select_gh')}</div>
-            </div>
-            <div class="gh-slider" style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
-        `;
+        var todayMurni = parseLocalDate(new Date());
 
-        var cardsList = [];
-
+        // 1. HITUNG DATA KESELURUHAN (ALL GH OVERVIEW)
         var uniqueHolesALL = new Set();
         var tPolALL = 0;
         var tBuahALL = 0;
@@ -496,25 +491,59 @@ var dashboard = (function() {
         dataBuah.forEach(function(b) { tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
         var tPopALL = uniqueHolesALL.size > 0 ? uniqueHolesALL.size : dataTanaman.length;
+        var isAllActive = (selectedGh === 'ALL');
 
-        cardsList.push({
-            id: 'ALL',
-            title: 'Cozycs Farm',
-            subtitle: 'Keseluruhan Data',
-            populasi: tPopALL,
-            polinasi: tPolALL,
-            buahFix: tBuahALL,
-            themeIndex: 0
-        });
+        // 2. HEADER + SPANDUK OVERVIEW UTAMA
+        var html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+                <div style="font-size: 13px; font-weight: 800; color: #1B5E20;"><i class="fas fa-th-large" style="margin-right: 6px; color: #2E7D32;"></i> Monitoring Greenhouse</div>
+                <span style="font-size: 10px; color: #2E7D32; font-weight: bold; background: #E8F5E9; padding: 2px 8px; border-radius: 10px;">${dataGh.length} GH Aktif</span>
+            </div>
 
-        var todayMurni = parseLocalDate(new Date());
+            <!-- SPANDUK OVERVIEW KESELURUHAN (FULL-WIDTH) -->
+            <div onclick="dashboard.selectGhFilter('ALL')" style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); border-radius: 14px; padding: 12px 14px; color: #fff; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(27,94,32,0.25); cursor: pointer; border: ${isAllActive ? '2px solid #FFD54F' : '2px solid transparent'}; position: relative; overflow: hidden; transition: all 0.2s ease;">
+                <i class="fas fa-globe-asia" style="position: absolute; right: -8px; bottom: -8px; font-size: 60px; opacity: 0.12;"></i>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative; z-index: 2;">
+                    <div style="font-size: 14px; font-weight: 800;">🌐 Cozycs Farm (Semua GH)</div>
+                    <span style="font-size: 9px; background: ${isAllActive ? '#FFC107' : 'rgba(255,255,255,0.22)'}; color: ${isAllActive ? '#000' : '#FFF'}; font-weight: bold; padding: 2px 8px; border-radius: 10px; backdrop-filter: blur(4px);">
+                        ${isAllActive ? 'AKTIF' : 'PILIH'}
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: rgba(0,0,0,0.18); padding: 8px; border-radius: 10px; backdrop-filter: blur(2px); position: relative; z-index: 2;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 9px; color: rgba(255,255,255,0.85);">Total Pop</div>
+                        <div style="font-size: 13px; font-weight: 800;">${tPopALL} <span style="font-size: 8px; font-weight: normal;">Phn</span></div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
+                        <div style="font-size: 9px; color: rgba(255,255,255,0.85);">Polinasi</div>
+                        <div style="font-size: 13px; font-weight: 800;">${tPolALL > 0 ? tPolALL : '-'} <span style="font-size: 8px; font-weight: normal;">Phn</span></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 9px; color: #FFD54F; font-weight: bold;">Buah Fix</div>
+                        <div style="font-size: 13px; font-weight: 800; color: #FFF;">${tBuahALL > 0 ? tBuahALL : '-'} <span style="font-size: 8px; font-weight: normal;">Buh</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRID MATRIX 2 KOLOM UNTUK KARTU INDIVIDUAL GH -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+        `;
+
+        var themes = [
+            { bg: 'linear-gradient(135deg, #0277BD 0%, #00838F 100%)', shadow: 'rgba(2,119,189,0.25)' },
+            { bg: 'linear-gradient(135deg, #E65100 0%, #F57C00 100%)', shadow: 'rgba(230,81,0,0.25)' },
+            { bg: 'linear-gradient(135deg, #4A148C 0%, #6A1B9A 100%)', shadow: 'rgba(106,27,154,0.25)' },
+            { bg: 'linear-gradient(135deg, #006064 0%, #00838F 100%)', shadow: 'rgba(0,96,100,0.25)' }
+        ];
 
         dataGh.forEach(function(g, index) {
             var gId = g.kode || g.id;
-            
-            var filteredTanaman = dataTanaman.filter(function(t) {
-                return t.gh === gId || t.ghId === gId;
-            });
+            var isActive = (selectedGh === gId);
+            var theme = themes[index % themes.length];
+
+            var filteredTanaman = dataTanaman.filter(function(t) { return t.gh === gId || t.ghId === gId; });
 
             var uniqueHoles = new Set();
             filteredTanaman.forEach(function(t) {
@@ -522,14 +551,14 @@ var dashboard = (function() {
             });
             var tPop = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
 
-            var subtitle = 'Masa Sterilisasi (Kosong)';
+            var subtitle = 'Masa Sterilisasi';
             var tTanamGH = parseLocalDate(g.tanam || g.tglTanam || g.tanggalTanam || g.beroperasi || (filteredTanaman[0] ? filteredTanaman[0].tanggal : null));
 
             if (tTanamGH) {
                 var varietasName = (filteredTanaman[0] && filteredTanaman[0].varietas) ? filteredTanaman[0].varietas : (g.varietas || 'Melon');
                 if (todayMurni < tTanamGH) {
                     var hMinus = Math.round((tTanamGH - todayMurni) / (1000 * 60 * 60 * 24));
-                    subtitle = varietasName + ' (H-' + hMinus + ' Tanam)';
+                    subtitle = varietasName + ' (H-' + hMinus + ')';
                 } else {
                     var hst = Math.max(0, Math.floor((todayMurni - tTanamGH) / (1000 * 60 * 60 * 24)));
                     subtitle = varietasName + ' (' + hst + ' HST)';
@@ -552,71 +581,45 @@ var dashboard = (function() {
             var filteredBuah = dataBuah.filter(function(b) { return b.gh === gId || b.ghId === gId; });
             filteredBuah.forEach(function(b) { tBuah += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
-            cardsList.push({
-                id: gId,
-                title: g.nama || g.kode,
-                subtitle: subtitle,
-                populasi: tPop,
-                polinasi: tPol,
-                buahFix: tBuah,
-                themeIndex: (index % 4) + 1
-            });
-        });
+            html += `
+                <div onclick="dashboard.selectGhFilter('${gId}')" style="background: ${theme.bg}; border-radius: 14px; padding: 12px; color: #fff; box-shadow: 0 4px 10px ${theme.shadow}; cursor: pointer; border: ${isActive ? '2px solid #FFD54F' : '2px solid transparent'}; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease;">
+                    <i class="fas fa-leaf" style="position: absolute; right: -8px; bottom: -8px; font-size: 55px; opacity: 0.12; transform: rotate(-20deg);"></i>
+                    
+                    <div style="position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                            <div style="font-size: 13px; font-weight: 800; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                🏡 ${g.nama || gId}
+                            </div>
+                            <span style="font-size: 8px; background: ${isActive ? '#FFC107' : 'rgba(255,255,255,0.25)'}; color: ${isActive ? '#000' : '#FFF'}; font-weight: bold; padding: 1px 5px; border-radius: 6px; flex-shrink: 0; margin-left: 4px;">
+                                ${isActive ? 'AKTIF' : 'PILIH'}
+                            </span>
+                        </div>
 
-        var selectedIndex = cardsList.findIndex(function(c) { return c.id === selectedGh; });
-        if (selectedIndex > 0) {
-            var selectedItem = cardsList.splice(selectedIndex, 1)[0];
-            cardsList.unshift(selectedItem);
-        }
+                        <div style="font-size: 10px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 8px; display: inline-block; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                            ${subtitle}
+                        </div>
+                    </div>
 
-        cardsList.forEach(function(c) {
-            var isActive = (c.id === selectedGh);
-            html += getCardHtml(c.id, c.title, c.subtitle, c.populasi, c.polinasi, c.buahFix, isActive, c.themeIndex);
+                    <div style="background: rgba(0,0,0,0.18); padding: 6px 8px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(2px); position: relative; z-index: 2;">
+                        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                            <span style="color: rgba(255,255,255,0.85);">Populasi:</span>
+                            <strong style="color: #FFF;">${tPop} Phn</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                            <span style="color: rgba(255,255,255,0.85);">Polinasi:</span>
+                            <strong style="color: #FFF;">${tPol > 0 ? tPol + ' Phn' : '-'}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+                            <span style="color: #FFD54F; font-weight: bold;">Buah Fix:</span>
+                            <strong style="color: #FFD54F;">${tBuah > 0 ? tBuah + ' Buh' : '-'}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
         html += `</div>`;
         el.innerHTML = html;
-    }
-
-    function getCardHtml(id, title, subtitle, populasi, polinasi, buahFix, isActive, themeIndex) {
-        var themes = [
-            { bg: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)', shadow: 'rgba(27, 94, 32, 0.3)' },
-            { bg: 'linear-gradient(135deg, #0277BD 0%, #00838F 100%)', shadow: 'rgba(2, 119, 189, 0.3)' },
-            { bg: 'linear-gradient(135deg, #E65100 0%, #F57C00 100%)', shadow: 'rgba(230, 81, 0, 0.3)' },
-            { bg: 'linear-gradient(135deg, #4A148C 0%, #6A1B9A 100%)', shadow: 'rgba(106, 27, 154, 0.3)' },
-            { bg: 'linear-gradient(135deg, #006064 0%, #00838F 100%)', shadow: 'rgba(0, 96, 100, 0.3)' }
-        ];
-        
-        var theme = themes[themeIndex] || themes[1];
-
-        return `
-            <div onclick="dashboard.selectGhFilter('${id}')" style="min-width: 85%; flex: 0 0 85%; background: ${theme.bg}; border-radius: 16px; padding: 18px; color: #fff; scroll-snap-align: center; box-shadow: 0 6px 16px ${theme.shadow}; position: relative; overflow: hidden; cursor: pointer; border: ${isActive ? '2px solid #FFF' : '2px solid transparent'};">
-                <i class="fas fa-leaf" style="position: absolute; right: -10px; bottom: -10px; font-size: 80px; opacity: 0.12; transform: rotate(-20deg);"></i>
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
-                    <div>
-                        <div style="font-size: 18px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">${id === 'ALL' ? '🌐 ' + title : title}</div>
-                        <div style="font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.22); padding: 3px 8px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px);">
-                            ${subtitle}
-                        </div>
-                    </div>
-                    <div style="background: ${isActive ? '#FFC107' : 'rgba(255,255,255,0.4)'}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 8px rgba(255, 193, 7, 0.8);"></div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: relative; z-index: 2; background: rgba(0,0,0,0.18); padding: 10px; border-radius: 12px; backdrop-filter: blur(2px);">
-                    <div style="text-align: center;">
-                        <div style="font-size: 10px; color: rgba(255,255,255,0.85); margin-bottom: 4px;">Populasi</div>
-                        <div style="font-size: 14px; font-weight: 800;">${populasi} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                    </div>
-                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);">
-                        <div style="font-size: 10px; color: rgba(255,255,255,0.85); margin-bottom: 4px;">Polinasi</div>
-                        <div style="font-size: 14px; font-weight: 800;">${polinasi > 0 ? polinasi : '-'} <span style="font-size: 9px; font-weight: normal;">Phn</span></div>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 10px; color: #FFD54F; font-weight: bold; margin-bottom: 4px;">Buah Fix</div>
-                        <div style="font-size: 14px; font-weight: 800; color: #fff;">${buahFix > 0 ? buahFix : '-'} <span style="font-size: 9px; font-weight: normal;">Buh</span></div>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     function selectGhFilter(kodeGh) {
