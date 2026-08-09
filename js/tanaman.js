@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL UNIFIED MONITORING & PERAWATAN TANAMAN
-// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN VERSION WITH SORTING)
+// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - ULTRA SAFE & SORTING)
 // ==========================================
 
 var tanaman = (function() {
@@ -23,7 +23,6 @@ var tanaman = (function() {
             'lbl_date': 'Tanggal Kegiatan',
             'lbl_category': 'Kategori Perawatan',
             
-            // OPSI DROPDOWN SIMPEL TANPA IKON
             'opt_cat_growth': 'Monitoring Pertumbuhan',
             'opt_cat_polinasi': 'Polinasi Bunga',
             'opt_cat_pruning': 'Pruning',
@@ -89,7 +88,6 @@ var tanaman = (function() {
             'confirm_generate': 'Apakah kamu yakin ingin memuat data lubang tanam otomatis untuk Greenhouse ini?',
             'toast_generated': 'Berhasil membuat data lubang tanam!',
 
-            // LABEL URUTKAN (SORTING)
             'opt_sort_newest': '📅 Terbaru ➔ Terlama',
             'opt_sort_oldest': '📅 Terlama ➔ Terbaru',
             'opt_sort_talang_asc': '🔤 Talang / Lubang (A-Z)',
@@ -172,7 +170,6 @@ var tanaman = (function() {
             'confirm_generate': 'Are you sure you want to generate plant hole records for this Greenhouse?',
             'toast_generated': 'Successfully generated plant hole records!',
 
-            // SORT LABELS
             'opt_sort_newest': '📅 Newest ➔ Oldest',
             'opt_sort_oldest': '📅 Oldest ➔ Newest',
             'opt_sort_talang_asc': '🔤 Gutter / Hole (A-Z)',
@@ -194,6 +191,24 @@ var tanaman = (function() {
         return 'cozycs_tanaman';
     }
 
+    // FUNGSI PEMBACA DATA MULTI-FALLBACK (SANGAT AMAN)
+    function getData(key) {
+        try {
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
+                var res = Storage.getAll(key);
+                if (Array.isArray(res) && res.length > 0) return res;
+            }
+            var raw = localStorage.getItem(key);
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        } catch(e) {
+            console.error('[Tanaman] Gagal membaca data ' + key, e);
+        }
+        return [];
+    }
+
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -209,15 +224,7 @@ var tanaman = (function() {
         if (!selectEl) return;
 
         var keyGh = (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GREENHOUSE) ? Storage.KEYS.GREENHOUSE : 'cozycs_greenhouse';
-        var dataGh = [];
-
-        try {
-            if (typeof Storage !== 'undefined' && Storage.getAll) {
-                dataGh = Storage.getAll(keyGh) || [];
-            }
-        } catch(e) {
-            dataGh = [];
-        }
+        var dataGh = getData(keyGh);
 
         var optionsHtml = `<option value="">${t('select_gh')}</option>`;
         if (Array.isArray(dataGh) && dataGh.length > 0) {
@@ -346,15 +353,7 @@ var tanaman = (function() {
 
     function showHistoryModal(kodeTalang, kodeGh) {
         var storageKey = getKey();
-        var allData = [];
-
-        try {
-            if (typeof Storage !== 'undefined' && Storage.getAll) {
-                allData = Storage.getAll(storageKey) || [];
-            }
-        } catch(e) {
-            allData = [];
-        }
+        var allData = getData(storageKey);
 
         var historyList = allData.filter(function(item) {
             return (item.talang === kodeTalang) && (item.gh === kodeGh);
@@ -571,7 +570,7 @@ var tanaman = (function() {
                 <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SISTER SORTING -->
+                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SORTING -->
                 <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
                     <div style="flex: 2; min-width: 180px;">
                         <input type="text" id="inputSearchTanaman" 
@@ -783,15 +782,8 @@ var tanaman = (function() {
         var pageEl = document.getElementById('paginationTanamanControls');
         if (!container) return;
 
-        var data = [];
-        try {
-            var storageKey = getKey();
-            if (typeof Storage !== 'undefined' && Storage.getAll) {
-                data = Storage.getAll(storageKey) || [];
-            }
-        } catch(e) {
-            data = [];
-        }
+        var storageKey = getKey();
+        var data = getData(storageKey);
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
@@ -959,12 +951,11 @@ var tanaman = (function() {
 
     function editItem(id) {
         var storageKey = getKey();
-        var item = null;
-        try {
-            if (typeof Storage !== 'undefined' && Storage.getById) {
-                item = Storage.getById(storageKey, id);
-            }
-        } catch(e) {}
+        var allData = getData(storageKey);
+        var item = allData.find(function(x) { return x && x.id === id; });
+        if (!item && typeof Storage !== 'undefined' && Storage.getById) {
+            item = Storage.getById(storageKey, id);
+        }
 
         if (!item) return;
 
@@ -1009,6 +1000,10 @@ var tanaman = (function() {
                 var storageKey = getKey();
                 if (typeof Storage !== 'undefined' && Storage.remove) {
                     Storage.remove(storageKey, id);
+                } else {
+                    var list = getData(storageKey);
+                    var filtered = list.filter(function(item) { return item && item.id !== id; });
+                    localStorage.setItem(storageKey, JSON.stringify(filtered));
                 }
             } catch(e) {}
             loadTable();
