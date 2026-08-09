@@ -1,12 +1,13 @@
 // ==========================================
 // COZYCS FARM - MODUL UNIFIED MONITORING & PERAWATAN TANAMAN
-// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN VERSION)
+// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN VERSION WITH SORTING)
 // ==========================================
 
 var tanaman = (function() {
 
-    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
+    // VARIABEL STATE UNTUK PENCARIAN, SORTING & PAGINASI
     var searchQuery = '';
+    var sortBy = 'tanggal_desc'; // Default: Terbaru ke Terlama
     var currentPage = 1;
     var itemsPerPage = 20;
 
@@ -79,14 +80,22 @@ var tanaman = (function() {
             'toast_saved': 'Data perawatan tanaman berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus catatan kegiatan ini?',
             'toast_deleted': 'Data perawatan berhasil dihapus',
-            'ph_search': '🔍 Cari varietas, GH, talang, kategori, atau petugas...',
+            'ph_search': '🔍 Cari varietas, GH, talang, kategori...',
             'btn_prev': '⬅️ Sebelum',
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
             'total_lbl': 'Total Data',
             'btn_generate_batch': '⚡ Generate Custom Lubang',
             'confirm_generate': 'Apakah kamu yakin ingin memuat data lubang tanam otomatis untuk Greenhouse ini?',
-            'toast_generated': 'Berhasil membuat data lubang tanam!'
+            'toast_generated': 'Berhasil membuat data lubang tanam!',
+
+            // LABEL URUTKAN (SORTING)
+            'opt_sort_newest': '📅 Terbaru ➔ Terlama',
+            'opt_sort_oldest': '📅 Terlama ➔ Terbaru',
+            'opt_sort_talang_asc': '🔤 Talang / Lubang (A-Z)',
+            'opt_sort_variety_asc': '🍉 Varietas Melon (A-Z)',
+            'opt_sort_variety_desc': '🍉 Varietas Melon (Z-A)',
+            'opt_sort_gh_asc': '🏢 Greenhouse (GH-01, GH-02)'
         },
         'en': {
             'module_title': 'Unified Crop Database & Care',
@@ -154,14 +163,22 @@ var tanaman = (function() {
             'toast_saved': 'Crop care record saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this activity record?',
             'toast_deleted': 'Care record deleted successfully',
-            'ph_search': '🔍 Search variety, GH, gutter, category, or PIC...',
+            'ph_search': '🔍 Search variety, GH, gutter, category...',
             'btn_prev': '⬅️ Prev',
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
             'total_lbl': 'Total Items',
             'btn_generate_batch': '⚡ Generate Custom Holes',
             'confirm_generate': 'Are you sure you want to generate plant hole records for this Greenhouse?',
-            'toast_generated': 'Successfully generated plant hole records!'
+            'toast_generated': 'Successfully generated plant hole records!',
+
+            // SORT LABELS
+            'opt_sort_newest': '📅 Newest ➔ Oldest',
+            'opt_sort_oldest': '📅 Oldest ➔ Newest',
+            'opt_sort_talang_asc': '🔤 Gutter / Hole (A-Z)',
+            'opt_sort_variety_asc': '🍉 Variety (A-Z)',
+            'opt_sort_variety_desc': '🍉 Variety (Z-A)',
+            'opt_sort_gh_asc': '🏢 Greenhouse (GH-01, GH-02)'
         }
     };
 
@@ -554,13 +571,26 @@ var tanaman = (function() {
                 <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <!-- Kotak Pencarian Khusus Modul Tanaman -->
-                <div style="margin-bottom: 14px;">
-                    <input type="text" id="inputSearchTanaman" 
-                           placeholder="${t('ph_search')}" 
-                           oninput="tanaman.handleSearch(this.value)"
-                           value="${searchQuery}"
-                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SISTER SORTING -->
+                <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 180px;">
+                        <input type="text" id="inputSearchTanaman" 
+                               placeholder="${t('ph_search')}" 
+                               oninput="tanaman.handleSearch(this.value)"
+                               value="${searchQuery}"
+                               style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                    </div>
+                    <div style="flex: 1; min-width: 140px;">
+                        <select id="selectSortTanaman" onchange="tanaman.handleSort(this.value)"
+                                style="width: 100%; padding: 10px 10px; border-radius: 10px; border: 1.5px solid #2E7D32; font-size: 12px; box-sizing: border-box; background: #E8F5E9; color: #2E7D32; font-weight: bold; cursor: pointer;">
+                            <option value="tanggal_desc" ${sortBy === 'tanggal_desc' ? 'selected' : ''}>${t('opt_sort_newest')}</option>
+                            <option value="tanggal_asc" ${sortBy === 'tanggal_asc' ? 'selected' : ''}>${t('opt_sort_oldest')}</option>
+                            <option value="talang_asc" ${sortBy === 'talang_asc' ? 'selected' : ''}>${t('opt_sort_talang_asc')}</option>
+                            <option value="varietas_asc" ${sortBy === 'varietas_asc' ? 'selected' : ''}>${t('opt_sort_variety_asc')}</option>
+                            <option value="varietas_desc" ${sortBy === 'varietas_desc' ? 'selected' : ''}>${t('opt_sort_variety_desc')}</option>
+                            <option value="gh_asc" ${sortBy === 'gh_asc' ? 'selected' : ''}>${t('opt_sort_gh_asc')}</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Rekap Data Cards Grid 2x2 -->
@@ -769,12 +799,7 @@ var tanaman = (function() {
             return;
         }
 
-        data.sort(function(a, b) {
-            var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
-            var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
-            return dateB - dateA;
-        });
-
+        // 1. FILTERING DATA BERDASARKAN QUERY PENCARIAN
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
@@ -793,6 +818,25 @@ var tanaman = (function() {
             return;
         }
 
+        // 2. SORTING / PENGURUTAN DATA LENGKAP
+        filteredData.sort(function(a, b) {
+            if (sortBy === 'tanggal_asc') {
+                return (new Date(a.tanggal || 0)) - (new Date(b.tanggal || 0));
+            } else if (sortBy === 'tanggal_desc') {
+                return (new Date(b.tanggal || 0)) - (new Date(a.tanggal || 0));
+            } else if (sortBy === 'varietas_asc') {
+                return (a.varietas || '').localeCompare(b.varietas || '', undefined, {numeric: true, sensitivity: 'base'});
+            } else if (sortBy === 'varietas_desc') {
+                return (b.varietas || '').localeCompare(a.varietas || '', undefined, {numeric: true, sensitivity: 'base'});
+            } else if (sortBy === 'talang_asc') {
+                return (a.talang || '').localeCompare(b.talang || '', undefined, {numeric: true, sensitivity: 'base'});
+            } else if (sortBy === 'gh_asc') {
+                return (a.gh || '').localeCompare(b.gh || '', undefined, {numeric: true, sensitivity: 'base'});
+            }
+            return 0;
+        });
+
+        // 3. PAGINASI DATA
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -980,6 +1024,12 @@ var tanaman = (function() {
         loadTable();
     }
 
+    function handleSort(val) {
+        sortBy = val || 'tanggal_desc';
+        currentPage = 1;
+        loadTable();
+    }
+
     function changePage(direction) {
         currentPage += direction;
         loadTable();
@@ -991,6 +1041,7 @@ var tanaman = (function() {
         editItem: editItem,
         deleteItem: deleteItem,
         handleSearch: handleSearch,
+        handleSort: handleSort,
         changePage: changePage,
         toggleKategoriFields: toggleKategoriFields,
         openGenerateModal: openGenerateModal,
