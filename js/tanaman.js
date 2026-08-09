@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL MONITORING TANAMAN (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL MONITORING TANAMAN (WITH AUTO-DRAFT, DASHBOARD LOG & AUTO-GENERATE 360 LUBANG)
 // ==========================================
 
 var tanaman = (function() {
@@ -62,7 +62,12 @@ var tanaman = (function() {
             'btn_prev': '⬅️ Sebelum',
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
-            'total_lbl': 'Total Data'
+            'total_lbl': 'Total Data',
+            // TERJEMAHAN OPSI BARU (AUTO-GENERATE & EDIT LUBANG)
+            'btn_generate_batch': '⚡ Generate 360 Lubang Tanam',
+            'confirm_generate': 'Apakah kamu yakin ingin memuat 360 data lubang tanam otomatis untuk Greenhouse ini?',
+            'toast_generated': 'Berhasil membuat 360 data lubang tanam!',
+            'modal_quick_edit_title': 'Update Performa Tanaman Spesifik'
         },
         'en': {
             'module_title': 'Crop Cycle & Growth Monitoring',
@@ -115,7 +120,11 @@ var tanaman = (function() {
             'btn_prev': '⬅️ Prev',
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
-            'total_lbl': 'Total Items'
+            'total_lbl': 'Total Items',
+            'btn_generate_batch': '⚡ Generate 360 Plant Holes',
+            'confirm_generate': 'Are you sure you want to generate 360 plant hole records for this Greenhouse?',
+            'toast_generated': 'Successfully generated 360 plant hole records!',
+            'modal_quick_edit_title': 'Update Specific Plant Performance'
         }
     };
 
@@ -170,6 +179,73 @@ var tanaman = (function() {
         selectEl.innerHTML = optionsHtml;
     }
 
+    // ==========================================
+    // LOGIKA OPSIONAL BARU: GENERATE BATCH 360 LUBANG TANAM
+    // ==========================================
+    function generateBatch360() {
+        var gh = getVal('tanamanGh') || 'GH-01';
+        var tanggal = getVal('tanamanTanggal') || '2026-08-13';
+        var varietas = getVal('tanamanVarietas') || 'Inthanon';
+        var petugas = getVal('tanamanPetugas') || t('default_petugas');
+
+        if (!confirm(t('confirm_generate'))) return;
+
+        var storageKey = getKey();
+        var totalInput = 0;
+
+        // Loop 6 Jalur x 2 Talang x 30 Lubang = 360 Lubang Tanam
+        for (var j = 1; j <= 6; j++) {
+            for (var tIdx = 1; tIdx <= 2; tIdx++) {
+                for (var l = 1; l <= 30; l++) {
+                    var padLubang = l < 10 ? '0' + l : '' + l;
+                    var kodeTalangFormat = 'J' + j + '-T' + tIdx + '-L' + padLubang; // Contoh: J1-T1-L01
+
+                    var payload = {
+                        gh: gh,
+                        tanggal: tanggal,
+                        varietas: varietas,
+                        talang: kodeTalangFormat,
+                        fase: t('opt_phase_nursery'),
+                        petugas: petugas,
+                        tinggi: 0,
+                        daun: 0,
+                        batang: 0,
+                        populasi: 1, // 1 Pohon per lubang
+                        desc: 'Inisialisasi Otomatis Batch Tanam 360 Lubang'
+                    };
+
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        Storage.add(storageKey, payload);
+                        totalInput++;
+                    }
+                }
+            }
+        }
+
+        // Catat Log Aktivitas Ke Dasbor Utama
+        if (typeof Storage !== 'undefined' && Storage.add) {
+            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            Storage.add(keyAktivitas, {
+                judul: 'Generate Batch 360 Lubang',
+                deskripsi: gh + ' - Inisialisasi ' + totalInput + ' Lubang Tanam (' + varietas + ')',
+                tanggal: tanggal,
+                jam: timeStr,
+                kategori: 'Tanaman',
+                icon: 'fas fa-th',
+                color: '#2E7D32'
+            });
+        }
+
+        if (typeof Helper !== 'undefined' && Helper.showToast) {
+            Helper.showToast(t('toast_generated'), 'success');
+        }
+
+        loadTable();
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
@@ -177,7 +253,14 @@ var tanaman = (function() {
                 
                 <!-- Form Input Data Perkembangan Tanaman -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
-                    <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleTanaman">${t('form_title_add')}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #2E7D32;" id="formTitleTanaman">${t('form_title_add')}</div>
+                        <!-- Tombol Pintas Generate 360 Lubang -->
+                        <button type="button" onclick="tanaman.generateBatch360()" style="background: #E8F5E9; color: #2E7D32; border: 1px solid #2E7D32; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                            <i class="fas fa-bolt"></i> ${t('btn_generate_batch')}
+                        </button>
+                    </div>
+
                     <form id="formTanaman">
                         <input type="hidden" id="tanamanId">
                         
@@ -619,7 +702,8 @@ var tanaman = (function() {
         editItem: editItem,
         deleteItem: deleteItem,
         handleSearch: handleSearch,
-        changePage: changePage
+        changePage: changePage,
+        generateBatch360: generateBatch360
     };
 
 })();
