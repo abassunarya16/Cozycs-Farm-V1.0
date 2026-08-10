@@ -46,9 +46,9 @@ var dashboard = (function() {
             'intensity': 'Intensitas',
             'active': 'Aktif',
             'inactive': 'Tidak Aktif',
-            'today_agenda': 'Agenda Hari Ini',
-            'today': 'Hari Ini',
-            'no_agenda': 'Tidak ada agenda kegiatan untuk hari ini.',
+            'today_agenda': 'Agenda & Tugas Operasional Kebun',
+            'today': 'Lintas Tanggal',
+            'no_agenda': 'Tidak ada agenda kegiatan aktif saat ini.',
             'season_progress': 'Progress Musim & Analisis Fase Tanam',
             'recent_act': 'Aktivitas Terakhir (Audit Log)',
             'no_logs': 'Belum ada riwayat aktivitas tercatat.',
@@ -84,9 +84,9 @@ var dashboard = (function() {
             'intensity': 'Intensity',
             'active': 'Active',
             'inactive': 'Inactive',
-            'today_agenda': "Today's Agenda",
-            'today': 'Today',
-            'no_agenda': 'No scheduled activities for today.',
+            'today_agenda': 'Farm Operational Agenda & Tasks',
+            'today': 'Cross Date',
+            'no_agenda': 'No active scheduled activities found.',
             'season_progress': 'Season Progress & Growth Phase Analysis',
             'recent_act': 'Recent Activities (Audit Log)',
             'no_logs': 'No activity logs recorded yet.',
@@ -128,25 +128,28 @@ var dashboard = (function() {
         return null;
     }
 
+    // FUNGSI GET DATA DENGAN PRIORITAS DAN PENANGANAN CLEANUP
     function getData(key) {
         try {
             var altKeys = [key];
-            if (key === 'cozycs_greenhouse') altKeys.push('cozycs_gh', 'cozycs_greenhouses', 'greenhouses');
-            if (key === 'cozycs_schedules') altKeys.push('cozycs_jadwal', 'schedules', 'jadwal');
+            if (key === 'cozycs_greenhouse') altKeys = ['cozycs_greenhouse', 'cozycs_gh', 'cozycs_greenhouses', 'greenhouses'];
+            if (key === 'cozycs_schedules' || key === 'cozycs_jadwal') altKeys = ['cozycs_jadwal', 'cozycs_schedules', 'schedules', 'jadwal'];
 
             for (var i = 0; i < altKeys.length; i++) {
                 var k = altKeys[i];
                 var raw = localStorage.getItem(k);
-                if (raw) {
-                    var parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (raw !== null) {
+                    try {
+                        var parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) return parsed;
+                    } catch(e){}
                 }
             }
 
             if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
                 for (var j = 0; j < altKeys.length; j++) {
                     var res = Storage.getAll(altKeys[j]);
-                    if (Array.isArray(res) && res.length > 0) return res;
+                    if (Array.isArray(res)) return res;
                 }
             }
         } catch(e) {
@@ -177,7 +180,6 @@ var dashboard = (function() {
         });
     }
 
-    // MULTI-KEY TIMESTAMP PARSER
     function formatLastUpdated(item) {
         if (!item || typeof item !== 'object' || Object.keys(item).length === 0) return null;
 
@@ -236,7 +238,7 @@ var dashboard = (function() {
                 <!-- 0. WELCOME BANNER -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 14px;"></div>
 
-                <!-- 1. GRID MATRIX GREENHOUSE (UTAMA -> KEDUA) -->
+                <!-- 1. GRID MATRIX GREENHOUSE -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
@@ -267,7 +269,7 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 4. AGENDA HARI INI -->
+                <!-- 4. AGENDA HARI INI & LINTAS TANGGAL -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -707,7 +709,6 @@ var dashboard = (function() {
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
-        // SINKRONISASI BADGE HEADER MONITORING DENGAN FALLBACK
         if (lastUpdatedEl) {
             var timeBadge = formatLastUpdated(latest);
 
@@ -861,25 +862,24 @@ var dashboard = (function() {
         `;
     }
 
+    // FUNGSI LOAD AGENDA LINTAS TANGGAL & HARI INI
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
         if (!el) return;
 
-        var todayStr = (typeof Helper !== 'undefined' && Helper.getTodayDate) ? Helper.getTodayDate() : new Date().toISOString().split('T')[0];
-        if (dateEl) dateEl.innerText = (typeof Helper !== 'undefined' && Helper.formatDate) ? Helper.formatDate(todayStr) : todayStr;
+        if (dateEl) {
+            dateEl.innerText = t('today');
+        }
 
-        var schedules = getData('cozycs_schedules');
+        var schedules = getData('cozycs_jadwal');
 
-        var todayTasks = schedules.filter(function(s) {
-            var sDate = s.date || s.tanggal || '';
-            var matchDate = (sDate === todayStr);
+        var filteredTasks = schedules.filter(function(s) {
             var sGh = s.gh || s.greenhouse || 'ALL';
-            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL');
-            return matchDate && matchGh;
+            return (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
         });
 
-        if (todayTasks.length === 0) {
+        if (filteredTasks.length === 0) {
             el.innerHTML = `
                 <div style="text-align: center; padding: 12px; color: #16A085; font-size: 12px; font-weight: 600;">
                     <i class="far fa-calendar-check" style="font-size: 20px; color: #2E7D32; margin-bottom: 4px; display: block;"></i>
@@ -889,21 +889,50 @@ var dashboard = (function() {
             return;
         }
 
+        // URUTKAN BERDASARKAN TANGGAL TERDEKAT
+        filteredTasks.sort(function(a, b) {
+            var dateA = new Date(a.date || a.tanggal || 0);
+            var dateB = new Date(b.date || b.tanggal || 0);
+            return dateA - dateB;
+        });
+
+        var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+
         var html = '';
-        todayTasks.slice(0, 10).forEach(function(item, idx) {
-            var isDone = (item.status === 'Selesai' || item.status === 'DONE' || item.completed === true);
-            var taskId = item.id || idx;
+        filteredTasks.forEach(function(item, idx) {
+            var isDone = (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true);
+            var taskId = item.id || ('task_' + idx);
+
+            var rawDate = item.tanggal || item.date || '';
+            var dateBadge = '-';
+            if (rawDate) {
+                var d = parseLocalDate(rawDate);
+                if (d) {
+                    dateBadge = d.getDate() + ' ' + monthNames[d.getMonth()];
+                } else {
+                    dateBadge = rawDate;
+                }
+            }
+
+            var ghTag = (item.gh && item.gh !== 'Seluruh Kebun' && item.gh !== 'ALL') ? (' (' + item.gh + ')') : '';
+
             html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.7); border-radius: 8px; margin-bottom: 6px; border: 1px solid #A3E4D7;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#117A65'}; text-decoration: ${isDone ? 'line-through' : 'none'};">
-                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.85); border-radius: 8px; margin-bottom: 6px; border: 1px solid #A3E4D7; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; overflow: hidden;">
+                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
+                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#117A65'}; text-decoration: ${isDone ? 'line-through' : 'none'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}${ghTag}
                         </span>
                     </div>
-                    <span style="font-size: 10px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                        ${isDone ? 'DONE' : 'PENDING'}
-                    </span>
+
+                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        <span style="font-size: 9px; background: #E0F2F1; color: #00796B; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid #B2DFDB;">
+                            📅 ${dateBadge}
+                        </span>
+                        <span style="font-size: 9px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+                            ${isDone ? 'DONE' : 'PENDING'}
+                        </span>
+                    </div>
                 </div>
             `;
         });
@@ -1253,27 +1282,30 @@ var dashboard = (function() {
         loadIotEnvData();
     }
 
+    // FUNGSI TOGGLE TASK DENGAN SINKRONISASI DUAL KEY DUA arah
     function toggleTask(id) {
-        var schedules = getData('cozycs_schedules');
-        var keyName = 'cozycs_schedules';
-        if (schedules.length === 0) {
-            schedules = getData('cozycs_jadwal');
-            keyName = 'cozycs_jadwal';
-        }
+        var schedules = getData('cozycs_jadwal');
 
         var item = schedules.find(function(s, idx) { return (s.id === id || idx == id); });
         if (item) {
-            if (item.status === 'Selesai' || item.completed === true) {
-                item.status = 'Belum Dikerjakan';
+            if (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true) {
+                item.status = 'Pending';
                 item.completed = false;
             } else {
                 item.status = 'Selesai';
                 item.completed = true;
             }
-            localStorage.setItem(keyName, JSON.stringify(schedules));
+
+            var json = JSON.stringify(schedules);
+            localStorage.setItem('cozycs_jadwal', json);
+            localStorage.setItem('cozycs_schedules', json);
+
             if (typeof Storage !== 'undefined' && Storage.saveAll) {
-                Storage.saveAll(keyName, schedules);
+                Storage.saveAll('cozycs_jadwal', schedules);
+                Storage.saveAll('cozycs_schedules', schedules);
             }
+
+            window.dispatchEvent(new Event('cozycs_data_changed'));
         }
         loadTodayAgenda();
     }
