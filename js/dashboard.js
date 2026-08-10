@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (FIXED SESSION TOGGLE & DAILY AUTO-RESET)
+// COZYCS FARM - EXECUTIVE DASHBOARD (PURE FORM SESSION FILTER)
 // ==========================================
 
 var dashboard = (function() {
@@ -179,6 +179,7 @@ var dashboard = (function() {
         return false;
     }
 
+    // FUNGSI EKSTRAKSI MURNI DARI FORM NUTRISI (TANPA LOGIKA JAM INPUT)
     function getSessionFromItem(item) {
         if (!item || typeof item !== 'object') return '';
         var rawVal = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
@@ -187,22 +188,6 @@ var dashboard = (function() {
 
         if (str.includes('pagi')) return 'pagi';
         if (str.includes('sore') || str.includes('malam')) return 'sore';
-
-        var jamStr = item.jam || item.waktu || item.time || item.jamInput || item.jam_input || '';
-        if (jamStr && String(jamStr).includes(':')) {
-            var hour = parseInt(String(jamStr).split(':')[0], 10);
-            if (!isNaN(hour)) {
-                return hour < 12 ? 'pagi' : 'sore';
-            }
-        }
-
-        var ts = item.timestamp || item.createdAt || item.created_at || item.updatedAt;
-        if (ts) {
-            var dt = new Date(ts);
-            if (!isNaN(dt.getTime())) {
-                return dt.getHours() < 12 ? 'pagi' : 'sore';
-            }
-        }
 
         return '';
     }
@@ -274,7 +259,7 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
-    // FUNGSI PENETAPAN DATA SESI PRESISI DENGAN SMART FALLBACK
+    // PEMFILTERAN TANGGAL & SESI HANYA BERDASARKAN TAG FORM
     function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
@@ -282,21 +267,6 @@ var dashboard = (function() {
         if (!Array.isArray(dataNutrisi) || dataNutrisi.length === 0 || !todayMurni) {
             return null;
         }
-
-        // Filter data HARI INI & SESUAI GREENHOUSE
-        var todayList = dataNutrisi.filter(function(n) {
-            if (!n) return false;
-
-            var ghVal = n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh;
-            if (!isGhMatched(ghVal, selectedGh)) return false;
-
-            var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
-            if (!nDate) return false;
-
-            return nDate.getTime() === todayMurni.getTime();
-        });
-
-        if (todayList.length === 0) return null;
 
         var sessionToUse = targetSession;
         if (sessionToUse === 'AUTO') {
@@ -306,26 +276,27 @@ var dashboard = (function() {
 
         var searchKey = sessionToUse.toLowerCase().trim();
 
-        // Cari data spesifik untuk sesi (Pagi / Sore)
-        var matched = todayList.filter(function(n) {
+        // Pencarian Murni: Hari Ini + Match GH + Match Form Sesi (Pagi/Sore)
+        var matchedList = dataNutrisi.filter(function(n) {
+            if (!n) return false;
+
+            // Match Greenhouse
+            var ghVal = n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh;
+            if (!isGhMatched(ghVal, selectedGh)) return false;
+
+            // Match Tanggal Hari Ini
+            var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
+            if (!nDate || nDate.getTime() !== todayMurni.getTime()) return false;
+
+            // Match Tag Sesi Form (Pagi / Sore)
             var s = getSessionFromItem(n);
             return s === searchKey;
         });
 
-        if (matched.length > 0) {
+        if (matchedList.length > 0) {
             return {
-                item: matched[matched.length - 1],
+                item: matchedList[matchedList.length - 1], // Ambil inputan paling akhir pada sesi tersebut
                 sessionName: sessionToUse
-            };
-        }
-
-        // Fallback jika mode AUTO tetapi label belum ada
-        if (targetSession === 'AUTO' && todayList.length > 0) {
-            var lastItem = todayList[todayList.length - 1];
-            var detectedSession = (getSessionFromItem(lastItem) === 'sore') ? 'Sore' : 'Pagi';
-            return {
-                item: lastItem,
-                sessionName: detectedSession
             };
         }
 
