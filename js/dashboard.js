@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (AUTOMATIC EXPIRATION & DATE-ORDERED AGENDA)
+// COZYCS FARM - EXECUTIVE DASHBOARD (AGGREGATED POPULATION & DYNAMIC VARIETY DISPLAY)
 // ==========================================
 
 var dashboard = (function() {
@@ -861,7 +861,6 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI LOAD AGENDA DENGAN AUTOMATIC EXPIRATION & DATE SORTING
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -874,7 +873,6 @@ var dashboard = (function() {
         var schedules = getData('cozycs_jadwal');
         var todayMurni = parseLocalDate(new Date());
 
-        // 1. FILTERING DATA AGENDA
         var filteredTasks = schedules.filter(function(s) {
             var sGh = s.gh || s.greenhouse || 'ALL';
             var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
@@ -884,7 +882,6 @@ var dashboard = (function() {
             var isDone = (s.status === 'Selesai' || s.status === 'Completed' || s.completed === true);
             var isPast = sDate && (sDate < todayMurni);
 
-            // REVISI 1: JIKA STATUS SELESAI DAN TANGGAL SUDAH TERLEWAT, LANGSUNG HILANG OTOMATIS
             if (isDone && isPast) {
                 return false;
             }
@@ -902,7 +899,6 @@ var dashboard = (function() {
             return;
         }
 
-        // REVISI 2: URUTKAN AGENDA BERDASARKAN TANGGAL EKSEKUSI (ASCENDING: TANGGAL TERDEKAT DULU)
         filteredTasks.sort(function(a, b) {
             var dateA = parseLocalDate(a.tanggal || a.date) || new Date(0);
             var dateB = parseLocalDate(b.tanggal || b.date) || new Date(0);
@@ -928,8 +924,6 @@ var dashboard = (function() {
             }
 
             var ghTag = (item.gh && item.gh !== 'Seluruh Kebun' && item.gh !== 'ALL') ? (' (' + item.gh + ')') : '';
-
-            // REVISI 1: WARNA SAMAR SAAT SELESAI & TANPA CORET (text-decoration: none)
             var textColor = isDone ? '#9E9E9E' : '#117A65';
 
             html += `
@@ -978,6 +972,7 @@ var dashboard = (function() {
         };
     }
 
+    // FUNGSI LOAD PROGRESS MUSIM (SUDAH SINKRON TOTAL POPULASI & HIDE VARIETAS KHUSUS 'ALL')
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -1054,22 +1049,46 @@ var dashboard = (function() {
             estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
-        var uniqueHoles = new Set();
+        // AKUMULASI POPULASI LINTAS GH DENGAN UNIK ID TERPISAH PER-GH
+        var totalPopulasi = 0;
         var varietasSet = new Set();
 
-        filteredTanaman.forEach(function(t) {
-            if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
-            if (t.varietas) varietasSet.add(t.varietas);
-        });
-
-        var totalPopulasi = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
-        if (totalPopulasi === 0 && targetGhList.length > 0) {
-            targetGhList.forEach(function(g) {
-                totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || 0);
-                if (g.varietas) varietasSet.add(g.varietas);
+        if (selectedGh === 'ALL') {
+            var uniqueHolesALL = new Set();
+            dataTanaman.forEach(function(t) {
+                if (t.talang && t.talang !== '-') {
+                    uniqueHolesALL.add((t.gh || t.ghId || 'GH') + '_' + t.talang);
+                }
+                if (t.varietas) varietasSet.add(t.varietas);
             });
+            totalPopulasi = uniqueHolesALL.size > 0 ? uniqueHolesALL.size : dataTanaman.length;
+
+            if (totalPopulasi === 0 && dataGh.length > 0) {
+                dataGh.forEach(function(g) {
+                    totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.totalPop) || 0);
+                    if (g.varietas) varietasSet.add(g.varietas);
+                });
+            }
+        } else {
+            var uniqueHolesGH = new Set();
+            filteredTanaman.forEach(function(t) {
+                if (t.talang && t.talang !== '-') {
+                    uniqueHolesGH.add(t.talang);
+                }
+                if (t.varietas) varietasSet.add(t.varietas);
+            });
+            totalPopulasi = uniqueHolesGH.size > 0 ? uniqueHolesGH.size : filteredTanaman.length;
+
+            if (totalPopulasi === 0 && targetGhList.length > 0) {
+                targetGhList.forEach(function(g) {
+                    totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.totalPop) || 0);
+                    if (g.varietas) varietasSet.add(g.varietas);
+                });
+            }
         }
-        var varietasStr = Array.from(varietasSet).join(', ') || 'Melon';
+
+        // KHUSUS "SEMUA GH", KETERANGAN VARIETAS DIHILANGKAN
+        var varietasDisplay = (selectedGh === 'ALL') ? '' : ` (${Array.from(varietasSet).join(', ') || 'Melon'})`;
 
         var phaseTitle = "Vegetatif Awal";
         var currentStep = 1;
@@ -1138,7 +1157,7 @@ var dashboard = (function() {
             <div style="background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE082; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
                 <div>
                     <span style="color: #666;">Populasi Aktif:</span>
-                    <strong style="color: #333;">${totalPopulasi} Pohon</strong> (${varietasStr})
+                    <strong style="color: #333;">${totalPopulasi} Pohon</strong>${varietasDisplay}
                 </div>
                 ${
                     totalBuahFix > 0
