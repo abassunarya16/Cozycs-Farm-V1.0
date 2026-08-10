@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (SINKRON NUTRISI.JS)
+// COZYCS FARM - EXECUTIVE DASHBOARD (WITH AUTO-SYNC REAL-TIME WEATHER)
 // ==========================================
 
 var dashboard = (function() {
@@ -195,7 +195,6 @@ var dashboard = (function() {
         return false;
     }
 
-    // FUNGSI EKSTRAKSI SESI WAKTU TERINTEGRASI DENGAN NUTRISI.JS (timeSlot)
     function getSessionFromItem(item) {
         if (!item || typeof item !== 'object') return '';
 
@@ -556,6 +555,9 @@ var dashboard = (function() {
                     if (tempEl) tempEl.textContent = temp;
                     if (humEl) humEl.textContent = humidity;
                     if (cityEl) cityEl.textContent = cityName;
+
+                    // OTOMATIS REFRES KARD LINGKUNGAN AGAR SINKRON SECARA REALTIME
+                    loadIotEnvData();
                 }
             })
             .catch(function(err) {});
@@ -919,6 +921,7 @@ var dashboard = (function() {
         `;
     }
 
+    // LOAD PARAMETER LINGKUNGAN (DENGAN SINKRONISASI OTOMATIS GPS REALTIME)
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -926,9 +929,21 @@ var dashboard = (function() {
         var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
         var latest = nutrientData ? nutrientData.item : null;
 
-        var valRoomTemp = (latest && (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) !== undefined && latest.roomTemp !== '-') ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) + '°C' : '0°C';
-        var valHumidity = (latest && (latest.humidity || latest.kelembaban) !== undefined) ? (latest.humidity || latest.kelembaban) : '0';
+        // Extract nilai manual jika diisi di nutrisi.js
+        var rawRoomTemp = latest ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) : null;
+        var rawHumidity = latest ? (latest.humidity || latest.kelembaban) : null;
+
+        var hasManualRoomTemp = (rawRoomTemp !== null && rawRoomTemp !== undefined && rawRoomTemp !== '-' && rawRoomTemp !== '' && parseFloat(rawRoomTemp) > 0);
+        var hasManualHumidity = (rawHumidity !== null && rawHumidity !== undefined && rawHumidity !== '-' && rawHumidity !== '' && parseFloat(rawHumidity) > 0);
+
+        // Fallback otomatis ke data cuaca lokasi terkini (GPS)
+        var valRoomTemp = hasManualRoomTemp ? (rawRoomTemp + '°C') : (pesawaranWeather.temp !== '-°C' ? pesawaranWeather.temp : '0°C');
+        var valHumidity = hasManualHumidity ? rawHumidity : (pesawaranWeather.humidity !== '-%' ? pesawaranWeather.humidity.replace('%', '') : '0');
         var valLux = (latest && (latest.lux || latest.cahaya) !== undefined) ? (latest.lux || latest.cahaya) : '0';
+
+        // Badge Status Sumber Data
+        var badgeRoomTemp = hasManualRoomTemp ? t('room_temp_lbl') : (pesawaranWeather.temp !== '-°C' ? '📍 GPS Live' : t('no_data'));
+        var badgeHumidity = hasManualHumidity ? t('rh_gh') : (pesawaranWeather.humidity !== '-%' ? '📍 GPS Live' : t('no_data'));
 
         el.innerHTML = `
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -941,7 +956,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valRoomTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('room_temp_lbl')}</span></div>
+                <div><span style="background: ${hasManualRoomTemp ? '#FFF3E0' : '#E0F7FA'}; color: ${hasManualRoomTemp ? '#E65100' : '#00838F'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${badgeRoomTemp}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -954,7 +969,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valHumidity} <span style="font-size: 10px; font-weight: 600; color: #777;">%</span></div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${t('rh_gh')}</span></div>
+                <div><span style="background: ${hasManualHumidity ? '#E8F5E9' : '#E0F7FA'}; color: ${hasManualHumidity ? '#2E7D32' : '#00838F'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${badgeHumidity}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
