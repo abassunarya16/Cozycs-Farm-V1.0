@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (PURE FORM SESSION FILTER)
+// COZYCS FARM - EXECUTIVE DASHBOARD (SINKRON NUTRISI.JS)
 // ==========================================
 
 var dashboard = (function() {
@@ -113,14 +113,23 @@ var dashboard = (function() {
             d.setHours(0, 0, 0, 0);
             return d;
         }
-        var cleanStr = String(dateStr).split('T')[0];
-        var parts = cleanStr.split('-');
-        if (parts.length === 3) {
-            var y = parseInt(parts[0], 10);
-            var m = parseInt(parts[1], 10) - 1;
-            var day = parseInt(parts[2], 10);
-            return new Date(y, m, day, 0, 0, 0, 0);
+        var str = String(dateStr).trim().split('T')[0];
+        
+        if (str.includes('-') || str.includes('/')) {
+            var parts = str.split(/[-/]/);
+            if (parts.length === 3) {
+                var p1 = parseInt(parts[0], 10);
+                var p2 = parseInt(parts[1], 10);
+                var p3 = parseInt(parts[2], 10);
+
+                if (p1 > 1000) {
+                    return new Date(p1, p2 - 1, p3, 0, 0, 0, 0);
+                } else if (p3 > 1000) {
+                    return new Date(p3, p2 - 1, p1, 0, 0, 0, 0);
+                }
+            }
         }
+
         var parsed = new Date(dateStr);
         if (!isNaN(parsed.getTime())) {
             parsed.setHours(0, 0, 0, 0);
@@ -161,7 +170,14 @@ var dashboard = (function() {
 
     function isGhMatched(itemGh, selected) {
         if (!selected || selected === 'ALL') return true;
-        var itemStr = String(itemGh || '').toLowerCase().trim();
+
+        var itemStr = '';
+        if (typeof itemGh === 'object' && itemGh !== null) {
+            itemStr = String(itemGh.nama || itemGh.kode || itemGh.id || '').toLowerCase();
+        } else {
+            itemStr = String(itemGh || '').toLowerCase().trim();
+        }
+
         var selStr = String(selected || '').toLowerCase().trim();
         if (!itemStr) return true;
 
@@ -179,15 +195,22 @@ var dashboard = (function() {
         return false;
     }
 
-    // FUNGSI EKSTRAKSI MURNI DARI FORM NUTRISI (TANPA LOGIKA JAM INPUT)
+    // FUNGSI EKSTRAKSI SESI WAKTU TERINTEGRASI DENGAN NUTRISI.JS (timeSlot)
     function getSessionFromItem(item) {
         if (!item || typeof item !== 'object') return '';
-        var rawVal = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
-                     item.sesi || item.periode || item.session || item.waktuSesi || '';
+
+        var rawVal = item.timeSlot || item.timeslot || item.waktuCek || item.waktu_cek || 
+                     item.waktuPengecekan || item.waktu || item.sesi || item.periode || 
+                     item.session || item.waktuSesi || item.kategori || item.type || item.label || '';
+
+        if (typeof rawVal === 'object' && rawVal !== null) {
+            rawVal = rawVal.nama || rawVal.label || rawVal.val || '';
+        }
+
         var str = String(rawVal).toLowerCase().trim();
 
-        if (str.includes('pagi')) return 'pagi';
-        if (str.includes('sore') || str.includes('malam')) return 'sore';
+        if (str.includes('pagi') || str.includes('morning')) return 'pagi';
+        if (str.includes('sore') || str.includes('afternoon') || str.includes('malam')) return 'sore';
 
         return '';
     }
@@ -217,17 +240,14 @@ var dashboard = (function() {
     function formatLastUpdated(item) {
         if (!item || typeof item !== 'object' || Object.keys(item).length === 0) return null;
 
-        var dateStr = item.updatedAt || item.updated_at || item.timestamp || 
-                      item.createdAt || item.created_at || item.tanggal || 
-                      item.tgl || item.date || item.datetime || item.lastUpdate || 
-                      item.last_update || item.tglInput || item.tgl_input;
+        var dateStr = item.date || item.tanggal || item.tgl || item.updatedAt || 
+                      item.updated_at || item.timestamp || item.createdAt || item.created_at;
 
-        var jamStr = item.jam || item.waktu || item.time || item.jamInput || 
-                     item.jam_input || item.waktu_input;
+        var jamStr = item.jam || item.waktu || item.time || item.jamInput || item.waktu_input;
 
         if (!dateStr && !jamStr) return null;
 
-        var timeText = jamStr || '';
+        var timeText = (typeof jamStr === 'string' && jamStr.includes(':')) ? jamStr : '';
 
         if (dateStr) {
             if (!timeText && String(dateStr).includes('T')) {
@@ -256,10 +276,9 @@ var dashboard = (function() {
             }
         }
 
-        return jamStr ? ('Jam ' + jamStr) : null;
+        return timeText ? ('Jam ' + timeText) : null;
     }
 
-    // PEMFILTERAN TANGGAL & SESI HANYA BERDASARKAN TAG FORM
     function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
@@ -276,26 +295,22 @@ var dashboard = (function() {
 
         var searchKey = sessionToUse.toLowerCase().trim();
 
-        // Pencarian Murni: Hari Ini + Match GH + Match Form Sesi (Pagi/Sore)
         var matchedList = dataNutrisi.filter(function(n) {
             if (!n) return false;
 
-            // Match Greenhouse
             var ghVal = n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh;
             if (!isGhMatched(ghVal, selectedGh)) return false;
 
-            // Match Tanggal Hari Ini
-            var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
+            var nDate = parseLocalDate(n.date || n.tanggal || n.tgl || n.createdAt || n.timestamp);
             if (!nDate || nDate.getTime() !== todayMurni.getTime()) return false;
 
-            // Match Tag Sesi Form (Pagi / Sore)
             var s = getSessionFromItem(n);
             return s === searchKey;
         });
 
         if (matchedList.length > 0) {
             return {
-                item: matchedList[matchedList.length - 1], // Ambil inputan paling akhir pada sesi tersebut
+                item: matchedList[matchedList.length - 1],
                 sessionName: sessionToUse
             };
         }
@@ -841,9 +856,9 @@ var dashboard = (function() {
             }
         }
 
-        var valPpm = (latest && (latest.ppm || latest.ppmAir || latest.nutrisi) !== undefined && latest.ppm !== '') ? (latest.ppm || latest.ppmAir || latest.nutrisi) : '0';
-        var valPh = (latest && (latest.ph || latest.phAir) !== undefined && latest.ph !== '') ? (latest.ph || latest.phAir) : '0.0';
-        var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined) ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
+        var valPpm = (latest && (latest.ppm || latest.ppmAir || latest.nutrisi) !== undefined && latest.ppm !== '-') ? (latest.ppm || latest.ppmAir || latest.nutrisi) : '0';
+        var valPh = (latest && (latest.ph || latest.phAir) !== undefined && latest.ph !== '-') ? (latest.ph || latest.phAir) : '0.0';
+        var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined && latest.waterTemp !== '-') ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
         var valTandon = (latest && (latest.tandon || latest.levelAir || latest.tandonAir) !== undefined) ? (latest.tandon || latest.levelAir || latest.tandonAir) : '0';
 
         var statusPpm = (latest && parseFloat(valPpm) > 0) ? t('recorded') : t('no_data');
@@ -911,7 +926,7 @@ var dashboard = (function() {
         var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
         var latest = nutrientData ? nutrientData.item : null;
 
-        var valRoomTemp = (latest && (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) !== undefined) ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) + '°C' : '0°C';
+        var valRoomTemp = (latest && (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) !== undefined && latest.roomTemp !== '-') ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) + '°C' : '0°C';
         var valHumidity = (latest && (latest.humidity || latest.kelembaban) !== undefined) ? (latest.humidity || latest.kelembaban) : '0';
         var valLux = (latest && (latest.lux || latest.cahaya) !== undefined) ? (latest.lux || latest.cahaya) : '0';
 
@@ -1293,12 +1308,18 @@ var dashboard = (function() {
 
         if (explicitLogs.length > 0) {
             explicitLogs.forEach(function(item) {
+                var itemGh = item.gh;
+                if (!itemGh && item.deskripsi) {
+                    var match = item.deskripsi.match(/(GH[-\w\d]+)/i);
+                    if (match) itemGh = match[1];
+                }
+
                 allLogs.push({
                     timestamp: item.timestamp || item.created_at || (item.tanggal ? (item.tanggal + 'T' + (item.jam || '00:00') + ':00') : new Date().toISOString()),
                     jam: item.jam || item.waktu || 'Baru',
                     text: item.judul || item.text || item.kegiatan || 'Aktivitas',
                     desc: item.deskripsi || item.keterangan || '',
-                    gh: item.gh || 'ALL'
+                    gh: itemGh || 'ALL'
                 });
             });
         } else {
@@ -1335,7 +1356,7 @@ var dashboard = (function() {
 
             allNutrisi.forEach(function(item) {
                 allLogs.push({
-                    timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
+                    timestamp: item.createdAt || item.date || item.tanggal || new Date().toISOString(),
                     jam: item.jam || item.waktu || 'Tercatat',
                     text: 'Nutrisi: ' + (item.ppm || 0) + ' PPM',
                     desc: 'pH: ' + (item.ph || '-') + ' | GH: ' + (item.gh || 'GH'),
