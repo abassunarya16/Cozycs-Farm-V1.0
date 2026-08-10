@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (PAGI & SORE NUTRIENT SESSION SYNC)
+// COZYCS FARM - EXECUTIVE DASHBOARD (EXACT NUTRIENT SESSION & GH MATCHING SYNC)
 // ==========================================
 
 var dashboard = (function() {
@@ -166,10 +166,10 @@ var dashboard = (function() {
             var nameB = String(b.nama || b.kode || b.id || '').toLowerCase();
 
             var getRank = function(str) {
-                if (str.includes('utama') || str.includes('gh 1') || str.includes('gh1')) return 1;
-                if (str.includes('kedua') || str.includes('gh 2') || str.includes('gh2')) return 2;
-                if (str.includes('ketiga') || str.includes('gh 3') || str.includes('gh3')) return 3;
-                if (str.includes('keempat') || str.includes('gh 4') || str.includes('gh4')) return 4;
+                if (str.includes('utama') || str.includes('gh 1') || str.includes('gh1') || str.includes('gh-01')) return 1;
+                if (str.includes('kedua') || str.includes('gh 2') || str.includes('gh2') || str.includes('gh-02')) return 2;
+                if (str.includes('ketiga') || str.includes('gh 3') || str.includes('gh3') || str.includes('gh-03')) return 3;
+                if (str.includes('keempat') || str.includes('gh 4') || str.includes('gh4') || str.includes('gh-04')) return 4;
                 return 99;
             };
 
@@ -226,7 +226,7 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
-    // FUNGSI UTAMA PENETAPAN SESI NUTRISI (PAGI / SORE) HARI INI
+    // FUNGSI UTAMA PENETAPAN SESI NUTRISI (DENGAN MULTI-KEY EXTRACTION & NORMALISASI GH)
     function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
@@ -235,11 +235,21 @@ var dashboard = (function() {
             return null;
         }
 
-        // Filter data hari ini & sesuai GH
+        // Filter data hari ini & sesuai GH (dengan normalisasi ID/Kode/Nama GH)
         var todayList = dataNutrisi.filter(function(n) {
             if (!n) return false;
 
-            var matchGh = (selectedGh === 'ALL') || (n.gh === selectedGh || n.ghId === selectedGh || n.greenhouse === selectedGh);
+            var nGh = String(n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh || '').toLowerCase();
+            var sGh = String(selectedGh || '').toLowerCase();
+
+            var matchGh = (selectedGh === 'ALL') || 
+                          (nGh === sGh) || 
+                          (nGh.includes(sGh) || sGh.includes(nGh)) ||
+                          (sGh === 'utama' && (nGh.includes('gh-01') || nGh.includes('gh1') || nGh.includes('gh_01'))) ||
+                          (sGh === 'kedua' && (nGh.includes('gh-02') || nGh.includes('gh2') || nGh.includes('gh_02'))) ||
+                          (sGh === 'gh-01' && (nGh.includes('utama') || nGh.includes('gh1'))) ||
+                          (sGh === 'gh-02' && (nGh.includes('kedua') || nGh.includes('gh2')));
+
             if (!matchGh) return false;
 
             var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
@@ -257,9 +267,16 @@ var dashboard = (function() {
             sessionToUse = (currentHour >= 12) ? 'Sore' : 'Pagi';
         }
 
-        // Cari data yang sesuai sesi (Pagi / Sore)
+        // Helper ekstraksi string sesi dari berbagai macam properti
+        function extractSessionString(item) {
+            var val = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
+                      item.waktu || item.sesi || item.periode || item.kategori || item.type || '';
+            return String(val).toLowerCase();
+        }
+
+        // Cari data yang cocok dengan sesi (Pagi / Sore)
         var matched = todayList.filter(function(n) {
-            var s = String(n.waktuCek || n.waktu || n.sesi || n.waktu_cek || '').toLowerCase();
+            var s = extractSessionString(n);
             return s.includes(sessionToUse.toLowerCase());
         });
 
@@ -270,13 +287,14 @@ var dashboard = (function() {
             };
         }
 
-        // Jika sesi yang dicari belum ada tetapi sesi lain ada
+        // Fallback jika mode AUTO tapi hanya ada 1 sesi
         if (targetSession === 'AUTO' && todayList.length > 0) {
             var lastItem = todayList[todayList.length - 1];
-            var detectedSesi = String(lastItem.waktuCek || lastItem.waktu || lastItem.sesi || 'Pagi');
+            var sVal = extractSessionString(lastItem);
+            var detectedName = sVal.includes('sore') ? 'Sore' : 'Pagi';
             return {
                 item: lastItem,
-                sessionName: detectedSesi.includes('Sore') ? 'Sore' : 'Pagi'
+                sessionName: detectedName
             };
         }
 
@@ -774,7 +792,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // UPDATE RENDER PARAMETER AIR TANDONsesi Pagi/Sore
+    // UPDATE RENDER PARAMETER AIR TANDON SESI Pagi/Sore
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
@@ -788,7 +806,7 @@ var dashboard = (function() {
 
         // Update Tampilan Tombol Sesi
         if (btnPagi && btnSore) {
-            if (activeSessionName === 'Pagi') {
+            if (activeSessionName.toLowerCase().includes('pagi')) {
                 btnPagi.style.background = '#00838F';
                 btnPagi.style.color = '#FFF';
                 btnSore.style.background = '#FFF';
@@ -812,8 +830,8 @@ var dashboard = (function() {
 
         var valPpm = (latest && latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
         var valPh = (latest && latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
-        var valWaterTemp = (latest && latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : (latest && latest.suhuAir ? latest.suhuAir + '°C' : '0°C');
-        var valTandon = (latest && latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
+        var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined) ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
+        var valTandon = (latest && (latest.tandon || latest.levelAir || latest.tandonAir) !== undefined) ? (latest.tandon || latest.levelAir || latest.tandonAir) : '0';
 
         var statusPpm = (latest && parseFloat(valPpm) > 0) ? t('recorded') : t('no_data');
         var statusPh = (latest && parseFloat(valPh) > 0) ? t('recorded') : t('no_data');
@@ -881,9 +899,9 @@ var dashboard = (function() {
         var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
         var latest = nutrientData ? nutrientData.item : null;
 
-        var valRoomTemp = (latest && latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : (latest && latest.tempUdara ? latest.tempUdara + '°C' : (latest && latest.suhuRuangan ? latest.suhuRuangan + '°C' : '0°C'));
-        var valHumidity = (latest && latest.humidity !== undefined && latest.humidity !== '') ? latest.humidity : (latest && latest.kelembaban ? latest.kelembaban : '0');
-        var valLux = (latest && latest.lux !== undefined && latest.lux !== '') ? latest.lux : (latest && latest.cahaya ? latest.cahaya : '0');
+        var valRoomTemp = (latest && (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) !== undefined) ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) + '°C' : '0°C';
+        var valHumidity = (latest && (latest.humidity || latest.kelembaban) !== undefined) ? (latest.humidity || latest.kelembaban) : '0';
+        var valLux = (latest && (latest.lux || latest.cahaya) !== undefined) ? (latest.lux || latest.cahaya) : '0';
 
         el.innerHTML = `
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
