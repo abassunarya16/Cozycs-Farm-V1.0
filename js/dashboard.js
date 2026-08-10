@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (MODERN HERO BANNER & SMART FARM UI)
+// COZYCS FARM - EXECUTIVE DASHBOARD (FIXED SESSION TOGGLE & DAILY AUTO-RESET)
 // ==========================================
 
 var dashboard = (function() {
@@ -159,6 +159,54 @@ var dashboard = (function() {
         return [];
     }
 
+    function isGhMatched(itemGh, selected) {
+        if (!selected || selected === 'ALL') return true;
+        var itemStr = String(itemGh || '').toLowerCase().trim();
+        var selStr = String(selected || '').toLowerCase().trim();
+        if (!itemStr) return true;
+
+        if (itemStr === selStr) return true;
+        if (itemStr.includes(selStr) || selStr.includes(itemStr)) return true;
+
+        var isUtama = (selStr.includes('utama') || selStr.includes('gh-01') || selStr.includes('gh1') || selStr.includes('gh_01'));
+        var itemIsUtama = (itemStr.includes('utama') || itemStr.includes('gh-01') || itemStr.includes('gh1') || itemStr.includes('gh_01'));
+        if (isUtama && itemIsUtama) return true;
+
+        var isKedua = (selStr.includes('kedua') || selStr.includes('gh-02') || selStr.includes('gh2') || selStr.includes('gh_02'));
+        var itemIsKedua = (itemStr.includes('kedua') || itemStr.includes('gh-02') || itemStr.includes('gh2') || itemStr.includes('gh_02'));
+        if (isKedua && itemIsKedua) return true;
+
+        return false;
+    }
+
+    function getSessionFromItem(item) {
+        if (!item || typeof item !== 'object') return '';
+        var rawVal = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
+                     item.sesi || item.periode || item.session || item.waktuSesi || '';
+        var str = String(rawVal).toLowerCase().trim();
+
+        if (str.includes('pagi')) return 'pagi';
+        if (str.includes('sore') || str.includes('malam')) return 'sore';
+
+        var jamStr = item.jam || item.waktu || item.time || item.jamInput || item.jam_input || '';
+        if (jamStr && String(jamStr).includes(':')) {
+            var hour = parseInt(String(jamStr).split(':')[0], 10);
+            if (!isNaN(hour)) {
+                return hour < 12 ? 'pagi' : 'sore';
+            }
+        }
+
+        var ts = item.timestamp || item.createdAt || item.created_at || item.updatedAt;
+        if (ts) {
+            var dt = new Date(ts);
+            if (!isNaN(dt.getTime())) {
+                return dt.getHours() < 12 ? 'pagi' : 'sore';
+            }
+        }
+
+        return '';
+    }
+
     function sortGhList(list) {
         if (!Array.isArray(list)) return [];
         return list.slice().sort(function(a, b) {
@@ -226,6 +274,7 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
+    // FUNGSI PENETAPAN DATA SESI PRESISI DENGAN SMART FALLBACK
     function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
@@ -234,21 +283,12 @@ var dashboard = (function() {
             return null;
         }
 
+        // Filter data HARI INI & SESUAI GREENHOUSE
         var todayList = dataNutrisi.filter(function(n) {
             if (!n) return false;
 
-            var nGh = String(n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh || '').toLowerCase();
-            var sGh = String(selectedGh || '').toLowerCase();
-
-            var matchGh = (selectedGh === 'ALL') || 
-                          (nGh === sGh) || 
-                          (nGh.includes(sGh) || sGh.includes(nGh)) ||
-                          (sGh === 'utama' && (nGh.includes('gh-01') || nGh.includes('gh1') || nGh.includes('gh_01'))) ||
-                          (sGh === 'kedua' && (nGh.includes('gh-02') || nGh.includes('gh2') || nGh.includes('gh_02'))) ||
-                          (sGh === 'gh-01' && (nGh.includes('utama') || nGh.includes('gh1'))) ||
-                          (sGh === 'gh-02' && (nGh.includes('kedua') || nGh.includes('gh2')));
-
-            if (!matchGh) return false;
+            var ghVal = n.gh || n.ghId || n.greenhouse || n.idGh || n.id_gh || n.kodeGh;
+            if (!isGhMatched(ghVal, selectedGh)) return false;
 
             var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
             if (!nDate) return false;
@@ -264,15 +304,12 @@ var dashboard = (function() {
             sessionToUse = (currentHour >= 12) ? 'Sore' : 'Pagi';
         }
 
-        function extractSessionString(item) {
-            var val = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
-                      item.waktu || item.sesi || item.periode || item.kategori || item.type || '';
-            return String(val).toLowerCase();
-        }
+        var searchKey = sessionToUse.toLowerCase().trim();
 
+        // Cari data spesifik untuk sesi (Pagi / Sore)
         var matched = todayList.filter(function(n) {
-            var s = extractSessionString(n);
-            return s.includes(sessionToUse.toLowerCase());
+            var s = getSessionFromItem(n);
+            return s === searchKey;
         });
 
         if (matched.length > 0) {
@@ -282,13 +319,13 @@ var dashboard = (function() {
             };
         }
 
+        // Fallback jika mode AUTO tetapi label belum ada
         if (targetSession === 'AUTO' && todayList.length > 0) {
             var lastItem = todayList[todayList.length - 1];
-            var sVal = extractSessionString(lastItem);
-            var detectedName = sVal.includes('sore') ? 'Sore' : 'Pagi';
+            var detectedSession = (getSessionFromItem(lastItem) === 'sore') ? 'Sore' : 'Pagi';
             return {
                 item: lastItem,
-                sessionName: detectedName
+                sessionName: detectedSession
             };
         }
 
@@ -313,7 +350,7 @@ var dashboard = (function() {
 
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. WELCOME BANNER (MODERN GLASS-EMERALD HERO CARD) -->
+                <!-- 0. WELCOME BANNER HERO CARD -->
                 <div id="dashWelcomeBanner" style="margin-bottom: 16px;"></div>
 
                 <!-- 1. GRID MATRIX GREENHOUSE -->
@@ -548,7 +585,6 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
-    // FUNGSI WELCOME BANNER REVOLUSI VISUAL (MODERN EXECUTIVE HERO BANNER)
     function loadWelcomeBanner() {
         var el = document.getElementById('dashWelcomeBanner');
         if (!el) return;
@@ -569,13 +605,9 @@ var dashboard = (function() {
 
         el.innerHTML = `
             <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
-                
-                <!-- ACCENT BACKGROUND GLOW -->
-                <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; blur: 20px; pointer-events: none;"></div>
+                <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; pointer-events: none;"></div>
 
-                <!-- TOP ROW: AVATAR, GREETING & FLOATING WEATHER CARD -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
-                    
                     <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
                         <div style="position: relative; flex-shrink: 0;">
                             <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
@@ -597,7 +629,6 @@ var dashboard = (function() {
                         </div>
                     </div>
 
-                    <!-- FLOATING WEATHER MICRO-CARD -->
                     <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
                         <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
@@ -607,12 +638,9 @@ var dashboard = (function() {
                             💧 ${pesawaranWeather.humidity}
                         </div>
                     </div>
-
                 </div>
 
-                <!-- BOTTOM ROW: LIVE DATE BADGE & LOCATION -->
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
-                    
                     <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
                         <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
                         <span id="liveDateTime">${dateTimeStr}</span>
@@ -623,13 +651,11 @@ var dashboard = (function() {
                             <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
                             <span id="liveLocationName">${currentLocation.city}</span>
                         </div>
-                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background 0.2s ease;">
+                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
                             <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
                         </button>
                     </div>
-
                 </div>
-
             </div>
         `;
     }
@@ -725,7 +751,7 @@ var dashboard = (function() {
             var isActive = (selectedGh === gId);
             var theme = themes[index % themes.length];
 
-            var filteredTanaman = dataTanaman.filter(function(t) { return t.gh === gId || t.ghId === gId; });
+            var filteredTanaman = dataTanaman.filter(function(t) { return isGhMatched(t.gh || t.ghId, gId); });
 
             var uniqueHoles = new Set();
             filteredTanaman.forEach(function(t) {
@@ -758,10 +784,10 @@ var dashboard = (function() {
                 if (t.kategori === 'Buah') tBuah += 1;
             });
 
-            var filteredPol = dataPolinasi.filter(function(p) { return p.gh === gId || p.ghId === gId; });
+            var filteredPol = dataPolinasi.filter(function(p) { return isGhMatched(p.gh || p.ghId, gId); });
             filteredPol.forEach(function(p) { tPol += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0); });
             
-            var filteredBuah = dataBuah.filter(function(b) { return b.gh === gId || b.ghId === gId; });
+            var filteredBuah = dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, gId); });
             filteredBuah.forEach(function(b) { tBuah += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
             html += `
@@ -844,8 +870,8 @@ var dashboard = (function() {
             }
         }
 
-        var valPpm = (latest && latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
-        var valPh = (latest && latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
+        var valPpm = (latest && (latest.ppm || latest.ppmAir || latest.nutrisi) !== undefined && latest.ppm !== '') ? (latest.ppm || latest.ppmAir || latest.nutrisi) : '0';
+        var valPh = (latest && (latest.ph || latest.phAir) !== undefined && latest.ph !== '') ? (latest.ph || latest.phAir) : '0.0';
         var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined) ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
         var valTandon = (latest && (latest.tandon || latest.levelAir || latest.tandonAir) !== undefined) ? (latest.tandon || latest.levelAir || latest.tandonAir) : '0';
 
@@ -994,7 +1020,7 @@ var dashboard = (function() {
 
         var filteredTasks = schedules.filter(function(s) {
             var sGh = s.gh || s.greenhouse || 'ALL';
-            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
+            var matchGh = (selectedGh === 'ALL') || isGhMatched(sGh, selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
             if (!matchGh) return false;
 
             var sDate = parseLocalDate(s.tanggal || s.date);
@@ -1103,11 +1129,11 @@ var dashboard = (function() {
 
         var targetGhList = (selectedGh === 'ALL') 
             ? dataGh 
-            : dataGh.filter(function(g) { return (g.kode === selectedGh || g.id === selectedGh || g.nama === selectedGh); });
+            : dataGh.filter(function(g) { return isGhMatched(g.kode || g.id || g.nama, selectedGh); });
 
         var filteredTanaman = (selectedGh === 'ALL') 
             ? dataTanaman 
-            : dataTanaman.filter(function(t) { return (t.gh === selectedGh || t.ghId === selectedGh); });
+            : dataTanaman.filter(function(t) { return isGhMatched(t.gh || t.ghId, selectedGh); });
 
         var explicitTanamDate = null;
         var explicitHarvestDate = null;
@@ -1227,7 +1253,7 @@ var dashboard = (function() {
         }
 
         var totalBuahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return (b.gh === selectedGh || b.ghId === selectedGh); });
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, selectedGh); });
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
         el.innerHTML = `
@@ -1379,7 +1405,7 @@ var dashboard = (function() {
 
         var filteredLogs = (selectedGh === 'ALL') 
             ? allLogs 
-            : allLogs.filter(function(l) { return l.gh === selectedGh || l.gh === 'ALL' || !l.gh; });
+            : allLogs.filter(function(l) { return isGhMatched(l.gh, selectedGh) || l.gh === 'ALL' || !l.gh; });
 
         if (filteredLogs.length === 0) {
             el.innerHTML = `<div style="font-size: 11px; color: #5C6BC0; text-align: center; padding: 12px 0; font-weight: 600;">${t('no_logs')}</div>`;
