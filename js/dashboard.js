@@ -177,18 +177,34 @@ var dashboard = (function() {
         });
     }
 
-    // FORMAT TIMESTAMP UPDATE MONITORING SPESIFIK
+    // MULTI-KEY TIMESTAMP PARSER
     function formatLastUpdated(item) {
-        if (!item || Object.keys(item).length === 0) return 'Belum Ada Data';
+        if (!item || typeof item !== 'object' || Object.keys(item).length === 0) return null;
 
-        var dateStr = item.updatedAt || item.timestamp || item.createdAt || item.tanggal || item.tgl;
-        var jamStr = item.jam || item.waktu;
+        var dateStr = item.updatedAt || item.updated_at || item.timestamp || 
+                      item.createdAt || item.created_at || item.tanggal || 
+                      item.tgl || item.date || item.datetime || item.lastUpdate || 
+                      item.last_update || item.tglInput || item.tgl_input;
 
-        if (!dateStr && !jamStr) return 'Data Terrekam';
+        var jamStr = item.jam || item.waktu || item.time || item.jamInput || 
+                     item.jam_input || item.waktu_input;
+
+        if (!dateStr && !jamStr) return null;
 
         var timeText = jamStr || '';
 
         if (dateStr) {
+            if (!timeText && String(dateStr).includes('T')) {
+                try {
+                    var dt = new Date(dateStr);
+                    if (!isNaN(dt.getTime())) {
+                        var h = String(dt.getHours()).padStart(2, '0');
+                        var m = String(dt.getMinutes()).padStart(2, '0');
+                        timeText = h + ':' + m;
+                    }
+                } catch(e) {}
+            }
+
             var d = parseLocalDate(dateStr);
             if (!d) {
                 var parsed = new Date(dateStr);
@@ -200,22 +216,11 @@ var dashboard = (function() {
                 var day = d.getDate();
                 var month = monthNames[d.getMonth()];
 
-                if (!timeText && String(dateStr).includes('T')) {
-                    try {
-                        var dt = new Date(dateStr);
-                        if (!isNaN(dt.getTime())) {
-                            var h = String(dt.getHours()).padStart(2, '0');
-                            var m = String(dt.getMinutes()).padStart(2, '0');
-                            timeText = h + ':' + m;
-                        }
-                    } catch(e) {}
-                }
-
                 return timeText ? (day + ' ' + month + ', ' + timeText) : (day + ' ' + month);
             }
         }
 
-        return jamStr ? ('Jam ' + jamStr) : 'Baru Saja';
+        return jamStr ? ('Jam ' + jamStr) : null;
     }
 
     function render() {
@@ -256,13 +261,13 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM (DI ATAS AGENDA) -->
+                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFF8E1 0%, #F1F8E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 10px;"><i class="fas fa-seedling" style="color: #2E7D32; margin-right: 6px;"></i> ${t('season_progress')}</div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 4. AGENDA HARI INI (DI BAWAH PROGRESS MUSIM) -->
+                <!-- 4. AGENDA HARI INI -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -567,7 +572,6 @@ var dashboard = (function() {
                 <span style="font-size: 10px; color: #2E7D32; font-weight: bold; background: #E8F5E9; padding: 2px 8px; border-radius: 10px;">${dataGh.length} GH Aktif</span>
             </div>
 
-            <!-- SPANDUK UTAMA KESELURHAN -->
             <div onclick="dashboard.selectGhFilter('ALL')" style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); border-radius: 14px; padding: 12px 14px; color: #fff; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(27,94,32,0.25); cursor: pointer; border: ${isAllActive ? '2px solid #FFD54F' : '2px solid transparent'}; position: relative; overflow: hidden; transition: all 0.2s ease;">
                 <i class="fas fa-globe-asia" style="position: absolute; right: -8px; bottom: -8px; font-size: 60px; opacity: 0.12;"></i>
                 
@@ -594,7 +598,6 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- GRID MATRIX 2 KOLOM (TERURUT UTAMA -> KEDUA) -->
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
         `;
 
@@ -704,9 +707,21 @@ var dashboard = (function() {
         var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
         var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
 
-        // SINKRONISASI BADGE WAKTU DI HEADER MONITORING
+        // SINKRONISASI BADGE HEADER MONITORING DENGAN FALLBACK
         if (lastUpdatedEl) {
-            lastUpdatedEl.textContent = formatLastUpdated(latest);
+            var timeBadge = formatLastUpdated(latest);
+
+            if (!timeBadge) {
+                var logs = getData('cozycs_aktivitas');
+                if (logs.length > 0) timeBadge = formatLastUpdated(logs[0]);
+            }
+
+            if (!timeBadge) {
+                var sprays = getData('cozycs_spray');
+                if (sprays.length > 0) timeBadge = formatLastUpdated(sprays[sprays.length - 1]);
+            }
+
+            lastUpdatedEl.textContent = timeBadge || 'Belum Ada Data';
         }
 
         var valPpm = (latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
