@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-DRAFT, GH SYNC & DASHBOARD LOG)
 // ==========================================
 
 var jadwal = (function() {
@@ -131,6 +131,32 @@ var jadwal = (function() {
         return 'cozycs_jadwal';
     }
 
+    function getData(key) {
+        try {
+            var altKeys = [key];
+            if (key === 'cozycs_greenhouse') altKeys.push('cozycs_gh', 'cozycs_greenhouses', 'greenhouses');
+
+            for (var i = 0; i < altKeys.length; i++) {
+                var k = altKeys[i];
+                var raw = localStorage.getItem(k);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            }
+
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
+                for (var j = 0; j < altKeys.length; j++) {
+                    var res = Storage.getAll(altKeys[j]);
+                    if (Array.isArray(res) && res.length > 0) return res;
+                }
+            }
+        } catch(e) {
+            console.error('[Jadwal] Gagal membaca data ' + key, e);
+        }
+        return [];
+    }
+
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -139,6 +165,32 @@ var jadwal = (function() {
     function setVal(id, val) {
         var el = document.getElementById(id);
         if (el) el.value = val;
+    }
+
+    // FUNGSI POPULATE DROPDOWN GREENHOUSE
+    function populateGhOptions() {
+        var selectEl = document.getElementById('jadwalGh');
+        if (!selectEl) return;
+
+        var currentValue = selectEl.value;
+        var ghList = getData('cozycs_greenhouse');
+
+        var html = `<option value="Seluruh Kebun">${t('opt_farm_general')}</option>`;
+
+        if (Array.isArray(ghList) && ghList.length > 0) {
+            ghList.forEach(function(gh) {
+                var val = gh.kode || gh.id || gh.nama;
+                var name = gh.nama || gh.kode || gh.id;
+                if (val) {
+                    html += `<option value="${val}">${name}</option>`;
+                }
+            });
+        }
+
+        selectEl.innerHTML = html;
+        if (currentValue) {
+            selectEl.value = currentValue;
+        }
     }
 
     function render() {
@@ -262,6 +314,7 @@ var jadwal = (function() {
     }
 
     function init() {
+        populateGhOptions();
         loadDashboard();
         loadTable();
 
@@ -339,6 +392,7 @@ var jadwal = (function() {
 
                 form.reset();
                 setVal('jadwalId', '');
+                populateGhOptions();
                 var titleEl = document.getElementById('formTitleJadwal');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
@@ -352,6 +406,7 @@ var jadwal = (function() {
             btnCancel.addEventListener('click', function() {
                 if (form) form.reset();
                 setVal('jadwalId', '');
+                populateGhOptions();
                 var titleEl = document.getElementById('formTitleJadwal');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
@@ -521,6 +576,8 @@ var jadwal = (function() {
         } catch(e) {}
 
         if (!item) return;
+
+        populateGhOptions();
 
         setVal('jadwalId', item.id || '');
         setVal('jadwalGh', item.gh || 'Seluruh Kebun');
