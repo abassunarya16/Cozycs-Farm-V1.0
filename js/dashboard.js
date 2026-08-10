@@ -1,10 +1,11 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (STRICT TODAY NUTRIENT SYNC & AUTO DAILY RESET)
+// COZYCS FARM - EXECUTIVE DASHBOARD (PAGI & SORE NUTRIENT SESSION SYNC)
 // ==========================================
 
 var dashboard = (function() {
 
     var selectedGh = 'ALL';
+    var selectedNutrientSession = 'AUTO'; // 'AUTO', 'Pagi', atau 'Sore'
     var isIotCollapsed = false;
     var isAirflowOn = false;
     var clockInterval = null;
@@ -225,28 +226,67 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
-    // FUNGSI UTAMA UNTUK MENGAMBIL DATA NUTRISI HARI INI
-    function getTodayNutrientData() {
+    // FUNGSI UTAMA PENETAPAN SESI NUTRISI (PAGI / SORE) HARI INI
+    function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
 
         if (!Array.isArray(dataNutrisi) || dataNutrisi.length === 0 || !todayMurni) {
-            return [];
+            return null;
         }
 
-        return dataNutrisi.filter(function(n) {
+        // Filter data hari ini & sesuai GH
+        var todayList = dataNutrisi.filter(function(n) {
             if (!n) return false;
 
-            // Filter Greenhouse jika dipilih spesifik
             var matchGh = (selectedGh === 'ALL') || (n.gh === selectedGh || n.ghId === selectedGh || n.greenhouse === selectedGh);
             if (!matchGh) return false;
 
-            // Filter Ketat: Tanggal Harus Tepat Hari Ini
             var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
             if (!nDate) return false;
 
             return nDate.getTime() === todayMurni.getTime();
         });
+
+        if (todayList.length === 0) return null;
+
+        // Penentuan Sesi Otomatis jika mode 'AUTO'
+        var sessionToUse = targetSession;
+        if (sessionToUse === 'AUTO') {
+            var currentHour = new Date().getHours();
+            sessionToUse = (currentHour >= 12) ? 'Sore' : 'Pagi';
+        }
+
+        // Cari data yang sesuai sesi (Pagi / Sore)
+        var matched = todayList.filter(function(n) {
+            var s = String(n.waktuCek || n.waktu || n.sesi || n.waktu_cek || '').toLowerCase();
+            return s.includes(sessionToUse.toLowerCase());
+        });
+
+        if (matched.length > 0) {
+            return {
+                item: matched[matched.length - 1],
+                sessionName: sessionToUse
+            };
+        }
+
+        // Jika sesi yang dicari belum ada tetapi sesi lain ada
+        if (targetSession === 'AUTO' && todayList.length > 0) {
+            var lastItem = todayList[todayList.length - 1];
+            var detectedSesi = String(lastItem.waktuCek || lastItem.waktu || lastItem.sesi || 'Pagi');
+            return {
+                item: lastItem,
+                sessionName: detectedSesi.includes('Sore') ? 'Sore' : 'Pagi'
+            };
+        }
+
+        return null;
+    }
+
+    function setNutrientSessionFilter(sesi) {
+        selectedNutrientSession = sesi;
+        loadIotWaterData();
+        loadIotEnvData();
     }
 
     function render() {
@@ -267,7 +307,7 @@ var dashboard = (function() {
 
                 <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); padding: 15px; border-radius: 16px; border: 1px solid #B2EBF2; margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 800; color: #006064;"><i class="fas fa-tint" style="margin-right: 4px; color: #0288D1;"></i> ${t('water_env_mon')}</span>
                             <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">Belum Ada Data</span>
@@ -278,7 +318,17 @@ var dashboard = (function() {
                         </button>
                     </div>
 
-                    <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; margin-top: 14px; transition: all 0.3s ease;">
+                    <!-- TAB SESI PENGECEKAN NUTRISI (PAGI / SORE) -->
+                    <div style="display: flex; gap: 6px; margin-bottom: 12px;" id="wrapperNutrientSessionTabs">
+                        <button id="btnSesiPagi" onclick="dashboard.setNutrientSessionFilter('Pagi')" style="flex: 1; padding: 6px; border-radius: 8px; border: 1px solid #00838F; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s ease;">
+                            ☀️ Pagi
+                        </button>
+                        <button id="btnSesiSore" onclick="dashboard.setNutrientSessionFilter('Sore')" style="flex: 1; padding: 6px; border-radius: 8px; border: 1px solid #00838F; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s ease;">
+                            🌙 Sore
+                        </button>
+                    </div>
+
+                    <div id="wrapperIotContent" style="display: ${isIotCollapsed ? 'none' : 'block'}; transition: all 0.3s ease;">
                         <div style="font-size: 11px; font-weight: 800; color: #00838F; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">${t('water_param')}</div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;" id="dashIotWaterCards"></div>
 
@@ -724,27 +774,45 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // REVISI TOTAL: SINKRONISASI STRICT TODAY & CLEANUP TANPA FALLBACK
+    // UPDATE RENDER PARAMETER AIR TANDONsesi Pagi/Sore
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
+        var btnPagi = document.getElementById('btnSesiPagi');
+        var btnSore = document.getElementById('btnSesiSore');
         if (!el) return;
 
-        var todayNutrisi = getTodayNutrientData();
-        var latest = todayNutrisi.length > 0 ? todayNutrisi[todayNutrisi.length - 1] : null;
+        var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
+        var latest = nutrientData ? nutrientData.item : null;
+        var activeSessionName = nutrientData ? nutrientData.sessionName : (selectedNutrientSession === 'AUTO' ? (new Date().getHours() >= 12 ? 'Sore' : 'Pagi') : selectedNutrientSession);
+
+        // Update Tampilan Tombol Sesi
+        if (btnPagi && btnSore) {
+            if (activeSessionName === 'Pagi') {
+                btnPagi.style.background = '#00838F';
+                btnPagi.style.color = '#FFF';
+                btnSore.style.background = '#FFF';
+                btnSore.style.color = '#00838F';
+            } else {
+                btnSore.style.background = '#00838F';
+                btnSore.style.color = '#FFF';
+                btnPagi.style.background = '#FFF';
+                btnPagi.style.color = '#00838F';
+            }
+        }
 
         if (lastUpdatedEl) {
             if (latest) {
                 var timeBadge = formatLastUpdated(latest);
-                lastUpdatedEl.textContent = timeBadge || 'Belum Ada Data';
+                lastUpdatedEl.textContent = (activeSessionName + ' (' + (timeBadge || 'Hari ini') + ')');
             } else {
-                lastUpdatedEl.textContent = 'Belum Ada Data';
+                lastUpdatedEl.textContent = activeSessionName + ' (Belum Ada Data)';
             }
         }
 
         var valPpm = (latest && latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
         var valPh = (latest && latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
-        var valWaterTemp = (latest && latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : '0°C';
+        var valWaterTemp = (latest && latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : (latest && latest.suhuAir ? latest.suhuAir + '°C' : '0°C');
         var valTandon = (latest && latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
 
         var statusPpm = (latest && parseFloat(valPpm) > 0) ? t('recorded') : t('no_data');
@@ -805,15 +873,15 @@ var dashboard = (function() {
         `;
     }
 
-    // REVISI TOTAL: PARAMETER LINGKUNGAN JUGA STRICT HARI INI
+    // UPDATE RENDER PARAMETER LINGKUNGAN SESI Pagi/Sore
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
 
-        var todayNutrisi = getTodayNutrientData();
-        var latest = todayNutrisi.length > 0 ? todayNutrisi[todayNutrisi.length - 1] : null;
+        var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
+        var latest = nutrientData ? nutrientData.item : null;
 
-        var valRoomTemp = (latest && latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : (latest && latest.tempUdara ? latest.tempUdara + '°C' : '0°C');
+        var valRoomTemp = (latest && latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : (latest && latest.tempUdara ? latest.tempUdara + '°C' : (latest && latest.suhuRuangan ? latest.suhuRuangan + '°C' : '0°C'));
         var valHumidity = (latest && latest.humidity !== undefined && latest.humidity !== '') ? latest.humidity : (latest && latest.kelembaban ? latest.kelembaban : '0');
         var valLux = (latest && latest.lux !== undefined && latest.lux !== '') ? latest.lux : (latest && latest.cahaya ? latest.cahaya : '0');
 
@@ -1363,6 +1431,7 @@ var dashboard = (function() {
         render: render,
         init: init,
         selectGhFilter: selectGhFilter,
+        setNutrientSessionFilter: setNutrientSessionFilter,
         toggleIotSection: toggleIotSection,
         toggleAirflow: toggleAirflow,
         toggleTask: toggleTask,
