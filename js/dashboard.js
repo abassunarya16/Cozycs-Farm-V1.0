@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (WITH AUTO-SYNC REAL-TIME WEATHER)
+// COZYCS FARM - EXECUTIVE DASHBOARD (PREMIUM UI & AUTO-SYNC WEATHER)
 // ==========================================
 
 var dashboard = (function() {
@@ -374,8 +374,10 @@ var dashboard = (function() {
                 </div>
 
                 <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM -->
-                <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFF8E1 0%, #F1F8E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #FFE082; margin-bottom: 16px;">
-                    <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 10px;"><i class="fas fa-seedling" style="color: #2E7D32; margin-right: 6px;"></i> ${t('season_progress')}</div>
+                <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFFDE7 0%, #F1F8E9 100%); padding: 16px; border-radius: 18px; border: 1px solid #FFE082; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-seedling" style="color: #2E7D32; font-size: 14px;"></i> ${t('season_progress')}
+                    </div>
                     <div id="dashProgressMusim"></div>
                 </div>
 
@@ -556,7 +558,6 @@ var dashboard = (function() {
                     if (humEl) humEl.textContent = humidity;
                     if (cityEl) cityEl.textContent = cityName;
 
-                    // OTOMATIS REFRES KARD LINGKUNGAN AGAR SINKRON SECARA REALTIME
                     loadIotEnvData();
                 }
             })
@@ -921,7 +922,6 @@ var dashboard = (function() {
         `;
     }
 
-    // LOAD PARAMETER LINGKUNGAN (DENGAN SINKRONISASI OTOMATIS GPS REALTIME)
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
@@ -929,19 +929,16 @@ var dashboard = (function() {
         var nutrientData = getTodayNutrientBySession(selectedNutrientSession);
         var latest = nutrientData ? nutrientData.item : null;
 
-        // Extract nilai manual jika diisi di nutrisi.js
         var rawRoomTemp = latest ? (latest.roomTemp || latest.suhuRuangan || latest.suhu_ruangan || latest.suhuRuang || latest.suhu_ruang || latest.tempUdara) : null;
         var rawHumidity = latest ? (latest.humidity || latest.kelembaban) : null;
 
         var hasManualRoomTemp = (rawRoomTemp !== null && rawRoomTemp !== undefined && rawRoomTemp !== '-' && rawRoomTemp !== '' && parseFloat(rawRoomTemp) > 0);
         var hasManualHumidity = (rawHumidity !== null && rawHumidity !== undefined && rawHumidity !== '-' && rawHumidity !== '' && parseFloat(rawHumidity) > 0);
 
-        // Fallback otomatis ke data cuaca lokasi terkini (GPS)
         var valRoomTemp = hasManualRoomTemp ? (rawRoomTemp + '°C') : (pesawaranWeather.temp !== '-°C' ? pesawaranWeather.temp : '0°C');
         var valHumidity = hasManualHumidity ? rawHumidity : (pesawaranWeather.humidity !== '-%' ? pesawaranWeather.humidity.replace('%', '') : '0');
         var valLux = (latest && (latest.lux || latest.cahaya) !== undefined) ? (latest.lux || latest.cahaya) : '0';
 
-        // Badge Status Sumber Data
         var badgeRoomTemp = hasManualRoomTemp ? t('room_temp_lbl') : (pesawaranWeather.temp !== '-°C' ? '📍 GPS Live' : t('no_data'));
         var badgeHumidity = hasManualHumidity ? t('rh_gh') : (pesawaranWeather.humidity !== '-%' ? '📍 GPS Live' : t('no_data'));
 
@@ -1118,6 +1115,9 @@ var dashboard = (function() {
         };
     }
 
+    // =======================================================
+    // TAMPILAN PROGRESS MUSIM & ESTIMASI PANEN (PREMIUM REDESIGN)
+    // =======================================================
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -1157,7 +1157,8 @@ var dashboard = (function() {
 
         if (!explicitTanamDate && filteredTanaman.length === 0 && targetGhList.length === 0) {
             el.innerHTML = `
-                <div style="background: rgba(255,255,255,0.8); padding: 12px; border-radius: 10px; text-align: center; color: #888; font-size: 11px; border: 1px dashed #FFE082;">
+                <div style="background: rgba(255,255,255,0.9); padding: 16px; border-radius: 14px; text-align: center; color: #888; font-size: 12px; border: 1px dashed #FFE082;">
+                    <i class="fas fa-seedling" style="font-size: 22px; color: #BDBDBD; margin-bottom: 6px; display: block;"></i>
                     Belum ada tanaman aktif di <strong>${selectedGh}</strong>.
                 </div>
             `;
@@ -1257,55 +1258,89 @@ var dashboard = (function() {
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, selectedGh); });
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
+        // Hitung Persentase Progress Jalur Progress Bar
+        var progressPercent = Math.min(100, Math.max(0, isBelumTanam ? 0 : Math.round((maxHst / totalTargetDays) * 100)));
+
         el.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px dashed #FFE082; padding-bottom: 10px;">
+            <!-- HEADER INFO & ESTiMASI PANEN -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
                 <div>
-                    <span style="font-size: 10px; background: ${isBelumTanam ? '#FFF3E0' : '#E8F5E9'}; color: ${isBelumTanam ? '#E65100' : '#2E7D32'}; padding: 3px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">${phaseTitle}</span>
-                    <div style="font-size: 18px; font-weight: 800; color: #E65100; margin-top: 6px;">
-                        ${maxHst} <span style="font-size: 12px; font-weight: normal; color: #795548;">/ ${totalTargetDays} HST</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); color: #E65100; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 2px 6px rgba(230,81,0,0.12); border: 1px solid #FFCC80;">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #E65100; display: inline-block;" class="pulse-green"></span>
+                        ${phaseTitle}
+                    </span>
+                    <div style="display: flex; align-items: baseline; gap: 4px; margin-top: 8px;">
+                        <span style="font-size: 26px; font-weight: 900; color: #1B5E20; line-height: 1; font-family: system-ui, -apple-system, sans-serif;">${maxHst}</span>
+                        <span style="font-size: 12px; font-weight: 700; color: #666;">/ ${totalTargetDays} HST</span>
                     </div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 10px; color: #8D6E63; font-weight: 600;">Estimasi Panen</div>
-                    <div style="font-size: 12px; font-weight: 800; color: #0277BD;">📅 ${estHarvestDateStr}</div>
-                    <div style="font-size: 10px; color: #666; font-weight: 600;">(${sisaHari} Hari Siklus)</div>
+
+                <div style="background: rgba(255, 255, 255, 0.95); border: 1px solid #FFE082; border-radius: 12px; padding: 8px 12px; text-align: right; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <div style="font-size: 9px; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px;">Estimasi Panen</div>
+                    <div style="font-size: 12px; font-weight: 800; color: #0277BD; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                        <i class="far fa-calendar-alt" style="font-size: 11px;"></i> ${estHarvestDateStr}
+                    </div>
+                    <div style="font-size: 9px; color: #2E7D32; font-weight: 700; margin-top: 2px;">
+                        (${sisaHari} Hari Lagi)
+                    </div>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; position: relative; margin-bottom: 14px; padding: 0 5px;">
-                <div style="position: absolute; top: 10px; left: 10px; right: 10px; height: 3px; background: #FFE082; z-index: 1;"></div>
-                <div style="position: absolute; top: 10px; left: 10px; width: ${((currentStep - 1) / 3) * 100}%; height: 3px; background: #2E7D32; z-index: 1; transition: width 0.3s ease;"></div>
-
-                <div style="text-align: center; position: relative; z-index: 2;">
-                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 1 ? '#2E7D32' : '#FFF'}; border: 2px solid #2E7D32; color: ${currentStep >= 1 ? '#FFF' : '#2E7D32'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">1</div>
-                    <span style="font-size: 9px; color: ${currentStep === 1 ? '#2E7D32' : '#795548'}; font-weight: ${currentStep === 1 ? 'bold' : 'normal'};">Veg Awal</span>
+            <!-- JALUR TRACKER STEPPER PROGRESS BAR -->
+            <div style="background: rgba(255, 255, 255, 0.9); border-radius: 14px; padding: 12px 10px; border: 1px solid rgba(255, 224, 130, 0.6); margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+                <!-- Visual Continuous Bar Fill -->
+                <div style="height: 6px; background: #E0E0E0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; position: relative;">
+                    <div style="height: 100%; width: ${progressPercent}%; background: linear-gradient(90deg, #2E7D32 0%, #4CAF50 100%); border-radius: 10px; transition: width 0.5s ease;"></div>
                 </div>
 
-                <div style="text-align: center; position: relative; z-index: 2;">
-                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 2 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">2</div>
-                    <span style="font-size: 9px; color: ${currentStep === 2 ? '#2E7D32' : '#795548'}; font-weight: ${currentStep === 2 ? 'bold' : 'normal'};">Vegetatif</span>
-                </div>
+                <!-- Node Tahapan 1-2-3-4 -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; position: relative;">
+                    <!-- Step 1 -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 1 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 1 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 1 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 1 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
+                            1
+                        </div>
+                        <span style="font-size: 9px; color: ${currentStep === 1 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 1 ? '800' : '600'}; margin-top: 4px;">Veg Awal</span>
+                    </div>
 
-                <div style="text-align: center; position: relative; z-index: 2;">
-                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 3 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">3</div>
-                    <span style="font-size: 9px; color: ${currentStep === 3 ? '#2E7D32' : '#795548'}; font-weight: ${currentStep === 3 ? 'bold' : 'normal'};">Polinasi</span>
-                </div>
+                    <!-- Step 2 -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 2 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 2 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
+                            2
+                        </div>
+                        <span style="font-size: 9px; color: ${currentStep === 2 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 2 ? '800' : '600'}; margin-top: 4px;">Vegetatif</span>
+                    </div>
 
-                <div style="text-align: center; position: relative; z-index: 2;">
-                    <div style="width: 22px; height: 22px; border-radius: 50%; background: ${currentStep >= 4 ? '#2E7D32' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px auto;">4</div>
-                    <span style="font-size: 9px; color: ${currentStep === 4 ? '#2E7D32' : '#795548'}; font-weight: ${currentStep === 4 ? 'bold' : 'normal'};">Pembesaran</span>
+                    <!-- Step 3 -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 3 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 3 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
+                            3
+                        </div>
+                        <span style="font-size: 9px; color: ${currentStep === 3 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 3 ? '800' : '600'}; margin-top: 4px;">Polinasi</span>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 4 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 4 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
+                            4
+                        </div>
+                        <span style="font-size: 9px; color: ${currentStep === 4 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 4 ? '800' : '600'}; margin-top: 4px;">Pembesaran</span>
+                    </div>
                 </div>
             </div>
 
-            <div style="background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 10px; border: 1px solid #FFE082; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
-                <div>
-                    <span style="color: #666;">Populasi Aktif:</span>
-                    <strong style="color: #333;">${totalPopulasi} Pohon</strong>${varietasDisplay}
+            <!-- KARTU RANGKUMAN POPULASI & EKSPEKTASI HASIL -->
+            <div style="background: rgba(255,255,255,0.92); padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(200, 230, 201, 0.8); display: flex; justify-content: space-between; align-items: center; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-tree" style="color: #2E7D32; font-size: 12px;"></i>
+                    <span style="color: #555; font-weight: 600;">Populasi:</span>
+                    <strong style="color: #1B5E20; font-weight: 800;">${totalPopulasi} Pohon</strong>
+                    <span style="color: #777; font-size: 10px;">${varietasDisplay}</span>
                 </div>
                 ${
                     totalBuahFix > 0
-                    ? `<div><span style="color: #666;">Buah Fix:</span> <strong style="color: #E65100;">${totalBuahFix} Buah (~${Math.round(totalBuahFix * 1.5)} Kg)</strong></div>`
-                    : `<div style="color: #888; font-size: 10px; font-style: italic;">*Estimasi panen dihitung setelah Polinasi</div>`
+                    ? `<div style="display: flex; align-items: center; gap: 4px;"><i class="fas fa-apple-alt" style="color: #E65100; font-size: 11px;"></i> <span style="color: #555;">Fix:</span> <strong style="color: #E65100; font-weight: 800;">${totalBuahFix} Buah (~${Math.round(totalBuahFix * 1.5)} Kg)</strong></div>`
+                    : `<div style="color: #9E9E9E; font-size: 10px; font-style: italic;">*Panen dihitung pasca Polinasi</div>`
                 }
             </div>
         `;
