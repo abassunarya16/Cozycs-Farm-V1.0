@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (REAL-TIME TIMESTAMP & ORDERED MATRIX)
+// COZYCS FARM - EXECUTIVE DASHBOARD (AUTOMATIC EXPIRATION & DATE-ORDERED AGENDA)
 // ==========================================
 
 var dashboard = (function() {
@@ -128,7 +128,6 @@ var dashboard = (function() {
         return null;
     }
 
-    // FUNGSI GET DATA DENGAN PRIORITAS DAN PENANGANAN CLEANUP
     function getData(key) {
         try {
             var altKeys = [key];
@@ -862,7 +861,7 @@ var dashboard = (function() {
         `;
     }
 
-    // FUNGSI LOAD AGENDA LINTAS TANGGAL & HARI INI
+    // FUNGSI LOAD AGENDA DENGAN AUTOMATIC EXPIRATION & DATE SORTING
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -873,10 +872,24 @@ var dashboard = (function() {
         }
 
         var schedules = getData('cozycs_jadwal');
+        var todayMurni = parseLocalDate(new Date());
 
+        // 1. FILTERING DATA AGENDA
         var filteredTasks = schedules.filter(function(s) {
             var sGh = s.gh || s.greenhouse || 'ALL';
-            return (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
+            var matchGh = (selectedGh === 'ALL') || (sGh === selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
+            if (!matchGh) return false;
+
+            var sDate = parseLocalDate(s.tanggal || s.date);
+            var isDone = (s.status === 'Selesai' || s.status === 'Completed' || s.completed === true);
+            var isPast = sDate && (sDate < todayMurni);
+
+            // REVISI 1: JIKA STATUS SELESAI DAN TANGGAL SUDAH TERLEWAT, LANGSUNG HILANG OTOMATIS
+            if (isDone && isPast) {
+                return false;
+            }
+
+            return true;
         });
 
         if (filteredTasks.length === 0) {
@@ -889,10 +902,10 @@ var dashboard = (function() {
             return;
         }
 
-        // URUTKAN BERDASARKAN TANGGAL TERDEKAT
+        // REVISI 2: URUTKAN AGENDA BERDASARKAN TANGGAL EKSEKUSI (ASCENDING: TANGGAL TERDEKAT DULU)
         filteredTasks.sort(function(a, b) {
-            var dateA = new Date(a.date || a.tanggal || 0);
-            var dateB = new Date(b.date || b.tanggal || 0);
+            var dateA = parseLocalDate(a.tanggal || a.date) || new Date(0);
+            var dateB = parseLocalDate(b.tanggal || b.date) || new Date(0);
             return dateA - dateB;
         });
 
@@ -916,11 +929,14 @@ var dashboard = (function() {
 
             var ghTag = (item.gh && item.gh !== 'Seluruh Kebun' && item.gh !== 'ALL') ? (' (' + item.gh + ')') : '';
 
+            // REVISI 1: WARNA SAMAR SAAT SELESAI & TANPA CORET (text-decoration: none)
+            var textColor = isDone ? '#9E9E9E' : '#117A65';
+
             html += `
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.85); border-radius: 8px; margin-bottom: 6px; border: 1px solid #A3E4D7; gap: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; overflow: hidden;">
                         <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
-                        <span style="font-size: 12px; font-weight: 600; color: ${isDone ? '#888888' : '#117A65'}; text-decoration: ${isDone ? 'line-through' : 'none'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <span style="font-size: 12px; font-weight: 600; color: ${textColor}; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}${ghTag}
                         </span>
                     </div>
@@ -1282,7 +1298,6 @@ var dashboard = (function() {
         loadIotEnvData();
     }
 
-    // FUNGSI TOGGLE TASK DENGAN SINKRONISASI DUAL KEY DUA arah
     function toggleTask(id) {
         var schedules = getData('cozycs_jadwal');
 
