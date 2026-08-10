@@ -1,15 +1,13 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-DRAFT, GH SYNC & DASHBOARD LOG)
+// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-SYNC & EVENT DISPATCH)
 // ==========================================
 
 var jadwal = (function() {
 
-    // VARIABEL STATE UNTUK PENCARIAN & PAGINASI
     var searchQuery = '';
     var currentPage = 1;
     var itemsPerPage = 20;
 
-    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
         'id': {
             'module_title': 'Jadwal & Agenda Operasional',
@@ -124,11 +122,30 @@ var jadwal = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    function getKey() {
-        if (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.JADWAL) {
-            return Storage.KEYS.JADWAL;
+    function getAllSchedules() {
+        var keys = ['cozycs_jadwal', 'cozycs_schedules'];
+        for (var i = 0; i < keys.length; i++) {
+            var raw = localStorage.getItem(keys[i]);
+            if (raw) {
+                try {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                } catch(e) {}
+            }
         }
-        return 'cozycs_jadwal';
+        return [];
+    }
+
+    function saveSchedulesToStorage(list) {
+        var json = JSON.stringify(list || []);
+        localStorage.setItem('cozycs_jadwal', json);
+        localStorage.setItem('cozycs_schedules', json);
+        if (typeof Storage !== 'undefined' && Storage.saveAll) {
+            Storage.saveAll('cozycs_jadwal', list);
+            Storage.saveAll('cozycs_schedules', list);
+        }
+        // PEMICU REFRESH OTOMATIS DASBOR
+        window.dispatchEvent(new Event('cozycs_data_changed'));
     }
 
     function getData(key) {
@@ -144,16 +161,7 @@ var jadwal = (function() {
                     if (Array.isArray(parsed) && parsed.length > 0) return parsed;
                 }
             }
-
-            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
-                for (var j = 0; j < altKeys.length; j++) {
-                    var res = Storage.getAll(altKeys[j]);
-                    if (Array.isArray(res) && res.length > 0) return res;
-                }
-            }
-        } catch(e) {
-            console.error('[Jadwal] Gagal membaca data ' + key, e);
-        }
+        } catch(e) {}
         return [];
     }
 
@@ -167,7 +175,6 @@ var jadwal = (function() {
         if (el) el.value = val;
     }
 
-    // FUNGSI POPULATE DROPDOWN GREENHOUSE
     function populateGhOptions() {
         var selectEl = document.getElementById('jadwalGh');
         if (!selectEl) return;
@@ -188,9 +195,7 @@ var jadwal = (function() {
         }
 
         selectEl.innerHTML = html;
-        if (currentValue) {
-            selectEl.value = currentValue;
-        }
+        if (currentValue) selectEl.value = currentValue;
     }
 
     function render() {
@@ -198,18 +203,13 @@ var jadwal = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-calendar-alt" style="color: #2E7D32;"></i> ${t('module_title')}</div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA (4 STAT CARDS) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="jadwalStatCards">
-                    <!-- Dynamic Stat Cards -->
-                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="jadwalStatCards"></div>
 
-                <!-- 2. FORM INPUT JADWAL -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleJadwal">${t('form_title_add')}</div>
                     <form id="formJadwal">
                         <input type="hidden" id="jadwalId">
 
-                        <!-- Lokasi GH & Tanggal Eksekusi -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_location')}</label>
@@ -223,7 +223,6 @@ var jadwal = (function() {
                             </div>
                         </div>
 
-                        <!-- Judul Kegiatan & Waktu -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_title')}</label>
@@ -240,7 +239,6 @@ var jadwal = (function() {
                             </div>
                         </div>
 
-                        <!-- Kategori & Penanggung Jawab -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_category')}</label>
@@ -260,7 +258,6 @@ var jadwal = (function() {
                             </div>
                         </div>
 
-                        <!-- Prioritas & Status -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_priority')}</label>
@@ -279,7 +276,6 @@ var jadwal = (function() {
                             </div>
                         </div>
 
-                        <!-- Catatan -->
                         <div style="margin-bottom: 12px;">
                             <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
                             <textarea id="jadwalDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);"></textarea>
@@ -292,10 +288,8 @@ var jadwal = (function() {
                     </form>
                 </div>
 
-                <!-- 3. REKAP DAFTAR JADWAL TITLE -->
                 <div class="section-title"><i class="fas fa-list-ul" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <!-- Kotak Pencarian Khusus Modul Jadwal -->
                 <div style="margin-bottom: 14px;">
                     <input type="text" id="inputSearchJadwal" 
                            placeholder="${t('ph_search')}" 
@@ -304,10 +298,7 @@ var jadwal = (function() {
                            style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
                 </div>
 
-                <!-- Container Cards Jadwal -->
                 <div id="containerJadwalCards"></div>
-
-                <!-- Kontrol Navigasi Paginasi -->
                 <div id="paginationJadwalControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
             </div>
         `;
@@ -318,7 +309,6 @@ var jadwal = (function() {
         loadDashboard();
         loadTable();
 
-        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formJadwal');
         }
@@ -341,10 +331,15 @@ var jadwal = (function() {
                 var status = getVal('jadwalStatus');
                 var desc = getVal('jadwalDesc');
 
-                var payload = {
+                var list = getAllSchedules();
+
+                var newEntry = {
+                    id: id || ('jdw_' + Date.now()),
                     gh: gh || 'Seluruh Kebun',
                     tanggal: tanggal,
+                    date: tanggal,
                     judul: judul,
+                    title: judul,
                     waktu: waktu || 'Pagi (06:00 - 09:00)',
                     kategori: kategori || 'Nutrisi & Tandon',
                     petugas: petugas || t('default_petugas'),
@@ -353,41 +348,18 @@ var jadwal = (function() {
                     desc: desc
                 };
 
-                try {
-                    var storageKey = getKey();
-                    if (id) {
-                        payload.id = id;
-                        if (typeof Storage !== 'undefined' && Storage.update) {
-                            Storage.update(storageKey, payload);
-                        }
-                    } else {
-                        if (typeof Storage !== 'undefined' && Storage.add) {
-                            Storage.add(storageKey, payload);
-                        }
-                    }
+                if (id) {
+                    var idx = list.findIndex(function(x) { return x.id === id; });
+                    if (idx !== -1) list[idx] = newEntry;
+                    else list.unshift(newEntry);
+                } else {
+                    list.unshift(newEntry);
+                }
 
-                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
-                    if (typeof Storage !== 'undefined' && Storage.add) {
-                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
-                        var now = new Date();
-                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                        
-                        Storage.add(keyAktivitas, {
-                            judul: id ? 'Perbarui Jadwal Operasional' : 'Jadwal / Tugas Baru',
-                            deskripsi: (judul || 'Tugas Kebun') + ' (' + (gh || 'Seluruh Kebun') + ') - Status: ' + (status || 'Pending'),
-                            tanggal: tanggal || now.toISOString().split('T')[0],
-                            jam: timeStr,
-                            kategori: 'Jadwal',
-                            icon: 'fas fa-calendar-alt',
-                            color: '#2E7D32'
-                        });
-                    }
+                saveSchedulesToStorage(list);
 
-                    if (typeof Helper !== 'undefined' && Helper.showToast) {
-                        Helper.showToast(t('toast_saved'), 'success');
-                    }
-                } catch(err) {
-                    console.error("Storage Error:", err);
+                if (typeof Helper !== 'undefined' && Helper.showToast) {
+                    Helper.showToast(t('toast_saved'), 'success');
                 }
 
                 form.reset();
@@ -418,14 +390,14 @@ var jadwal = (function() {
         var container = document.getElementById('jadwalStatCards');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+        var data = getAllSchedules();
         var total = data.length;
         var pendingCount = 0;
         var urgentCount = 0;
         var completedCount = 0;
 
         data.forEach(function(item) {
-            if (item.status === 'Selesai' || item.status === 'Completed') {
+            if (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true) {
                 completedCount++;
             } else {
                 pendingCount++;
@@ -460,7 +432,7 @@ var jadwal = (function() {
         var pageEl = document.getElementById('paginationJadwalControls');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+        var data = getAllSchedules();
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
@@ -468,20 +440,18 @@ var jadwal = (function() {
             return;
         }
 
-        // 1. Urutkan dari tanggal terdekat
         data.sort(function(a, b) {
-            var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
-            var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
+            var dateA = a && (a.tanggal || a.date) ? new Date(a.tanggal || a.date) : new Date(0);
+            var dateB = b && (b.tanggal || b.date) ? new Date(b.tanggal || b.date) : new Date(0);
             return dateA - dateB;
         });
 
-        // 2. Filter data berdasarkan kata kunci pencarian
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
             var gh = (item.gh || '').toLowerCase();
-            var tanggal = (item.tanggal || '').toLowerCase();
-            var judul = (item.judul || '').toLowerCase();
+            var tanggal = (item.tanggal || item.date || '').toLowerCase();
+            var judul = (item.judul || item.title || '').toLowerCase();
             var waktu = (item.waktu || '').toLowerCase();
             var kategori = (item.kategori || '').toLowerCase();
             var petugas = (item.petugas || '').toLowerCase();
@@ -497,7 +467,6 @@ var jadwal = (function() {
             return;
         }
 
-        // 3. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -506,12 +475,11 @@ var jadwal = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
 
-            var isDone = item.status === 'Selesai' || item.status === 'Completed';
+            var isDone = item.status === 'Selesai' || item.status === 'Completed' || item.completed === true;
             var badgeBg = isDone ? '#E8F5E9' : (item.prioritas === 'Tinggi' || item.prioritas === 'High' ? '#FFEBEE' : '#FFF3E0');
             var badgeColor = isDone ? '#2E7D32' : (item.prioritas === 'Tinggi' || item.prioritas === 'High' ? '#C62828' : '#E65100');
 
@@ -519,17 +487,17 @@ var jadwal = (function() {
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
-                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
+                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || item.date || '-'}</strong>
                             <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.gh || 'Seluruh Kebun'}</span>
                         </div>
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">${item.status || 'Pending'}</span>
                     </div>
 
                     <div style="margin-bottom: 8px;">
-                        <strong style="font-size: 15px; color: var(--text-color, #222); display: block; margin-bottom: 4px;">${item.judul}</strong>
+                        <strong style="font-size: 15px; color: var(--text-color, #222); display: block; margin-bottom: 4px;">${item.judul || item.title}</strong>
                         <div style="font-size: 12px; color: #888;">
-                            <span><i class="far fa-clock" style="color: #0277BD;"></i> ${item.waktu}</span> | 
-                            <span><i class="fas fa-tag" style="color: #E65100;"></i> ${item.kategori}</span> | 
+                            <span><i class="far fa-clock" style="color: #0277BD;"></i> ${item.waktu || 'Pagi'}</span> | 
+                            <span><i class="fas fa-tag" style="color: #E65100;"></i> ${item.kategori || 'Umum'}</span> | 
                             <span><i class="fas fa-user" style="color: #388E3C;"></i> ${item.petugas || t('default_petugas')}</span>
                         </div>
                     </div>
@@ -546,7 +514,6 @@ var jadwal = (function() {
 
         container.innerHTML = html;
 
-        // 5. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -567,22 +534,16 @@ var jadwal = (function() {
     }
 
     function editItem(id) {
-        var storageKey = getKey();
-        var item = null;
-        try {
-            if (typeof Storage !== 'undefined' && Storage.getById) {
-                item = Storage.getById(storageKey, id);
-            }
-        } catch(e) {}
-
+        var list = getAllSchedules();
+        var item = list.find(function(x) { return x.id === id; });
         if (!item) return;
 
         populateGhOptions();
 
         setVal('jadwalId', item.id || '');
         setVal('jadwalGh', item.gh || 'Seluruh Kebun');
-        setVal('jadwalTanggal', item.tanggal || '');
-        setVal('jadwalJudul', item.judul || '');
+        setVal('jadwalTanggal', item.tanggal || item.date || '');
+        setVal('jadwalJudul', item.judul || item.title || '');
         setVal('jadwalWaktu', item.waktu || 'Pagi (06:00 - 09:00)');
         setVal('jadwalKategori', item.kategori || 'Nutrisi & Tandon');
         setVal('jadwalPetugas', item.petugas === t('default_petugas') ? '' : (item.petugas || ''));
@@ -599,14 +560,13 @@ var jadwal = (function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // FUNGSI HAPUS YANG DIJAMIN CLEANUP DI SEMUA KUNCI
     function deleteItem(id) {
         if (confirm(t('confirm_delete'))) {
-            try {
-                var storageKey = getKey();
-                if (typeof Storage !== 'undefined' && Storage.remove) {
-                    Storage.remove(storageKey, id);
-                }
-            } catch(e) {}
+            var list = getAllSchedules();
+            list = list.filter(function(x) { return x.id !== id; });
+            saveSchedulesToStorage(list);
+
             loadDashboard();
             loadTable();
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
