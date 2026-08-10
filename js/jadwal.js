@@ -1,13 +1,18 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH AUTO-SYNC & EVENT DISPATCH)
+// COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH MULTI-FILTER & AUTOMATIC DATE SORT)
 // ==========================================
 
 var jadwal = (function() {
 
+    // VARIABEL STATE PENCARIAN, FILTER, URUTAN & PAGINASI
     var searchQuery = '';
+    var filterGh = 'ALL';
+    var filterStatus = 'ALL';
+    var sortOrder = 'desc'; // Default: Terbaru di atas, Terlama di bawah (Sesuai Tanggal Eksekusi)
     var currentPage = 1;
     var itemsPerPage = 20;
 
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
         'id': {
             'module_title': 'Jadwal & Agenda Operasional',
@@ -57,6 +62,13 @@ var jadwal = (function() {
             'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal ini?',
             'toast_deleted': 'Jadwal berhasil dihapus',
             'ph_search': '🔍 Cari judul, GH, tanggal, petugas, atau kategori...',
+            'lbl_sort': 'Urutan Tanggal',
+            'opt_sort_desc': '📅 Terbaru ➔ Terlama',
+            'opt_sort_asc': '📅 Terlama ➔ Terbaru',
+            'lbl_filter_gh': 'Filter GH',
+            'opt_all_gh': '🌐 Semua GH',
+            'lbl_filter_status': 'Filter Status',
+            'opt_all_status': 'Semua Status',
             'btn_prev': '⬅️ Sebelum',
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
@@ -110,6 +122,13 @@ var jadwal = (function() {
             'confirm_delete': 'Are you sure you want to delete this schedule?',
             'toast_deleted': 'Schedule deleted successfully',
             'ph_search': '🔍 Search title, GH, date, PIC, or category...',
+            'lbl_sort': 'Date Order',
+            'opt_sort_desc': '📅 Newest ➔ Oldest',
+            'opt_sort_asc': '📅 Oldest ➔ Newest',
+            'lbl_filter_gh': 'Filter GH',
+            'opt_all_gh': '🌐 All GH',
+            'lbl_filter_status': 'Filter Status',
+            'opt_all_status': 'All Status',
             'btn_prev': '⬅️ Prev',
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
@@ -120,6 +139,29 @@ var jadwal = (function() {
     function t(key) {
         var lang = localStorage.getItem('cozycs_lang') || 'id';
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
+    }
+
+    function parseLocalDate(dateStr) {
+        if (!dateStr) return null;
+        if (dateStr instanceof Date) {
+            var d = new Date(dateStr.getTime());
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+        var cleanStr = String(dateStr).split('T')[0];
+        var parts = cleanStr.split('-');
+        if (parts.length === 3) {
+            var y = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10) - 1;
+            var day = parseInt(parts[2], 10);
+            return new Date(y, m, day, 0, 0, 0, 0);
+        }
+        var parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) {
+            parsed.setHours(0, 0, 0, 0);
+            return parsed;
+        }
+        return null;
     }
 
     function getAllSchedules() {
@@ -144,14 +186,13 @@ var jadwal = (function() {
             Storage.saveAll('cozycs_jadwal', list);
             Storage.saveAll('cozycs_schedules', list);
         }
-        // PEMICU REFRESH OTOMATIS DASBOR
         window.dispatchEvent(new Event('cozycs_data_changed'));
     }
 
     function getData(key) {
         try {
             var altKeys = [key];
-            if (key === 'cozycs_greenhouse') altKeys.push('cozycs_gh', 'cozycs_greenhouses', 'greenhouses');
+            if (key === 'cozycs_greenhouse') altKeys = ['cozycs_greenhouse', 'cozycs_gh', 'cozycs_greenhouses', 'greenhouses'];
 
             for (var i = 0; i < altKeys.length; i++) {
                 var k = altKeys[i];
@@ -175,27 +216,38 @@ var jadwal = (function() {
         if (el) el.value = val;
     }
 
+    // POPULATE DROPDOWN GREENHOUSE UNTUK FORM MAUPUN FILTER
     function populateGhOptions() {
-        var selectEl = document.getElementById('jadwalGh');
-        if (!selectEl) return;
-
-        var currentValue = selectEl.value;
+        var selectForm = document.getElementById('jadwalGh');
+        var selectFilter = document.getElementById('selectFilterJadwalGh');
         var ghList = getData('cozycs_greenhouse');
 
-        var html = `<option value="Seluruh Kebun">${t('opt_farm_general')}</option>`;
+        var currentFormVal = selectForm ? selectForm.value : '';
+        var currentFilterVal = selectFilter ? selectFilter.value : filterGh;
+
+        var htmlForm = `<option value="Seluruh Kebun">${t('opt_farm_general')}</option>`;
+        var htmlFilter = `<option value="ALL">${t('opt_all_gh')}</option>`;
 
         if (Array.isArray(ghList) && ghList.length > 0) {
             ghList.forEach(function(gh) {
                 var val = gh.kode || gh.id || gh.nama;
                 var name = gh.nama || gh.kode || gh.id;
                 if (val) {
-                    html += `<option value="${val}">${name}</option>`;
+                    htmlForm += `<option value="${val}">${name}</option>`;
+                    htmlFilter += `<option value="${val}">${name}</option>`;
                 }
             });
         }
 
-        selectEl.innerHTML = html;
-        if (currentValue) selectEl.value = currentValue;
+        if (selectForm) {
+            selectForm.innerHTML = htmlForm;
+            if (currentFormVal) selectForm.value = currentFormVal;
+        }
+
+        if (selectFilter) {
+            selectFilter.innerHTML = htmlFilter;
+            selectFilter.value = currentFilterVal;
+        }
     }
 
     function render() {
@@ -203,8 +255,10 @@ var jadwal = (function() {
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-calendar-alt" style="color: #2E7D32;"></i> ${t('module_title')}</div>
 
+                <!-- 1. DASHBOARD STATISTIK UTAMA -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="jadwalStatCards"></div>
 
+                <!-- 2. FORM INPUT JADWAL -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleJadwal">${t('form_title_add')}</div>
                     <form id="formJadwal">
@@ -288,14 +342,39 @@ var jadwal = (function() {
                     </form>
                 </div>
 
+                <!-- 3. REKAP DAFTAR JADWAL TITLE & MULTI-FILTER TOOLBAR -->
                 <div class="section-title"><i class="fas fa-list-ul" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <div style="margin-bottom: 14px;">
+                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
                     <input type="text" id="inputSearchJadwal" 
                            placeholder="${t('ph_search')}" 
                            oninput="jadwal.handleSearch(this.value)"
                            value="${searchQuery}"
-                           style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                           style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222); margin-bottom: 10px;">
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #666; display: block; margin-bottom: 2px;">${t('lbl_sort')}</label>
+                            <select id="selectSortJadwal" onchange="jadwal.handleSort(this.value)" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                <option value="desc" ${sortOrder === 'desc' ? 'selected' : ''}>${t('opt_sort_desc')}</option>
+                                <option value="asc" ${sortOrder === 'asc' ? 'selected' : ''}>${t('opt_sort_asc')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #666; display: block; margin-bottom: 2px;">${t('lbl_filter_gh')}</label>
+                            <select id="selectFilterJadwalGh" onchange="jadwal.handleFilterGh(this.value)" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                <option value="ALL">${t('opt_all_gh')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #666; display: block; margin-bottom: 2px;">${t('lbl_filter_status')}</label>
+                            <select id="selectFilterJadwalStatus" onchange="jadwal.handleFilterStatus(this.value)" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                <option value="ALL">${t('opt_all_status')}</option>
+                                <option value="Pending" ${filterStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Selesai" ${filterStatus === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="containerJadwalCards"></div>
@@ -440,25 +519,40 @@ var jadwal = (function() {
             return;
         }
 
-        data.sort(function(a, b) {
-            var dateA = a && (a.tanggal || a.date) ? new Date(a.tanggal || a.date) : new Date(0);
-            var dateB = b && (b.tanggal || b.date) ? new Date(b.tanggal || b.date) : new Date(0);
-            return dateA - dateB;
-        });
-
+        // 1. FILTERING DATA
         var filteredData = data.filter(function(item) {
-            if (!searchQuery) return true;
-            var kw = searchQuery.toLowerCase();
-            var gh = (item.gh || '').toLowerCase();
-            var tanggal = (item.tanggal || item.date || '').toLowerCase();
-            var judul = (item.judul || item.title || '').toLowerCase();
-            var waktu = (item.waktu || '').toLowerCase();
-            var kategori = (item.kategori || '').toLowerCase();
-            var petugas = (item.petugas || '').toLowerCase();
-            var prioritas = (item.prioritas || '').toLowerCase();
-            var status = (item.status || '').toLowerCase();
-            var desc = (item.desc || '').toLowerCase();
-            return gh.includes(kw) || tanggal.includes(kw) || judul.includes(kw) || waktu.includes(kw) || kategori.includes(kw) || petugas.includes(kw) || prioritas.includes(kw) || status.includes(kw) || desc.includes(kw);
+            if (!item) return false;
+
+            // Filter berdasarkan Greenhouse
+            if (filterGh !== 'ALL') {
+                var itemGh = item.gh || item.greenhouse || 'Seluruh Kebun';
+                if (itemGh !== filterGh) return false;
+            }
+
+            // Filter berdasarkan Status
+            if (filterStatus !== 'ALL') {
+                var isDone = (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true);
+                if (filterStatus === 'Selesai' && !isDone) return false;
+                if (filterStatus === 'Pending' && isDone) return false;
+            }
+
+            // Filter pencarian teks
+            if (searchQuery) {
+                var kw = searchQuery.toLowerCase();
+                var gh = (item.gh || '').toLowerCase();
+                var tanggal = (item.tanggal || item.date || '').toLowerCase();
+                var judul = (item.judul || item.title || '').toLowerCase();
+                var waktu = (item.waktu || '').toLowerCase();
+                var kategori = (item.kategori || '').toLowerCase();
+                var petugas = (item.petugas || '').toLowerCase();
+                var prioritas = (item.prioritas || '').toLowerCase();
+                var status = (item.status || '').toLowerCase();
+                var desc = (item.desc || '').toLowerCase();
+
+                return gh.includes(kw) || tanggal.includes(kw) || judul.includes(kw) || waktu.includes(kw) || kategori.includes(kw) || petugas.includes(kw) || prioritas.includes(kw) || status.includes(kw) || desc.includes(kw);
+            }
+
+            return true;
         });
 
         if (filteredData.length === 0) {
@@ -467,6 +561,22 @@ var jadwal = (function() {
             return;
         }
 
+        // 2. PENGURUTAN BERDASARKAN TANGGAL EKSEKUSI (BUKAN WAKTU INPUT)
+        filteredData.sort(function(a, b) {
+            var dateA = a && (a.tanggal || a.date) ? parseLocalDate(a.tanggal || a.date) : new Date(0);
+            var dateB = b && (b.tanggal || b.date) ? parseLocalDate(b.tanggal || b.date) : new Date(0);
+
+            var timeA = dateA ? dateA.getTime() : 0;
+            var timeB = dateB ? dateB.getTime() : 0;
+
+            if (sortOrder === 'asc') {
+                return timeA - timeB; // Terlama ke Terbaru
+            } else {
+                return timeB - timeA; // Terbaru ke Terlama (Default: Tgl 10 diatas, Tgl 9 dibawah)
+            }
+        });
+
+        // 3. PAGINASI
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -475,6 +585,7 @@ var jadwal = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
+        // 4. RENDER KARTU JADWAL
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
@@ -560,7 +671,6 @@ var jadwal = (function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // FUNGSI HAPUS YANG DIJAMIN CLEANUP DI SEMUA KUNCI
     function deleteItem(id) {
         if (confirm(t('confirm_delete'))) {
             var list = getAllSchedules();
@@ -581,6 +691,24 @@ var jadwal = (function() {
         loadTable();
     }
 
+    function handleSort(val) {
+        sortOrder = val || 'desc';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleFilterGh(val) {
+        filterGh = val || 'ALL';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleFilterStatus(val) {
+        filterStatus = val || 'ALL';
+        currentPage = 1;
+        loadTable();
+    }
+
     function changePage(direction) {
         currentPage += direction;
         loadTable();
@@ -594,6 +722,9 @@ var jadwal = (function() {
         editItem: editItem,
         deleteItem: deleteItem,
         handleSearch: handleSearch,
+        handleSort: handleSort,
+        handleFilterGh: handleFilterGh,
+        handleFilterStatus: handleFilterStatus,
         changePage: changePage
     };
 
