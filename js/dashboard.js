@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (EXACT NUTRIENT SESSION & GH MATCHING SYNC)
+// COZYCS FARM - EXECUTIVE DASHBOARD (MODERN HERO BANNER & SMART FARM UI)
 // ==========================================
 
 var dashboard = (function() {
@@ -226,7 +226,6 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
-    // FUNGSI UTAMA PENETAPAN SESI NUTRISI (DENGAN MULTI-KEY EXTRACTION & NORMALISASI GH)
     function getTodayNutrientBySession(targetSession) {
         var dataNutrisi = getData('cozycs_nutrisi');
         var todayMurni = parseLocalDate(new Date());
@@ -235,7 +234,6 @@ var dashboard = (function() {
             return null;
         }
 
-        // Filter data hari ini & sesuai GH (dengan normalisasi ID/Kode/Nama GH)
         var todayList = dataNutrisi.filter(function(n) {
             if (!n) return false;
 
@@ -260,21 +258,18 @@ var dashboard = (function() {
 
         if (todayList.length === 0) return null;
 
-        // Penentuan Sesi Otomatis jika mode 'AUTO'
         var sessionToUse = targetSession;
         if (sessionToUse === 'AUTO') {
             var currentHour = new Date().getHours();
             sessionToUse = (currentHour >= 12) ? 'Sore' : 'Pagi';
         }
 
-        // Helper ekstraksi string sesi dari berbagai macam properti
         function extractSessionString(item) {
             var val = item.waktuCek || item.waktu_cek || item.waktuPengecekan || 
                       item.waktu || item.sesi || item.periode || item.kategori || item.type || '';
             return String(val).toLowerCase();
         }
 
-        // Cari data yang cocok dengan sesi (Pagi / Sore)
         var matched = todayList.filter(function(n) {
             var s = extractSessionString(n);
             return s.includes(sessionToUse.toLowerCase());
@@ -287,7 +282,6 @@ var dashboard = (function() {
             };
         }
 
-        // Fallback jika mode AUTO tapi hanya ada 1 sesi
         if (targetSession === 'AUTO' && todayList.length > 0) {
             var lastItem = todayList[todayList.length - 1];
             var sVal = extractSessionString(lastItem);
@@ -311,14 +305,16 @@ var dashboard = (function() {
         return `
             <style>
                 @keyframes spinIcon { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes pulseDot { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
                 .spinning { animation: spinIcon 0.8s linear infinite; }
-                .dash-card-shadow { box-shadow: 0 4px 14px rgba(0,0,0,0.05); }
+                .pulse-green { animation: pulseDot 1.8s infinite ease-in-out; }
+                .dash-card-shadow { box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
             </style>
 
             <div class="dashboard-container" style="padding-bottom: 30px;">
                 
-                <!-- 0. WELCOME BANNER -->
-                <div id="dashWelcomeBanner" style="margin-bottom: 14px;"></div>
+                <!-- 0. WELCOME BANNER (MODERN GLASS-EMERALD HERO CARD) -->
+                <div id="dashWelcomeBanner" style="margin-bottom: 16px;"></div>
 
                 <!-- 1. GRID MATRIX GREENHOUSE -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
@@ -552,6 +548,7 @@ var dashboard = (function() {
         loadRecentActivities();
     }
 
+    // FUNGSI WELCOME BANNER REVOLUSI VISUAL (MODERN EXECUTIVE HERO BANNER)
     function loadWelcomeBanner() {
         var el = document.getElementById('dashWelcomeBanner');
         if (!el) return;
@@ -567,51 +564,72 @@ var dashboard = (function() {
         }
 
         var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
+        var currentHour = new Date().getHours();
+        var smartInsight = (currentHour >= 6 && currentHour < 18) ? '☀️ Fase Fotosintesis Aktif' : '🌙 Sesi Istirahat Tanaman';
 
         el.innerHTML = `
-            <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%); border-radius: 16px; padding: 16px; border: 1px solid #C8E6C9;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 46px; height: 46px; border-radius: 50%; background: #FFF; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; border: 1px solid #C8E6C9; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-                            👨‍🌾
+            <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
+                
+                <!-- ACCENT BACKGROUND GLOW -->
+                <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; blur: 20px; pointer-events: none;"></div>
+
+                <!-- TOP ROW: AVATAR, GREETING & FLOATING WEATHER CARD -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
+                    
+                    <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                                👨‍🌾
+                            </div>
+                            <span class="pulse-green" style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background: #52B788; border: 2px solid #1b4332; border-radius: 50%;"></span>
                         </div>
-                        <div>
-                            <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #1B5E20; line-height: 1.2;">
+
+                        <div style="overflow: hidden;">
+                            <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.2; letter-spacing: -0.2px;">
                                 ${greetingText}
                             </div>
-                            <div style="font-size: 11px; color: #388E3C; margin-top: 3px; font-weight: 600;">
+                            <div style="font-size: 11px; color: #D8F3DC; margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 ${t('greeting_sub')}
+                            </div>
+                            <div style="display: inline-block; margin-top: 5px; font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.15); color: #B7E4C7; padding: 2px 8px; border-radius: 10px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);">
+                                ${smartInsight}
                             </div>
                         </div>
                     </div>
 
-                    <div style="text-align: right; flex-shrink: 0;">
-                        <div id="liveWeatherIcon" style="font-size: 22px; line-height: 1;">${pesawaranWeather.icon}</div>
-                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-top: 2px;">
+                    <!-- FLOATING WEATHER MICRO-CARD -->
+                    <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
+                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
                             ${pesawaranWeather.temp}
                         </div>
-                        <div id="liveWeatherHumidity" style="font-size: 10px; color: #558B2F; font-weight: 700;">
-                            ${pesawaranWeather.humidity}
+                        <div id="liveWeatherHumidity" style="font-size: 9px; color: #B7E4C7; font-weight: 700; margin-top: 1px;">
+                            💧 ${pesawaranWeather.humidity}
                         </div>
                     </div>
+
                 </div>
 
-                <div style="border-top: 1px dashed #A5D6A7; margin-bottom: 10px;"></div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #2E7D32;">
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
-                        <i class="far fa-calendar-alt" style="color: #2E7D32; font-size: 12px;"></i>
+                <!-- BOTTOM ROW: LIVE DATE BADGE & LOCATION -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
+                    
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
+                        <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
                         <span id="liveDateTime">${dateTimeStr}</span>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 5px; color: #C62828; font-weight: 800;">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span id="liveLocationName">${currentLocation.city}</span>
-                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: #FFEBEE; border: 1px solid #FFCDD2; color: #D32F2F; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-                            <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 11px;"></i>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #FFF;">
+                            <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
+                            <span id="liveLocationName">${currentLocation.city}</span>
+                        </div>
+                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background 0.2s ease;">
+                            <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
                         </button>
                     </div>
+
                 </div>
+
             </div>
         `;
     }
@@ -792,7 +810,6 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // UPDATE RENDER PARAMETER AIR TANDON SESI Pagi/Sore
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
@@ -804,7 +821,6 @@ var dashboard = (function() {
         var latest = nutrientData ? nutrientData.item : null;
         var activeSessionName = nutrientData ? nutrientData.sessionName : (selectedNutrientSession === 'AUTO' ? (new Date().getHours() >= 12 ? 'Sore' : 'Pagi') : selectedNutrientSession);
 
-        // Update Tampilan Tombol Sesi
         if (btnPagi && btnSore) {
             if (activeSessionName.toLowerCase().includes('pagi')) {
                 btnPagi.style.background = '#00838F';
@@ -891,7 +907,6 @@ var dashboard = (function() {
         `;
     }
 
-    // UPDATE RENDER PARAMETER LINGKUNGAN SESI Pagi/Sore
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
