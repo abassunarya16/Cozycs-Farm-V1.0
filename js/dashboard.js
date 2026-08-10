@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (AGGREGATED POPULATION & DYNAMIC VARIETY DISPLAY)
+// COZYCS FARM - EXECUTIVE DASHBOARD (STRICT TODAY NUTRIENT SYNC & AUTO DAILY RESET)
 // ==========================================
 
 var dashboard = (function() {
@@ -133,6 +133,7 @@ var dashboard = (function() {
             var altKeys = [key];
             if (key === 'cozycs_greenhouse') altKeys = ['cozycs_greenhouse', 'cozycs_gh', 'cozycs_greenhouses', 'greenhouses'];
             if (key === 'cozycs_schedules' || key === 'cozycs_jadwal') altKeys = ['cozycs_jadwal', 'cozycs_schedules', 'schedules', 'jadwal'];
+            if (key === 'cozycs_nutrisi') altKeys = ['cozycs_nutrisi', 'nutrisi', 'cozycs_nutrition'];
 
             for (var i = 0; i < altKeys.length; i++) {
                 var k = altKeys[i];
@@ -224,6 +225,30 @@ var dashboard = (function() {
         return jamStr ? ('Jam ' + jamStr) : null;
     }
 
+    // FUNGSI UTAMA UNTUK MENGAMBIL DATA NUTRISI HARI INI
+    function getTodayNutrientData() {
+        var dataNutrisi = getData('cozycs_nutrisi');
+        var todayMurni = parseLocalDate(new Date());
+
+        if (!Array.isArray(dataNutrisi) || dataNutrisi.length === 0 || !todayMurni) {
+            return [];
+        }
+
+        return dataNutrisi.filter(function(n) {
+            if (!n) return false;
+
+            // Filter Greenhouse jika dipilih spesifik
+            var matchGh = (selectedGh === 'ALL') || (n.gh === selectedGh || n.ghId === selectedGh || n.greenhouse === selectedGh);
+            if (!matchGh) return false;
+
+            // Filter Ketat: Tanggal Harus Tepat Hari Ini
+            var nDate = parseLocalDate(n.tanggal || n.tgl || n.date || n.createdAt || n.timestamp);
+            if (!nDate) return false;
+
+            return nDate.getTime() === todayMurni.getTime();
+        });
+    }
+
     function render() {
         return `
             <style>
@@ -245,7 +270,7 @@ var dashboard = (function() {
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 13px; font-weight: 800; color: #006064;"><i class="fas fa-tint" style="margin-right: 4px; color: #0288D1;"></i> ${t('water_env_mon')}</span>
-                            <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">Menghitung...</span>
+                            <span id="dashIotLastUpdated" style="font-size: 9px; background: #00838F; color: #FFF; padding: 2px 7px; border-radius: 10px; font-weight: bold;">Belum Ada Data</span>
                         </div>
                         
                         <button onclick="dashboard.toggleIotSection()" title="Toggle Monitoring" style="width: 28px; height: 28px; border-radius: 50%; background: #FFF; border: 1px solid #B2EBF2; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
@@ -699,38 +724,31 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
+    // REVISI TOTAL: SINKRONISASI STRICT TODAY & CLEANUP TANPA FALLBACK
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
         if (!el) return;
 
-        var dataNutrisi = getData('cozycs_nutrisi');
-        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
-        var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
+        var todayNutrisi = getTodayNutrientData();
+        var latest = todayNutrisi.length > 0 ? todayNutrisi[todayNutrisi.length - 1] : null;
 
         if (lastUpdatedEl) {
-            var timeBadge = formatLastUpdated(latest);
-
-            if (!timeBadge) {
-                var logs = getData('cozycs_aktivitas');
-                if (logs.length > 0) timeBadge = formatLastUpdated(logs[0]);
+            if (latest) {
+                var timeBadge = formatLastUpdated(latest);
+                lastUpdatedEl.textContent = timeBadge || 'Belum Ada Data';
+            } else {
+                lastUpdatedEl.textContent = 'Belum Ada Data';
             }
-
-            if (!timeBadge) {
-                var sprays = getData('cozycs_spray');
-                if (sprays.length > 0) timeBadge = formatLastUpdated(sprays[sprays.length - 1]);
-            }
-
-            lastUpdatedEl.textContent = timeBadge || 'Belum Ada Data';
         }
 
-        var valPpm = (latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
-        var valPh = (latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
-        var valWaterTemp = (latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : '0°C';
-        var valTandon = (latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
+        var valPpm = (latest && latest.ppm !== undefined && latest.ppm !== '') ? latest.ppm : '0';
+        var valPh = (latest && latest.ph !== undefined && latest.ph !== '') ? latest.ph : '0.0';
+        var valWaterTemp = (latest && latest.waterTemp !== undefined && latest.waterTemp !== '') ? latest.waterTemp + '°C' : '0°C';
+        var valTandon = (latest && latest.tandon !== undefined && latest.tandon !== '') ? latest.tandon : '0';
 
-        var statusPpm = (valPpm > 0) ? t('recorded') : t('no_data');
-        var statusPh = (valPh > 0) ? t('recorded') : t('no_data');
+        var statusPpm = (latest && parseFloat(valPpm) > 0) ? t('recorded') : t('no_data');
+        var statusPh = (latest && parseFloat(valPh) > 0) ? t('recorded') : t('no_data');
 
         el.innerHTML = `
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -743,7 +761,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #777;">ppm</span></div>
                     </div>
                 </div>
-                <div><span style="background: ${valPpm > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPpm > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
+                <div><span style="background: ${parseFloat(valPpm) > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${parseFloat(valPpm) > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -756,7 +774,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valPh} <span style="font-size: 10px; font-weight: 600; color: #777;">pH</span></div>
                     </div>
                 </div>
-                <div><span style="background: ${valPh > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${valPh > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPh}</span></div>
+                <div><span style="background: ${parseFloat(valPh) > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${parseFloat(valPh) > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPh}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -769,7 +787,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valWaterTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
+                <div><span style="background: ${latest ? '#E8F5E9' : '#F5F5F5'}; color: ${latest ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -787,17 +805,17 @@ var dashboard = (function() {
         `;
     }
 
+    // REVISI TOTAL: PARAMETER LINGKUNGAN JUGA STRICT HARI INI
     function loadIotEnvData() {
         var el = document.getElementById('dashIotEnvCards');
         if (!el) return;
 
-        var dataNutrisi = getData('cozycs_nutrisi');
-        var filteredNutrisi = (selectedGh === 'ALL') ? dataNutrisi : dataNutrisi.filter(function(n) { return (n.gh === selectedGh || n.ghId === selectedGh); });
-        var latest = filteredNutrisi.length > 0 ? filteredNutrisi[filteredNutrisi.length - 1] : {};
+        var todayNutrisi = getTodayNutrientData();
+        var latest = todayNutrisi.length > 0 ? todayNutrisi[todayNutrisi.length - 1] : null;
 
-        var valRoomTemp = (latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : '0°C';
-        var valHumidity = (latest.humidity !== undefined && latest.humidity !== '') ? latest.humidity : '0';
-        var valLux = (latest.lux !== undefined && latest.lux !== '') ? latest.lux : '0';
+        var valRoomTemp = (latest && latest.roomTemp !== undefined && latest.roomTemp !== '') ? latest.roomTemp + '°C' : (latest && latest.tempUdara ? latest.tempUdara + '°C' : '0°C');
+        var valHumidity = (latest && latest.humidity !== undefined && latest.humidity !== '') ? latest.humidity : (latest && latest.kelembaban ? latest.kelembaban : '0');
+        var valLux = (latest && latest.lux !== undefined && latest.lux !== '') ? latest.lux : (latest && latest.cahaya ? latest.cahaya : '0');
 
         el.innerHTML = `
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -972,7 +990,6 @@ var dashboard = (function() {
         };
     }
 
-    // FUNGSI LOAD PROGRESS MUSIM (SUDAH SINKRON TOTAL POPULASI & HIDE VARIETAS KHUSUS 'ALL')
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -1049,7 +1066,6 @@ var dashboard = (function() {
             estHarvestDateStr = targetPanen.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
-        // AKUMULASI POPULASI LINTAS GH DENGAN UNIK ID TERPISAH PER-GH
         var totalPopulasi = 0;
         var varietasSet = new Set();
 
@@ -1087,7 +1103,6 @@ var dashboard = (function() {
             }
         }
 
-        // KHUSUS "SEMUA GH", KETERANGAN VARIETAS DIHILANGKAN
         var varietasDisplay = (selectedGh === 'ALL') ? '' : ` (${Array.from(varietasSet).join(', ') || 'Melon'})`;
 
         var phaseTitle = "Vegetatif Awal";
