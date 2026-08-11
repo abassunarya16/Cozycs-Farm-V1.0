@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT, PEKATAN API & DASHBOARD LOG)
 // ==========================================
 
 var gudang = (function() {
@@ -42,7 +42,7 @@ var gudang = (function() {
             'opt_cat_sparepart': 'Sparepart',
             'opt_cat_others': 'Lainnya',
             'lbl_item_name': 'Nama Barang',
-            'ph_item_name': 'Contoh: AB Mix A',
+            'ph_item_name': 'Contoh: Pekatan AB Mix A',
             'lbl_brand': 'Merek / Produsen',
             'ph_brand': 'Contoh: Meroke',
             'lbl_stock_initial': 'Stok Awal',
@@ -112,7 +112,7 @@ var gudang = (function() {
             'opt_cat_sparepart': 'Spare Parts',
             'opt_cat_others': 'Others',
             'lbl_item_name': 'Item Name',
-            'ph_item_name': 'e.g., AB Mix A',
+            'ph_item_name': 'e.g., AB Mix Concentrate A',
             'lbl_brand': 'Brand / Manufacturer',
             'ph_brand': 'e.g., Meroke',
             'lbl_stock_initial': 'Initial Stock',
@@ -185,15 +185,88 @@ var gudang = (function() {
     }
 
     // ==========================================
-    // API OTOMATISASI LINTAS MODUL
+    // API KHUSUS PEKATAN NUTRISI (UNTUK MODUL NUTRISI)
     // ==========================================
-    function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas) {
+    function getStokPekatan() {
+        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyBarang()) || []) : [];
+        if (!Array.isArray(data)) data = [];
+
+        var nutrisiItems = data.filter(function(b) {
+            if (!b) return false;
+            var kat = String(b.kategori || '').toLowerCase();
+            var nm = String(b.nama || '').toLowerCase();
+            return kat === 'nutrisi' || nm.includes('pekatan') || nm.includes('ab mix') || nm.includes('abmix');
+        });
+
+        var itemA = nutrisiItems.find(function(b) {
+            var nm = String(b.nama || '').toLowerCase();
+            return nm.includes('pekatan a') || nm.includes('ab mix a') || nm.includes('mix a') || (nm.includes('a') && nm.includes('pekatan'));
+        });
+
+        var itemB = nutrisiItems.find(function(b) {
+            var nm = String(b.nama || '').toLowerCase();
+            return nm.includes('pekatan b') || nm.includes('ab mix b') || nm.includes('mix b') || (nm.includes('b') && nm.includes('pekatan'));
+        });
+
+        return {
+            pekatanA: itemA ? {
+                id: itemA.id,
+                nama: itemA.nama,
+                stok: roundNumber(itemA.stok),
+                satuan: itemA.satuan || 'Liter',
+                stokMin: roundNumber(itemA.stokMin || 0),
+                isKritis: roundNumber(itemA.stok) <= roundNumber(itemA.stokMin || 0)
+            } : null,
+            pekatanB: itemB ? {
+                id: itemB.id,
+                nama: itemB.nama,
+                stok: roundNumber(itemB.stok),
+                satuan: itemB.satuan || 'Liter',
+                stokMin: roundNumber(itemB.stokMin || 0),
+                isKritis: roundNumber(itemB.stok) <= roundNumber(itemB.stokMin || 0)
+            } : null
+        };
+    }
+
+    // ==========================================
+    // API OTOMATISASI LINTAS MODUL (SMART DEDUCTION)
+    // ==========================================
+    function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas, satuanInput) {
         if (typeof Storage === 'undefined' || !Storage.getAll) return false;
 
         var dataBarang = Storage.getAll(getKeyBarang()) || [];
+        if (!Array.isArray(dataBarang) || dataBarang.length === 0) return false;
+
+        var targetKw = String(namaBarang || '').toLowerCase().trim();
+
+        // 1. Match Exact Name
         var item = dataBarang.find(function(b) {
-            return b && b.nama && b.nama.toLowerCase().trim() === namaBarang.toLowerCase().trim();
+            return b && b.nama && b.nama.toLowerCase().trim() === targetKw;
         });
+
+        // 2. Match Partial Name
+        if (!item) {
+            item = dataBarang.find(function(b) {
+                if (!b || !b.nama) return false;
+                var bName = String(b.nama).toLowerCase().trim();
+                return bName.includes(targetKw) || targetKw.includes(bName);
+            });
+        }
+
+        // 3. Fallback Khusus Pekatan A & B
+        if (!item && (targetKw.includes('pekatan a') || targetKw.includes('ab mix a') || targetKw === 'a')) {
+            item = dataBarang.find(function(b) {
+                var bName = String(b.nama || '').toLowerCase();
+                return bName.includes('pekatan a') || bName.includes('ab mix a') || (bName.includes('a') && bName.includes('pekatan'));
+            });
+        }
+
+        if (!item && (targetKw.includes('pekatan b') || targetKw.includes('ab mix b') || targetKw === 'b')) {
+            item = dataBarang.find(function(b) {
+                var bName = String(b.nama || '').toLowerCase();
+                return bName.includes('pekatan b') || bName.includes('ab mix b') || (bName.includes('b') && bName.includes('pekatan'));
+            });
+        }
 
         if (!item) {
             console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
@@ -202,13 +275,23 @@ var gudang = (function() {
 
         var stokLama = parseFloat(item.stok) || 0;
         var jumlah = parseFloat(jumlahDipotong) || 0;
-        var stokBaru = Math.max(0, stokLama - jumlah);
+        var inputSat = String(satuanInput || item.satuan || '').toLowerCase().trim();
+        var itemSat = String(item.satuan || '').toLowerCase().trim();
 
+        // Konversi Satuan Otomatis (ml -> Liter) jika input beda skala dengan master gudang
+        if ((inputSat === 'ml' || inputSat === 'milliliter') && (itemSat === 'liter' || itemSat === 'l')) {
+            jumlah = jumlah / 1000;
+        } else if ((inputSat === 'liter' || inputSat === 'l') && (itemSat === 'ml' || itemSat === 'milliliter')) {
+            jumlah = jumlah * 1000;
+        }
+
+        var stokBaru = Math.max(0, stokLama - jumlah);
         stokBaru = roundNumber(stokBaru);
 
         item.stok = stokBaru;
+        var minStok = parseFloat(item.stokMin) || 0;
         if (stokBaru <= 0) item.status = 'Habis';
-        else if (stokBaru <= (parseFloat(item.stokMin) || 0)) item.status = 'Hampir Habis';
+        else if (stokBaru <= minStok) item.status = 'Hampir Habis';
         else item.status = 'Aktif';
 
         Storage.update(getKeyBarang(), item);
@@ -220,7 +303,7 @@ var gudang = (function() {
             jenis: 'Keluar',
             jumlah: roundNumber(jumlah),
             satuan: item.satuan,
-            alasan: t('log_reason_used') + ' ' + modulPengirim,
+            alasan: (t('log_reason_used') || 'Dipakai') + ' ' + (modulPengirim || 'Nutrisi'),
             gh: idGh || '-',
             petugas: namaPetugas || 'Sistem Otomatis',
             tanggal: new Date().toISOString().split('T')[0]
@@ -234,7 +317,7 @@ var gudang = (function() {
             
             Storage.add(keyAktivitas, {
                 judul: 'Pemotongan Stok Gudang',
-                deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + modulPengirim + ')',
+                deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + (modulPengirim || 'Nutrisi') + ')',
                 tanggal: now.toISOString().split('T')[0],
                 jam: timeStr,
                 kategori: 'Gudang',
@@ -243,7 +326,12 @@ var gudang = (function() {
             });
         }
 
+        loadDashboard();
         loadTable();
+        loadMutasiLog();
+
+        // Broadcast event agar UI lain (seperti widget nutrisi.js) langsung ter-update otomatis
+        window.dispatchEvent(new Event('cozycs_data_changed'));
         return true;
     }
 
@@ -316,10 +404,10 @@ var gudang = (function() {
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_unit')}</label>
                                 <select id="barangSatuan" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
-                                    <option value="Kg">Kg</option>
-                                    <option value="Gram">Gram</option>
                                     <option value="Liter">Liter</option>
                                     <option value="ml">ml</option>
+                                    <option value="Kg">Kg</option>
+                                    <option value="Gram">Gram</option>
                                     <option value="Pcs">Pcs</option>
                                     <option value="Roll">Roll</option>
                                     <option value="Pack">Pack</option>
@@ -414,7 +502,7 @@ var gudang = (function() {
         loadTable();
         loadMutasiLog();
 
-        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        // KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formGudang');
         }
@@ -481,7 +569,7 @@ var gudang = (function() {
                     });
                 }
 
-                // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
                 if (typeof Storage !== 'undefined' && Storage.add) {
                     var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                     var now = new Date();
@@ -511,6 +599,8 @@ var gudang = (function() {
                 loadDashboard();
                 loadTable();
                 loadMutasiLog();
+
+                window.dispatchEvent(new Event('cozycs_data_changed'));
             });
         }
 
@@ -747,7 +837,7 @@ var gudang = (function() {
         setVal('barangNama', item.nama || '');
         setVal('barangMerek', item.merek === '-' ? '' : item.merek);
         setVal('barangStok', roundNumber(item.stok));
-        setVal('barangSatuan', item.satuan || 'Kg');
+        setVal('barangSatuan', item.satuan || 'Liter');
         setVal('barangStokMin', roundNumber(item.stokMin));
         setVal('barangHarga', item.harga || '');
         setVal('barangSupplier', item.supplier === '-' ? '' : item.supplier);
@@ -771,6 +861,7 @@ var gudang = (function() {
             }
             loadDashboard();
             loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
@@ -807,6 +898,7 @@ var gudang = (function() {
         editItem: editItem,
         deleteItem: deleteItem,
         potongStokOtomatis: potongStokOtomatis,
+        getStokPekatan: getStokPekatan,
         handleSearch: handleSearch,
         handleCategoryFilter: handleCategoryFilter,
         handleStatusFilter: handleStatusFilter,
