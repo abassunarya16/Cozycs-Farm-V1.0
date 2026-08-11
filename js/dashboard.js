@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (PREMIUM UI & AUTO-SYNC WEATHER)
+// COZYCS FARM - EXECUTIVE DASHBOARD (CLEAN UI & AUTO-SYNC WEATHER)
 // ==========================================
 
 var dashboard = (function() {
@@ -52,14 +52,7 @@ var dashboard = (function() {
             'no_agenda': 'Tidak ada agenda kegiatan aktif saat ini.',
             'season_progress': 'Progress Musim & Analisis Fase Tanam',
             'recent_act': 'Aktivitas Terakhir (Audit Log)',
-            'no_logs': 'Belum ada riwayat aktivitas tercatat.',
-            'quick_action': 'Quick Action / Input Cepat',
-            'btn_nutrition': '+ Nutrisi',
-            'btn_spray': '+ Spray',
-            'btn_warehouse': '+ Gudang',
-            'btn_harvest': '+ Panen',
-            'btn_schedule': '+ Jadwal',
-            'btn_pests': '+ Hama'
+            'no_logs': 'Belum ada riwayat aktivitas tercatat.'
         },
         'en': {
             'greeting_sub': 'May your harvest be abundant today!',
@@ -90,14 +83,7 @@ var dashboard = (function() {
             'no_agenda': 'No active scheduled activities found.',
             'season_progress': 'Season Progress & Growth Phase Analysis',
             'recent_act': 'Recent Activities (Audit Log)',
-            'no_logs': 'No activity logs recorded yet.',
-            'quick_action': 'Quick Action / Fast Input',
-            'btn_nutrition': '+ Nutrition',
-            'btn_spray': '+ Spray',
-            'btn_warehouse': '+ Stock',
-            'btn_harvest': '+ Harvest',
-            'btn_schedule': '+ Schedule',
-            'btn_pests': '+ Pests'
+            'no_logs': 'No activity logs recorded yet.'
         }
     };
 
@@ -391,7 +377,7 @@ var dashboard = (function() {
                 </div>
 
                 <!-- 5. AKTIVITAS TERAKHIR (AUDIT LOG) -->
-                <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC; margin-bottom: 20px;">
+                <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 800; color: #283593;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
                         <button id="btnManualRefreshLog" onclick="dashboard.manualRefreshLogs()" style="background: #FFF; border: 1px solid #B3E5FC; color: #0277BD; font-size: 11px; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px;">
@@ -401,18 +387,6 @@ var dashboard = (function() {
                     <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
-                <!-- 6. QUICK ACTION BUTTONS -->
-                <div class="dash-card-shadow" style="background: linear-gradient(135deg, #F5F5F5 0%, #E8EAF6 100%); padding: 14px; border-radius: 16px; border: 1px solid #C5CAE9;">
-                    <div style="font-size: 11px; font-weight: 800; color: #3F51B5; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">${t('quick_action')}</div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                        <button onclick="navigateTo('nutrisi')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #B3E5FC; background: #FFF; color: #0277BD; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_nutrition')}</button>
-                        <button onclick="navigateTo('spray')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #E1BEE7; background: #FFF; color: #6A1B9A; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_spray')}</button>
-                        <button onclick="navigateTo('gudang')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #FFE0B2; background: #FFF; color: #E65100; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_warehouse')}</button>
-                        <button onclick="navigateTo('panen')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #C8E6C9; background: #FFF; color: #2E7D32; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_harvest')}</button>
-                        <button onclick="navigateTo('jadwal')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #D1C4E9; background: #FFF; color: #512DA8; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_schedule')}</button>
-                        <button onclick="navigateTo('hama')" style="padding: 10px 4px; border-radius: 10px; border: 1px solid #FFCDD2; background: #FFF; color: #C62828; font-weight: bold; font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">${t('btn_pests')}</button>
-                    </div>
-                </div>
             </div>
         `;
     }
@@ -1115,9 +1089,6 @@ var dashboard = (function() {
         };
     }
 
-    // =======================================================
-    // TAMPILAN PROGRESS MUSIM & ESTIMASI PANEN (PREMIUM REDESIGN)
-    // =======================================================
     function loadProgressMusim() {
         var el = document.getElementById('dashProgressMusim');
         if (!el) return;
@@ -1258,11 +1229,9 @@ var dashboard = (function() {
         var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, selectedGh); });
         filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
-        // Hitung Persentase Progress Jalur Progress Bar
         var progressPercent = Math.min(100, Math.max(0, isBelumTanam ? 0 : Math.round((maxHst / totalTargetDays) * 100)));
 
         el.innerHTML = `
-            <!-- HEADER INFO & ESTiMASI PANEN -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
                 <div>
                     <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); color: #E65100; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; box-shadow: 0 2px 6px rgba(230,81,0,0.12); border: 1px solid #FFCC80;">
@@ -1286,16 +1255,12 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- JALUR TRACKER STEPPER PROGRESS BAR -->
             <div style="background: rgba(255, 255, 255, 0.9); border-radius: 14px; padding: 12px 10px; border: 1px solid rgba(255, 224, 130, 0.6); margin-bottom: 12px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
-                <!-- Visual Continuous Bar Fill -->
                 <div style="height: 6px; background: #E0E0E0; border-radius: 10px; overflow: hidden; margin-bottom: 12px; position: relative;">
                     <div style="height: 100%; width: ${progressPercent}%; background: linear-gradient(90deg, #2E7D32 0%, #4CAF50 100%); border-radius: 10px; transition: width 0.5s ease;"></div>
                 </div>
 
-                <!-- Node Tahapan 1-2-3-4 -->
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; position: relative;">
-                    <!-- Step 1 -->
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 1 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 1 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 1 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 1 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
                             1
@@ -1303,7 +1268,6 @@ var dashboard = (function() {
                         <span style="font-size: 9px; color: ${currentStep === 1 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 1 ? '800' : '600'}; margin-top: 4px;">Veg Awal</span>
                     </div>
 
-                    <!-- Step 2 -->
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 2 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 2 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 2 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 2 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
                             2
@@ -1311,7 +1275,6 @@ var dashboard = (function() {
                         <span style="font-size: 9px; color: ${currentStep === 2 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 2 ? '800' : '600'}; margin-top: 4px;">Vegetatif</span>
                     </div>
 
-                    <!-- Step 3 -->
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 3 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 3 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 3 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 3 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
                             3
@@ -1319,7 +1282,6 @@ var dashboard = (function() {
                         <span style="font-size: 9px; color: ${currentStep === 3 ? '#1B5E20' : '#757575'}; font-weight: ${currentStep === 3 ? '800' : '600'}; margin-top: 4px;">Polinasi</span>
                     </div>
 
-                    <!-- Step 4 -->
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background: ${currentStep >= 4 ? 'linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%)' : '#FFF'}; border: 2px solid ${currentStep >= 4 ? '#2E7D32' : '#CCC'}; color: ${currentStep >= 4 ? '#FFF' : '#888'}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: ${currentStep === 4 ? '0 0 0 3px rgba(46,125,50,0.25)' : 'none'}; transition: all 0.2s ease;">
                             4
@@ -1329,7 +1291,6 @@ var dashboard = (function() {
                 </div>
             </div>
 
-            <!-- KARTU RANGKUMAN POPULASI & EKSPEKTASI HASIL -->
             <div style="background: rgba(255,255,255,0.92); padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(200, 230, 201, 0.8); display: flex; justify-content: space-between; align-items: center; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-tree" style="color: #2E7D32; font-size: 12px;"></i>
