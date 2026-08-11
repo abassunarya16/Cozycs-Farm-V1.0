@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL NUTRISI & PPM (WITH PEKATAN STOCK WIDGET & AUTO-DEDUCTION)
 // ==========================================
 
 var nutrisi = (function() {
@@ -13,6 +13,8 @@ var nutrisi = (function() {
     var i18nDict = {
         'id': {
             'module_title': 'Cek & Kontrol Nutrisi (PPM & pH)',
+            'widget_title': '📦 Ringkasan Stok Pekatan Gudang',
+            'widget_sync_info': 'Terhubung Otomatis dengan Modul Gudang',
             'form_title_add': 'Catat Cek Nutrisi Harian',
             'form_title_edit': 'Edit Data Nutrisi',
             'lbl_gh': 'ID GH',
@@ -40,6 +42,10 @@ var nutrisi = (function() {
             'opt_ph_safe': 'Aman / Tanpa Koreksi',
             'opt_ph_up': 'Tambah pH Up',
             'opt_ph_down': 'Tambah pH Down',
+            'lbl_vol_a': 'Penambahan Pekatan A (ml)',
+            'ph_vol_a': 'Contoh: 500 (Kosongkan jika hanya cek)',
+            'lbl_vol_b': 'Penambahan Pekatan B (ml)',
+            'ph_vol_b': 'Contoh: 500 (Kosongkan jika hanya cek)',
             'lbl_water_temp': 'Suhu Air Tandon (°C)',
             'ph_water_temp': 'Contoh: 26°C',
             'lbl_room_temp': 'Suhu Ruangan (°C)',
@@ -65,10 +71,13 @@ var nutrisi = (function() {
             'btn_prev': '⬅️ Sebelum',
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
-            'total_lbl': 'Total Data'
+            'total_lbl': 'Total Data',
+            'stock_not_found': 'Belum di-input di Gudang'
         },
         'en': {
             'module_title': 'Nutrition Check & Control (PPM & pH)',
+            'widget_title': '📦 Warehouse Concentrate Stock Summary',
+            'widget_sync_info': 'Automatically Synced with Warehouse Module',
             'form_title_add': 'Record Daily Nutrition Check',
             'form_title_edit': 'Edit Nutrition Data',
             'lbl_gh': 'GH ID',
@@ -96,6 +105,10 @@ var nutrisi = (function() {
             'opt_ph_safe': 'Safe / No Correction',
             'opt_ph_up': 'Add pH Up',
             'opt_ph_down': 'Add pH Down',
+            'lbl_vol_a': 'Concentrate A Addition (ml)',
+            'ph_vol_a': 'e.g., 500 (Leave empty if check only)',
+            'lbl_vol_b': 'Concentrate B Addition (ml)',
+            'ph_vol_b': 'e.g., 500 (Leave empty if check only)',
             'lbl_water_temp': 'Water Temp (°C)',
             'ph_water_temp': 'e.g., 26°C',
             'lbl_room_temp': 'Room Temp (°C)',
@@ -121,7 +134,8 @@ var nutrisi = (function() {
             'btn_prev': '⬅️ Prev',
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
-            'total_lbl': 'Total Items'
+            'total_lbl': 'Total Items',
+            'stock_not_found': 'Not registered in Warehouse'
         }
     };
 
@@ -176,11 +190,111 @@ var nutrisi = (function() {
         selectEl.innerHTML = optionsHtml;
     }
 
+    // ==========================================
+    // WIDGET RINGKASAN STOK PEKATAN (GUDANG SYNC)
+    // ==========================================
+    function loadPekatanWidget() {
+        var container = document.getElementById('wrapperPekatanWidget');
+        if (!container) return;
+
+        var stokData = { pekatanA: null, pekatanB: null };
+
+        if (typeof gudang !== 'undefined' && typeof gudang.getStokPekatan === 'function') {
+            stokData = gudang.getStokPekatan();
+        } else if (typeof Storage !== 'undefined' && Storage.getAll) {
+            var keyGudang = (Storage.KEYS && Storage.KEYS.GUDANG) ? Storage.KEYS.GUDANG : 'cozycs_gudang';
+            var allGudang = Storage.getAll(keyGudang) || [];
+            
+            var itemA = allGudang.find(function(b) {
+                var nm = String(b.nama || '').toLowerCase();
+                return nm.includes('pekatan a') || nm.includes('ab mix a') || nm.includes('mix a');
+            });
+            var itemB = allGudang.find(function(b) {
+                var nm = String(b.nama || '').toLowerCase();
+                return nm.includes('pekatan b') || nm.includes('ab mix b') || nm.includes('mix b');
+            });
+
+            if (itemA) {
+                stokData.pekatanA = {
+                    nama: itemA.nama,
+                    stok: parseFloat(itemA.stok) || 0,
+                    satuan: itemA.satuan || 'Liter',
+                    stokMin: parseFloat(itemA.stokMin) || 0,
+                    isKritis: (parseFloat(itemA.stok) || 0) <= (parseFloat(itemA.stokMin) || 0)
+                };
+            }
+            if (itemB) {
+                stokData.pekatanB = {
+                    nama: itemB.nama,
+                    stok: parseFloat(itemB.stok) || 0,
+                    satuan: itemB.satuan || 'Liter',
+                    stokMin: parseFloat(itemB.stokMin) || 0,
+                    isKritis: (parseFloat(itemB.stok) || 0) <= (parseFloat(itemB.stokMin) || 0)
+                };
+            }
+        }
+
+        var itemA = stokData.pekatanA;
+        var itemB = stokData.pekatanB;
+
+        var textA = itemA ? (itemA.stok + ' ' + itemA.satuan) : t('stock_not_found');
+        var isKritisA = itemA ? itemA.isKritis : false;
+        var badgeBgA = isKritisA ? '#FFEBEE' : (itemA ? '#E8F5E9' : '#F5F5F5');
+        var badgeColorA = isKritisA ? '#C62828' : (itemA ? '#2E7D32' : '#888');
+        var badgeTextA = isKritisA ? '⚠ REFILL' : (itemA ? 'STOK AMAN' : 'NO DATA');
+
+        var textB = itemB ? (itemB.stok + ' ' + itemB.satuan) : t('stock_not_found');
+        var isKritisB = itemB ? itemB.isKritis : false;
+        var badgeBgB = isKritisB ? '#FFEBEE' : (itemB ? '#E8F5E9' : '#F5F5F5');
+        var badgeColorB = isKritisB ? '#C62828' : (itemB ? '#2E7D32' : '#888');
+        var badgeTextB = isKritisB ? '⚠ REFILL' : (itemB ? 'STOK AMAN' : 'NO DATA');
+
+        container.innerHTML = `
+            <div style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); border: 1px solid #B2EBF2; border-radius: 14px; padding: 14px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(2,119,189,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 13px; font-weight: 800; color: #0277BD; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-flask" style="color: #00838F;"></i> ${t('widget_title')}
+                    </div>
+                    <span style="font-size: 9px; background: #0288D1; color: #FFF; padding: 2px 8px; border-radius: 10px; font-weight: bold;">
+                        ${t('widget_sync_info')}
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <!-- PEKATAN A -->
+                    <div style="background: rgba(255,255,255,0.95); padding: 10px 12px; border-radius: 10px; border: 1px solid ${isKritisA ? '#FFCDD2' : '#B2EBF2'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 11px; font-weight: 700; color: #555;">🧪 Pekatan A</span>
+                            <span style="background: ${badgeBgA}; color: ${badgeColorA}; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">${badgeTextA}</span>
+                        </div>
+                        <div style="font-size: 16px; font-weight: 900; color: ${isKritisA ? '#C62828' : '#006064'};">
+                            ${textA}
+                        </div>
+                    </div>
+
+                    <!-- PEKATAN B -->
+                    <div style="background: rgba(255,255,255,0.95); padding: 10px 12px; border-radius: 10px; border: 1px solid ${isKritisB ? '#FFCDD2' : '#B2EBF2'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 11px; font-weight: 700; color: #555;">🧪 Pekatan B</span>
+                            <span style="background: ${badgeBgB}; color: ${badgeColorB}; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: bold;">${badgeTextB}</span>
+                        </div>
+                        <div style="font-size: 16px; font-weight: 900; color: ${isKritisB ? '#C62828' : '#006064'};">
+                            ${textB}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> ${t('module_title')}</div>
                 
+                <!-- WIDGET RINGKASAN STOK PEKATAN GUDANG -->
+                <div id="wrapperPekatanWidget"></div>
+
                 <!-- Form Input Data Nutrisi -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 14px; font-weight: 700; color: #0277BD; margin-bottom: 12px;" id="formTitleNutrisi">${t('form_title_add')}</div>
@@ -237,6 +351,18 @@ var nutrisi = (function() {
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_ppm_target')}</label>
                                 <input type="number" id="nutrisiTargetPpm" required placeholder="${t('ph_ppm_target')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <!-- INPUT OPSIONAL: VOL PEKATAN A & PEKATAN B DITUANG -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; background: #E0F7FA; padding: 10px; border-radius: 8px; border: 1px solid #B2EBF2;">
+                            <div>
+                                <label style="font-size: 11px; font-weight: 700; color: #006064;">${t('lbl_vol_a')}</label>
+                                <input type="number" step="any" id="nutrisiVolA" placeholder="${t('ph_vol_a')}" style="width: 100%; padding: 8px; border: 1px solid #80DEEA; border-radius: 6px; font-size: 12px; margin-top: 4px; background: #FFF;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: 700; color: #006064;">${t('lbl_vol_b')}</label>
+                                <input type="number" step="any" id="nutrisiVolB" placeholder="${t('ph_vol_b')}" style="width: 100%; padding: 8px; border: 1px solid #80DEEA; border-radius: 6px; font-size: 12px; margin-top: 4px; background: #FFF;">
                             </div>
                         </div>
 
@@ -304,9 +430,17 @@ var nutrisi = (function() {
 
     function init() {
         populateGhDropdown();
+        loadPekatanWidget();
         loadTable();
 
-        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
+        // LISTEN EVENT DARI MODUL LAIN ATAU DARI BROWSER UNTUK AUTO-REFRESH WIDGET
+        window.removeEventListener('cozycs_data_changed', loadPekatanWidget);
+        window.addEventListener('cozycs_data_changed', loadPekatanWidget);
+
+        window.removeEventListener('storage', loadPekatanWidget);
+        window.addEventListener('storage', loadPekatanWidget);
+
+        // KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formNutrisi');
         }
@@ -326,11 +460,23 @@ var nutrisi = (function() {
                 var fase = getVal('nutrisiFase');
                 var ppm = getVal('nutrisiPpm');
                 var targetPpm = getVal('nutrisiTargetPpm');
+                var volA = parseFloat(getVal('nutrisiVolA')) || 0;
+                var volB = parseFloat(getVal('nutrisiVolB')) || 0;
                 var ph = getVal('nutrisiPh');
                 var phAction = getVal('nutrisiPhAction');
                 var waterTemp = getVal('nutrisiWaterTemp');
                 var roomTemp = getVal('nutrisiRoomTemp');
                 var desc = getVal('nutrisiDesc');
+
+                // Opsi catatan jika ada penuangan pekatan
+                var extraNotes = [];
+                if (volA > 0) extraNotes.push('Pekatan A: ' + volA + 'ml');
+                if (volB > 0) extraNotes.push('Pekatan B: ' + volB + 'ml');
+                
+                var finalDesc = desc;
+                if (extraNotes.length > 0) {
+                    finalDesc = (finalDesc ? finalDesc + ' | ' : '') + extraNotes.join(', ');
+                }
 
                 var payload = {
                     gh: gh || '-',
@@ -340,11 +486,13 @@ var nutrisi = (function() {
                     fase: fase || t('opt_fase_veg_growth'),
                     ppm: ppm || '-',
                     targetPpm: targetPpm || '-',
+                    volA: volA,
+                    volB: volB,
                     ph: ph || '-',
                     phAction: phAction || t('opt_ph_safe'),
                     waterTemp: waterTemp || '-',
                     roomTemp: roomTemp || '-',
-                    desc: desc,
+                    desc: finalDesc,
                     title: 'GH: ' + (gh || '-') + ' | PPM: ' + ppm + ' | pH: ' + ph
                 };
 
@@ -360,13 +508,18 @@ var nutrisi = (function() {
                             Storage.add(storageKey, payload);
                         }
 
-                        // --- AUTOCUT STOK GUDANG OTOMATIS ---
+                        // --- PEMOTONGAN STOK GUDANG OTOMATIS BERDASARKAN TAKARAN (ml) ---
                         if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
-                            gudang.potongStokOtomatis('AB Mix', 1, 'Nutrisi', gh || '-', 'Operator');
+                            if (volA > 0) {
+                                gudang.potongStokOtomatis('Pekatan A', volA, 'Nutrisi', gh || '-', 'Operator', 'ml');
+                            }
+                            if (volB > 0) {
+                                gudang.potongStokOtomatis('Pekatan B', volB, 'Nutrisi', gh || '-', 'Operator', 'ml');
+                            }
                         }
                     }
 
-                    // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                    // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
                     if (typeof Storage !== 'undefined' && Storage.add) {
                         var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                         var now = new Date();
@@ -374,7 +527,7 @@ var nutrisi = (function() {
                         
                         Storage.add(keyAktivitas, {
                             judul: id ? 'Perbarui Cek Nutrisi' : 'Cek Nutrisi Harian',
-                            deskripsi: (gh || 'GH') + ' - PPM: ' + ppm + ' (Target: ' + targetPpm + '), pH: ' + ph,
+                            deskripsi: (gh || 'GH') + ' - PPM: ' + ppm + ' (Target: ' + targetPpm + '), pH: ' + ph + (extraNotes.length > 0 ? ' [' + extraNotes.join(', ') + ']' : ''),
                             tanggal: date || now.toISOString().split('T')[0],
                             jam: timeStr,
                             kategori: 'Nutrisi',
@@ -392,11 +545,16 @@ var nutrisi = (function() {
 
                 form.reset();
                 setVal('nutrisiId', '');
+                setVal('nutrisiVolA', '');
+                setVal('nutrisiVolB', '');
                 var titleEl = document.getElementById('formTitleNutrisi');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
 
+                loadPekatanWidget();
                 loadTable();
+
+                window.dispatchEvent(new Event('cozycs_data_changed'));
             });
         }
 
@@ -404,6 +562,8 @@ var nutrisi = (function() {
             btnCancel.addEventListener('click', function() {
                 if (form) form.reset();
                 setVal('nutrisiId', '');
+                setVal('nutrisiVolA', '');
+                setVal('nutrisiVolB', '');
                 var titleEl = document.getElementById('formTitleNutrisi');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
@@ -593,6 +753,8 @@ var nutrisi = (function() {
         setVal('nutrisiFase', item.fase || t('opt_fase_veg_growth'));
         setVal('nutrisiPpm', item.ppm === '-' ? '' : (item.ppm || ''));
         setVal('nutrisiTargetPpm', item.targetPpm === '-' ? '' : (item.targetPpm || ''));
+        setVal('nutrisiVolA', item.volA || '');
+        setVal('nutrisiVolB', item.volB || '');
         setVal('nutrisiPh', item.ph === '-' ? '' : (item.ph || ''));
         setVal('nutrisiPhAction', item.phAction || t('opt_ph_safe'));
         setVal('nutrisiWaterTemp', item.waterTemp === '-' ? '' : (item.waterTemp || ''));
@@ -617,6 +779,7 @@ var nutrisi = (function() {
                 }
             } catch(e) {}
             loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
@@ -637,6 +800,7 @@ var nutrisi = (function() {
     return {
         render: render,
         init: init,
+        loadPekatanWidget: loadPekatanWidget,
         editItem: editItem,
         deleteItem: deleteItem,
         handleSearch: handleSearch,
