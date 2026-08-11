@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (WITH PEKATAN STOCK WIDGET & AUTO-DEDUCTION)
+// COZYCS FARM - MODUL NUTRISI & PPM (WITH INTEGRATED DOSAGE CALCULATOR)
 // ==========================================
 
 var nutrisi = (function() {
@@ -15,6 +15,12 @@ var nutrisi = (function() {
             'module_title': 'Cek & Kontrol Nutrisi (PPM & pH)',
             'widget_title': '📦 Ringkasan Stok Pekatan Gudang',
             'widget_sync_info': 'Terhubung Otomatis dengan Modul Gudang',
+            'calc_title': '🧮 Kalkulator Dosis Top-Up Nutrisi',
+            'calc_btn': '⚡ Hitung & Isi Otomatis',
+            'lbl_vol_tandon': 'Volume Tandon + Talang (Liter)',
+            'ph_vol_tandon': 'Contoh: 1600',
+            'lbl_konsentrasi': 'Konsentrasi Pekatan (PPM)',
+            'ph_konsentrasi': 'Default: 250000',
             'form_title_add': 'Catat Cek Nutrisi Harian',
             'form_title_edit': 'Edit Data Nutrisi',
             'lbl_gh': 'ID GH',
@@ -32,10 +38,10 @@ var nutrisi = (function() {
             'opt_fase_flower': 'Pembungaan / Polinasi',
             'opt_fase_fruit_grow': 'Pembesaran Buah',
             'opt_fase_fruit_ripe': 'Pematangan Buah',
-            'lbl_ppm_actual': 'PPM Aktual',
-            'ph_ppm_actual': 'Contoh: 1000',
+            'lbl_ppm_actual': 'PPM Sekarang',
+            'ph_ppm_actual': 'Contoh: 1150',
             'lbl_ppm_target': 'Target PPM',
-            'ph_ppm_target': 'Contoh: 1200',
+            'ph_ppm_target': 'Contoh: 1600',
             'lbl_ph_actual': 'pH Aktual',
             'ph_ph_actual': 'Contoh: 6.5',
             'lbl_ph_action': 'Aksi Koreksi pH',
@@ -43,9 +49,9 @@ var nutrisi = (function() {
             'opt_ph_up': 'Tambah pH Up',
             'opt_ph_down': 'Tambah pH Down',
             'lbl_vol_a': 'Penambahan Pekatan A (ml)',
-            'ph_vol_a': 'Contoh: 500 (Kosongkan jika hanya cek)',
+            'ph_vol_a': 'Otomatis terisi dari kalkulator',
             'lbl_vol_b': 'Penambahan Pekatan B (ml)',
-            'ph_vol_b': 'Contoh: 500 (Kosongkan jika hanya cek)',
+            'ph_vol_b': 'Otomatis terisi dari kalkulator',
             'lbl_water_temp': 'Suhu Air Tandon (°C)',
             'ph_water_temp': 'Contoh: 26°C',
             'lbl_room_temp': 'Suhu Ruangan (°C)',
@@ -78,6 +84,12 @@ var nutrisi = (function() {
             'module_title': 'Nutrition Check & Control (PPM & pH)',
             'widget_title': '📦 Warehouse Concentrate Stock Summary',
             'widget_sync_info': 'Automatically Synced with Warehouse Module',
+            'calc_title': '🧮 Top-Up Nutrient Dosage Calculator',
+            'calc_btn': '⚡ Auto-Calculate & Fill',
+            'lbl_vol_tandon': 'Tank + Trough Volume (Liters)',
+            'ph_vol_tandon': 'e.g., 1600',
+            'lbl_konsentrasi': 'Concentrate PPM',
+            'ph_konsentrasi': 'Default: 250000',
             'form_title_add': 'Record Daily Nutrition Check',
             'form_title_edit': 'Edit Nutrition Data',
             'lbl_gh': 'GH ID',
@@ -95,10 +107,10 @@ var nutrisi = (function() {
             'opt_fase_flower': 'Flowering / Pollination',
             'opt_fase_fruit_grow': 'Fruit Enlargement',
             'opt_fase_fruit_ripe': 'Fruit Ripening',
-            'lbl_ppm_actual': 'Actual PPM',
-            'ph_ppm_actual': 'e.g., 1000',
+            'lbl_ppm_actual': 'Current PPM',
+            'ph_ppm_actual': 'e.g., 1150',
             'lbl_ppm_target': 'Target PPM',
-            'ph_ppm_target': 'e.g., 1200',
+            'ph_ppm_target': 'e.g., 1600',
             'lbl_ph_actual': 'Actual pH',
             'ph_ph_actual': 'e.g., 6.5',
             'lbl_ph_action': 'pH Correction Action',
@@ -106,9 +118,9 @@ var nutrisi = (function() {
             'opt_ph_up': 'Add pH Up',
             'opt_ph_down': 'Add pH Down',
             'lbl_vol_a': 'Concentrate A Addition (ml)',
-            'ph_vol_a': 'e.g., 500 (Leave empty if check only)',
+            'ph_vol_a': 'Auto-filled from calculator',
             'lbl_vol_b': 'Concentrate B Addition (ml)',
-            'ph_vol_b': 'e.g., 500 (Leave empty if check only)',
+            'ph_vol_b': 'Auto-filled from calculator',
             'lbl_water_temp': 'Water Temp (°C)',
             'ph_water_temp': 'e.g., 26°C',
             'lbl_room_temp': 'Room Temp (°C)',
@@ -188,6 +200,52 @@ var nutrisi = (function() {
         }
 
         selectEl.innerHTML = optionsHtml;
+    }
+
+    // ==========================================
+    // LOGIKA KALKULATOR DOSIS NUTRISI
+    // ==========================================
+    function hitungDosisNutrisi() {
+        var ppmSekarang = parseFloat(getVal('nutrisiPpm')) || 0;
+        var ppmTarget = parseFloat(getVal('nutrisiTargetPpm')) || 0;
+        var volTandon = parseFloat(getVal('calcVolTandon')) || 0;
+        var konsentrasi = parseFloat(getVal('calcKonsentrasi')) || 250000;
+
+        var resultBox = document.getElementById('calcResultBox');
+
+        if (ppmTarget <= ppmSekarang) {
+            if (resultBox) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `⚠️ <strong style="color: #E65100;">Target PPM harus lebih besar dari PPM Sekarang.</strong>`;
+            }
+            return;
+        }
+
+        if (volTandon <= 0) {
+            if (resultBox) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `⚠️ <strong style="color: #E65100;">Masukkan volume tandon + talang air.</strong>`;
+            }
+            return;
+        }
+
+        var selisihPpm = ppmTarget - ppmSekarang;
+        // Rumus: (Selisih PPM * Volume Tandon) / Konsentrasi Stok
+        var kebutuhanLiter = (selisihPpm * volTandon) / konsentrasi;
+        var kebutuhanMl = Math.round(kebutuhanLiter * 1000);
+
+        // Auto-fill ke input form pemakaian
+        setVal('nutrisiVolA', kebutuhanMl);
+        setVal('nutrisiVolB', kebutuhanMl);
+
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                <div style="font-size: 11px; color: #004D40; font-weight: 700;">
+                    ✅ Kebutuhan Top-Up: <span style="font-size: 14px; color: #00796B; font-weight: 900;">${kebutuhanLiter.toFixed(2)} Liter (${kebutuhanMl} ml)</span> per pekatan (A & B).
+                </div>
+            `;
+        }
     }
 
     // ==========================================
@@ -354,7 +412,28 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- INPUT OPSIONAL: VOL PEKATAN A & PEKATAN B DITUANG -->
+                        <!-- BLOCK KALKULATOR DOSIS INTEGRATED -->
+                        <div style="background: #E8F5E9; border: 1px solid #A5D6A7; padding: 12px; border-radius: 10px; margin-bottom: 12px;">
+                            <div style="font-size: 12px; font-weight: 800; color: #2E7D32; margin-bottom: 8px;">
+                                ${t('calc_title')}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 700; color: #333;">${t('lbl_vol_tandon')}</label>
+                                    <input type="number" id="calcVolTandon" placeholder="${t('ph_vol_tandon')}" value="1600" style="width: 100%; padding: 8px; border: 1px solid #A5D6A7; border-radius: 6px; font-size: 12px; margin-top: 2px; background: #FFF;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 10px; font-weight: 700; color: #333;">${t('lbl_konsentrasi')}</label>
+                                    <input type="number" id="calcKonsentrasi" placeholder="${t('ph_konsentrasi')}" value="250000" style="width: 100%; padding: 8px; border: 1px solid #A5D6A7; border-radius: 6px; font-size: 12px; margin-top: 2px; background: #FFF;">
+                                </div>
+                            </div>
+                            <button type="button" onclick="nutrisi.hitungDosisNutrisi()" style="width: 100%; background: #2E7D32; color: #FFF; border: none; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                                ${t('calc_btn')}
+                            </button>
+                            <div id="calcResultBox" style="display: none; margin-top: 8px; padding: 8px; background: #FFF; border-radius: 6px; border: 1px solid #81C784;"></div>
+                        </div>
+
+                        <!-- INPUT TAKARAN PEKATAN A & PEKATAN B DITUANG -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; background: #E0F7FA; padding: 10px; border-radius: 8px; border: 1px solid #B2EBF2;">
                             <div>
                                 <label style="font-size: 11px; font-weight: 700; color: #006064;">${t('lbl_vol_a')}</label>
@@ -433,14 +512,12 @@ var nutrisi = (function() {
         loadPekatanWidget();
         loadTable();
 
-        // LISTEN EVENT DARI MODUL LAIN ATAU DARI BROWSER UNTUK AUTO-REFRESH WIDGET
         window.removeEventListener('cozycs_data_changed', loadPekatanWidget);
         window.addEventListener('cozycs_data_changed', loadPekatanWidget);
 
         window.removeEventListener('storage', loadPekatanWidget);
         window.addEventListener('storage', loadPekatanWidget);
 
-        // KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formNutrisi');
         }
@@ -468,7 +545,6 @@ var nutrisi = (function() {
                 var roomTemp = getVal('nutrisiRoomTemp');
                 var desc = getVal('nutrisiDesc');
 
-                // Opsi catatan jika ada penuangan pekatan
                 var extraNotes = [];
                 if (volA > 0) extraNotes.push('Pekatan A: ' + volA + 'ml');
                 if (volB > 0) extraNotes.push('Pekatan B: ' + volB + 'ml');
@@ -508,7 +584,7 @@ var nutrisi = (function() {
                             Storage.add(storageKey, payload);
                         }
 
-                        // --- PEMOTONGAN STOK GUDANG OTOMATIS BERDASARKAN TAKARAN (ml) ---
+                        // PEMOTONGAN STOK GUDANG OTOMATIS BERDASARKAN TAKARAN (ml)
                         if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
                             if (volA > 0) {
                                 gudang.potongStokOtomatis('Pekatan A', volA, 'Nutrisi', gh || '-', 'Operator', 'ml');
@@ -519,7 +595,6 @@ var nutrisi = (function() {
                         }
                     }
 
-                    // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
                     if (typeof Storage !== 'undefined' && Storage.add) {
                         var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                         var now = new Date();
@@ -551,6 +626,9 @@ var nutrisi = (function() {
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
 
+                var resultBox = document.getElementById('calcResultBox');
+                if (resultBox) resultBox.style.display = 'none';
+
                 loadPekatanWidget();
                 loadTable();
 
@@ -567,6 +645,9 @@ var nutrisi = (function() {
                 var titleEl = document.getElementById('formTitleNutrisi');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
+
+                var resultBox = document.getElementById('calcResultBox');
+                if (resultBox) resultBox.style.display = 'none';
             });
         }
     }
@@ -592,14 +673,12 @@ var nutrisi = (function() {
             return;
         }
 
-        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             var dateA = a && a.date ? new Date(a.date) : new Date(0);
             var dateB = b && b.date ? new Date(b.date) : new Date(0);
             return dateB - dateA;
         });
 
-        // 2. Filter data berdasarkan kata kunci pencarian
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
@@ -621,7 +700,6 @@ var nutrisi = (function() {
             return;
         }
 
-        // 3. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -630,7 +708,6 @@ var nutrisi = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
@@ -648,7 +725,6 @@ var nutrisi = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card: Tanggal, ID GH & Waktu -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: var(--text-color, #222);">${item.date || '-'}</strong>
@@ -657,10 +733,7 @@ var nutrisi = (function() {
                         </div>
                     </div>
 
-                    <!-- Grid 4 Kotak (2x2) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        
-                        <!-- 1. Kiri Atas: PPM -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_ppm')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -669,7 +742,6 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 2. Kanan Atas: pH & Koreksi -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_ph_action')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -678,7 +750,6 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Kiri Bawah: HST & Fase -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_hst_fase')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -687,7 +758,6 @@ var nutrisi = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Kanan Bawah: Suhu Air & Ruangan -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('card_lbl_temp')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -695,13 +765,10 @@ var nutrisi = (function() {
                                 <div style="margin-top: 3px;"><i class="fas fa-home" style="color: #F57F17; width: 14px;"></i> <strong>${t('lbl_room')} ${valRoom}</strong></div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Catatan Tambahan -->
                     ${valDesc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${valDesc}</div>` : ''}
 
-                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="nutrisi.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="nutrisi.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -712,7 +779,6 @@ var nutrisi = (function() {
 
         container.innerHTML = html;
 
-        // 5. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -800,6 +866,7 @@ var nutrisi = (function() {
     return {
         render: render,
         init: init,
+        hitungDosisNutrisi: hitungDosisNutrisi,
         loadPekatanWidget: loadPekatanWidget,
         editItem: editItem,
         deleteItem: deleteItem,
