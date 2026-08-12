@@ -247,51 +247,80 @@ var nutrisi = (function() {
     }
 
     // ==========================================
-    // WIDGET RINGKASAN STOK PEKATAN (GUDANG SYNC)
+    // FUNGSI PEMBANTU: PENCARIAN FLEXIBLE (Fuzzy Match)
+    // ==========================================
+    function findFlexibleStok(keyword) {
+        var allGudang = [];
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getAll) {
+                var keyGudang = (Storage.KEYS && Storage.KEYS.GUDANG) ? Storage.KEYS.GUDANG : 'cozycs_gudang';
+                allGudang = Storage.getAll(keyGudang) || [];
+            }
+            if (!Array.isArray(allGudang) || allGudang.length === 0) {
+                var raw = localStorage.getItem('cozycs_gudang');
+                if (raw) allGudang = JSON.parse(raw);
+            }
+        } catch(e) {
+            allGudang = [];
+        }
+
+        if (!Array.isArray(allGudang)) allGudang = [];
+
+        var kw = keyword.toLowerCase().trim();
+        return allGudang.find(function(item) {
+            if (!item) return false;
+            var nm = String(item.nama || item.namaBarang || '').toLowerCase();
+            return nm.includes(kw);
+        });
+    }
+
+    // ==========================================
+    // WIDGET RINGKASAN STOK PEKATAN (GUDANG SYNC - FLEXIBLE & ROBUST)
     // ==========================================
     function loadPekatanWidget() {
         var container = document.getElementById('wrapperPekatanWidget');
         if (!container) return;
 
-        var stokData = { pekatanA: null, pekatanB: null };
+        var itemA = null;
+        var itemB = null;
 
+        // 1. Coba via modul gudang bila ada method getStokPekatan
         if (typeof gudang !== 'undefined' && typeof gudang.getStokPekatan === 'function') {
-            stokData = gudang.getStokPekatan();
-        } else if (typeof Storage !== 'undefined' && Storage.getAll) {
-            var keyGudang = (Storage.KEYS && Storage.KEYS.GUDANG) ? Storage.KEYS.GUDANG : 'cozycs_gudang';
-            var allGudang = Storage.getAll(keyGudang) || [];
-            
-            var itemA = allGudang.find(function(b) {
-                var nm = String(b.nama || '').toLowerCase();
-                return nm.includes('pekatan a') || nm.includes('ab mix a') || nm.includes('mix a');
-            });
-            var itemB = allGudang.find(function(b) {
-                var nm = String(b.nama || '').toLowerCase();
-                return nm.includes('pekatan b') || nm.includes('ab mix b') || nm.includes('mix b');
-            });
+            try {
+                var res = gudang.getStokPekatan();
+                if (res) {
+                    if (res.pekatanA && res.pekatanA.stok !== undefined) itemA = res.pekatanA;
+                    if (res.pekatanB && res.pekatanB.stok !== undefined) itemB = res.pekatanB;
+                }
+            } catch(e) {}
+        }
 
-            if (itemA) {
-                stokData.pekatanA = {
-                    nama: itemA.nama,
-                    stok: parseFloat(itemA.stok) || 0,
-                    satuan: itemA.satuan || 'Liter',
-                    stokMin: parseFloat(itemA.stokMin) || 0,
-                    isKritis: (parseFloat(itemA.stok) || 0) <= (parseFloat(itemA.stokMin) || 0)
-                };
-            }
-            if (itemB) {
-                stokData.pekatanB = {
-                    nama: itemB.nama,
-                    stok: parseFloat(itemB.stok) || 0,
-                    satuan: itemB.satuan || 'Liter',
-                    stokMin: parseFloat(itemB.stokMin) || 0,
-                    isKritis: (parseFloat(itemB.stok) || 0) <= (parseFloat(itemB.stokMin) || 0)
+        // 2. Fallback jika via modul gudang tidak ditemukan atau null
+        if (!itemA) {
+            var rawA = findFlexibleStok('pekatan a') || findFlexibleStok('ab mix a') || findFlexibleStok('mix a');
+            if (rawA) {
+                itemA = {
+                    nama: rawA.nama || rawA.namaBarang,
+                    stok: parseFloat(rawA.stok) || 0,
+                    satuan: rawA.satuan || 'Liter',
+                    stokMin: parseFloat(rawA.stokMin) || 0,
+                    isKritis: (parseFloat(rawA.stok) || 0) <= (parseFloat(rawA.stokMin) || 0)
                 };
             }
         }
 
-        var itemA = stokData.pekatanA;
-        var itemB = stokData.pekatanB;
+        if (!itemB) {
+            var rawB = findFlexibleStok('pekatan b') || findFlexibleStok('ab mix b') || findFlexibleStok('mix b');
+            if (rawB) {
+                itemB = {
+                    nama: rawB.nama || rawB.namaBarang,
+                    stok: parseFloat(rawB.stok) || 0,
+                    satuan: rawB.satuan || 'Liter',
+                    stokMin: parseFloat(rawB.stokMin) || 0,
+                    isKritis: (parseFloat(rawB.stok) || 0) <= (parseFloat(rawB.stokMin) || 0)
+                };
+            }
+        }
 
         var textA = itemA ? (itemA.stok + ' ' + itemA.satuan) : t('stock_not_found');
         var isKritisA = itemA ? itemA.isKritis : false;
