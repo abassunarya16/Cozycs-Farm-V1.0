@@ -787,8 +787,8 @@ var dashboard = (function() {
 
             </div>
         `;
-        }
-    
+    }
+
 
         el.innerHTML = `
             <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
