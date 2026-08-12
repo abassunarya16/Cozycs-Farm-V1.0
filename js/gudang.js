@@ -1,15 +1,17 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT, PEKATAN API, SMART DEDUCTION & AUTO-RETURN STOCK)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG
+// (WITH BULK DELETE, DATA RESET, VALIDATED STATS & MODERN DASHBOARD)
 // ==========================================
 
 var gudang = (function() {
 
-    // VARIABEL STATE UNTUK PENCARIAN, FILTER & PAGINASI
+    // VARIABEL STATE UNTUK PENCARIAN, FILTER, PAGINASI & SELEKSI MASSAL
     var searchQuery = '';
     var selectedCategory = '';
     var selectedStatus = '';
     var currentPage = 1;
     var itemsPerPage = 20;
+    var selectedItemIds = []; // Menyimpan ID barang yang dicentang
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -31,7 +33,7 @@ var gudang = (function() {
             'lbl_date_buy': 'Tanggal Beli / Masuk',
             'lbl_category': 'Kategori',
             'opt_cat_nutrition': 'Nutrisi',
-            'opt_cat_pesticide': 'Pesticida',
+            'opt_cat_pesticide': 'Pestisida',
             'opt_cat_seeds': 'Benih',
             'opt_cat_rockwool': 'Rockwool',
             'opt_cat_netpot': 'Netpot',
@@ -184,15 +186,23 @@ var gudang = (function() {
         if (el) el.value = val;
     }
 
+    // HELPER AMBIL HANYA DATA BARANG VALID & AKTIF
+    function getValidBarangList() {
+        if (typeof Storage === 'undefined' || !Storage.getAll) return [];
+        var raw = Storage.getAll(getKeyBarang()) || [];
+        if (!Array.isArray(raw)) return [];
+        return raw.filter(function(item) {
+            return item && item.id && typeof item.nama === 'string' && item.nama.trim() !== '';
+        });
+    }
+
     // ==========================================
     // API KHUSUS PEKATAN NUTRISI (UNTUK MODUL NUTRISI)
     // ==========================================
     function getStokPekatan() {
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyBarang()) || []) : [];
-        if (!Array.isArray(data)) data = [];
+        var data = getValidBarangList();
 
         var nutrisiItems = data.filter(function(b) {
-            if (!b) return false;
             var kat = String(b.kategori || '').toLowerCase();
             var nm = String(b.nama || '').toLowerCase();
             return kat === 'nutrisi' || nm.includes('pekatan') || nm.includes('ab mix') || nm.includes('abmix');
@@ -232,28 +242,22 @@ var gudang = (function() {
     // API OTOMATISASI LINTAS MODUL (SMART DEDUCTION)
     // ==========================================
     function potongStokOtomatis(namaBarang, jumlahDipotong, modulPengirim, idGh, namaPetugas, satuanInput) {
-        if (typeof Storage === 'undefined' || !Storage.getAll) return false;
-
-        var dataBarang = Storage.getAll(getKeyBarang()) || [];
-        if (!Array.isArray(dataBarang) || dataBarang.length === 0) return false;
+        var dataBarang = getValidBarangList();
+        if (dataBarang.length === 0) return false;
 
         var targetKw = String(namaBarang || '').toLowerCase().trim();
 
-        // 1. Match Exact Name
         var item = dataBarang.find(function(b) {
             return b && b.nama && b.nama.toLowerCase().trim() === targetKw;
         });
 
-        // 2. Match Partial Name
         if (!item) {
             item = dataBarang.find(function(b) {
-                if (!b || !b.nama) return false;
-                var bName = String(b.nama).toLowerCase().trim();
+                var bName = String(b.nama || '').toLowerCase().trim();
                 return bName.includes(targetKw) || targetKw.includes(bName);
             });
         }
 
-        // 3. Fallback Khusus Pekatan A & B
         if (!item && (targetKw.includes('pekatan a') || targetKw.includes('ab mix a') || targetKw === 'a')) {
             item = dataBarang.find(function(b) {
                 var bName = String(b.nama || '').toLowerCase();
@@ -278,7 +282,6 @@ var gudang = (function() {
         var inputSat = String(satuanInput || item.satuan || '').toLowerCase().trim();
         var itemSat = String(item.satuan || '').toLowerCase().trim();
 
-        // Konversi Satuan Otomatis (ml -> Liter) jika input beda skala dengan master gudang
         if ((inputSat === 'ml' || inputSat === 'milliliter') && (itemSat === 'liter' || itemSat === 'l')) {
             jumlah = jumlah / 1000;
         } else if ((inputSat === 'liter' || inputSat === 'l') && (itemSat === 'ml' || itemSat === 'milliliter')) {
@@ -296,7 +299,6 @@ var gudang = (function() {
 
         Storage.update(getKeyBarang(), item);
 
-        // 1. Catat ke Mutasi Gudang
         catatMutasi({
             barangId: item.id,
             namaBarang: item.nama,
@@ -309,23 +311,6 @@ var gudang = (function() {
             tanggal: new Date().toISOString().split('T')[0]
         });
 
-        // 2. Catat ke Aktivitas Terakhir Dasbor
-        if (typeof Storage !== 'undefined' && Storage.add) {
-            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
-            var now = new Date();
-            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            
-            Storage.add(keyAktivitas, {
-                judul: 'Pemotongan Stok Gudang',
-                deskripsi: 'Dipakai ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + (modulPengirim || 'Nutrisi') + ')',
-                tanggal: now.toISOString().split('T')[0],
-                jam: timeStr,
-                kategori: 'Gudang',
-                icon: 'fas fa-boxes',
-                color: '#E65100'
-            });
-        }
-
         loadDashboard();
         loadTable();
         loadMutasiLog();
@@ -334,48 +319,25 @@ var gudang = (function() {
         return true;
     }
 
-    // ==========================================
-    // API PENGEMBALIAN STOK OTOMATIS (SAAT HAPUS / EDIT DATA)
-    // ==========================================
     function kembalikanStokOtomatis(namaBarang, jumlahDikembalikan, modulPengirim, idGh, namaPetugas, satuanInput) {
-        if (typeof Storage === 'undefined' || !Storage.getAll) return false;
-
-        var dataBarang = Storage.getAll(getKeyBarang()) || [];
-        if (!Array.isArray(dataBarang) || dataBarang.length === 0) return false;
+        var dataBarang = getValidBarangList();
+        if (dataBarang.length === 0) return false;
 
         var targetKw = String(namaBarang || '').toLowerCase().trim();
 
-        // 1. Match Exact Name
         var item = dataBarang.find(function(b) {
             return b && b.nama && b.nama.toLowerCase().trim() === targetKw;
         });
 
-        // 2. Match Partial Name
         if (!item) {
             item = dataBarang.find(function(b) {
-                if (!b || !b.nama) return false;
-                var bName = String(b.nama).toLowerCase().trim();
+                var bName = String(b.nama || '').toLowerCase().trim();
                 return bName.includes(targetKw) || targetKw.includes(bName);
             });
         }
 
-        // 3. Fallback Khusus Pekatan A & B
-        if (!item && (targetKw.includes('pekatan a') || targetKw.includes('ab mix a') || targetKw === 'a')) {
-            item = dataBarang.find(function(b) {
-                var bName = String(b.nama || '').toLowerCase();
-                return bName.includes('pekatan a') || bName.includes('ab mix a') || (bName.includes('a') && bName.includes('pekatan'));
-            });
-        }
-
-        if (!item && (targetKw.includes('pekatan b') || targetKw.includes('ab mix b') || targetKw === 'b')) {
-            item = dataBarang.find(function(b) {
-                var bName = String(b.nama || '').toLowerCase();
-                return bName.includes('pekatan b') || bName.includes('ab mix b') || (bName.includes('b') && bName.includes('pekatan'));
-            });
-        }
-
         if (!item) {
-            console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris untuk dikembalikan.");
+            console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris.");
             return false;
         }
 
@@ -384,7 +346,6 @@ var gudang = (function() {
         var inputSat = String(satuanInput || item.satuan || '').toLowerCase().trim();
         var itemSat = String(item.satuan || '').toLowerCase().trim();
 
-        // Konversi Satuan Otomatis (ml -> Liter)
         if ((inputSat === 'ml' || inputSat === 'milliliter') && (itemSat === 'liter' || itemSat === 'l')) {
             jumlah = jumlah / 1000;
         } else if ((inputSat === 'liter' || inputSat === 'l') && (itemSat === 'ml' || itemSat === 'milliliter')) {
@@ -401,35 +362,17 @@ var gudang = (function() {
 
         Storage.update(getKeyBarang(), item);
 
-        // 1. Catat ke Mutasi Gudang
         catatMutasi({
             barangId: item.id,
             namaBarang: item.nama,
             jenis: 'Masuk',
             jumlah: roundNumber(jumlah),
             satuan: item.satuan,
-            alasan: 'Pengembalian Stok (Hapus Data ' + (modulPengirim || 'Nutrisi') + ')',
+            alasan: 'Pengembalian Stok (' + (modulPengirim || 'Nutrisi') + ')',
             gh: idGh || '-',
             petugas: namaPetugas || 'Sistem Otomatis',
             tanggal: new Date().toISOString().split('T')[0]
         });
-
-        // 2. Catat ke Aktivitas Terakhir Dasbor
-        if (typeof Storage !== 'undefined' && Storage.add) {
-            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
-            var now = new Date();
-            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-            
-            Storage.add(keyAktivitas, {
-                judul: 'Pengembalian Stok Gudang',
-                deskripsi: 'Dikembalikan ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + (modulPengirim || 'Nutrisi') + ')',
-                tanggal: now.toISOString().split('T')[0],
-                jam: timeStr,
-                kategori: 'Gudang',
-                icon: 'fas fa-boxes',
-                color: '#2E7D32'
-            });
-        }
 
         loadDashboard();
         loadTable();
@@ -448,15 +391,22 @@ var gudang = (function() {
     }
 
     // ==========================================
-    // RENDER TAMPILAN MODUL
+    // RENDER TAMPILAN UTAMA MODUL
     // ==========================================
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-boxes" style="color: #E65100;"></i> ${t('module_title')}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="section-title" style="margin-bottom: 0;">
+                        <i class="fas fa-boxes" style="color: #2E7D32;"></i> ${t('module_title')}
+                    </div>
+                    <button type="button" onclick="gudang.resetDataGudang()" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-power-off"></i> Reset Data
+                    </button>
+                </div>
 
-                <!-- 1. DASHBOARD STATISTIK UTAMA -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="gudangStatCards">
+                <!-- 1. DASHBOARD STATISTIK UTAMA (MODERN CARDS) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;" id="gudangStatCards">
                     <!-- Dynamic Stat Cards -->
                 </div>
 
@@ -557,18 +507,19 @@ var gudang = (function() {
                     </form>
                 </div>
 
-                <!-- 3. REKAP KATALOG STOK GUDANG -->
+                <!-- 3. REKAP KATALOG STOK GUDANG + TOOLBAR AKSI PENCENTANGAN -->
                 <div class="section-title"><i class="fas fa-cubes" style="color: #E65100;"></i> ${t('recap_catalog_title')}</div>
 
                 <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
-                    <div style="margin-bottom: 8px;">
+                    <div style="margin-bottom: 10px;">
                         <input type="text" id="inputSearchGudang" 
                                placeholder="${t('ph_search')}" 
                                oninput="gudang.handleSearch(this.value)"
                                value="${searchQuery}"
                                style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
                     </div>
-                    <div style="display: flex; gap: 8px; overflow-x: auto;">
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto;">
                         <select id="gudangFilterKategori" onchange="gudang.handleCategoryFilter(this.value)" style="flex: 1; padding: 8px 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             <option value="">${t('opt_all_categories')}</option>
                             <option value="Nutrisi" ${selectedCategory === 'Nutrisi' ? 'selected' : ''}>${t('opt_cat_nutrition')}</option>
@@ -588,6 +539,18 @@ var gudang = (function() {
                             <option value="KRITIS" ${selectedStatus === 'KRITIS' ? 'selected' : ''}>${t('opt_status_kritis')}</option>
                             <option value="EXPIRED" ${selectedStatus === 'EXPIRED' ? 'selected' : ''}>${t('opt_status_expired')}</option>
                         </select>
+                    </div>
+
+                    <!-- BILAH AKSI CENTANG MASSAL -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--inner-card-bg, #f9f9f9); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color, #eee);">
+                        <label style="font-size: 12px; font-weight: 600; color: #444; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="chkSelectAllGudang" onchange="gudang.toggleSelectAll(this.checked)" style="width: 16px; height: 16px; accent-color: #2E7D32;">
+                            <span>Pilih Semua</span>
+                        </label>
+
+                        <button type="button" id="btnHapusTerpilihGudang" onclick="gudang.deleteSelectedItems()" style="display: none; background: #C62828; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; align-items: center; gap: 5px;">
+                            <i class="fas fa-trash"></i> Hapus Terpilih (<span id="cntTerpilihGudang">0</span>)
+                        </button>
                     </div>
                 </div>
 
@@ -717,11 +680,15 @@ var gudang = (function() {
         }
     }
 
+    // ==========================================
+    // REKAP DASBOR & KARTU STATISTIK TAMPILAN MODERN
+    // ==========================================
     function loadDashboard() {
         var container = document.getElementById('gudangStatCards');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyBarang()) || []) : [];
+        var data = getValidBarangList();
+
         var totalJenis = data.length;
         var nilaiPersediaan = 0;
         var stokKritis = 0;
@@ -734,14 +701,17 @@ var gudang = (function() {
             var harga = parseFloat(item.harga) || 0;
             var stokMin = roundNumber(item.stokMin);
 
-            nilaiPersediaan += (stok * harga);
+            // Hanya hitung jika stok dan harga bernilai positif valid
+            if (stok > 0 && harga > 0) {
+                nilaiPersediaan += (stok * harga);
+            }
 
             if (stok <= stokMin) stokKritis++;
 
             if (item.expired && item.expired !== '-') {
                 var expDate = new Date(item.expired);
                 var diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                if (diffDays <= 30) expiredSoon++;
+                if (diffDays <= 30 && diffDays >= 0) expiredSoon++;
             }
         });
 
@@ -750,31 +720,65 @@ var gudang = (function() {
         };
 
         container.innerHTML = `
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_total_items')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #2E7D32;">${totalJenis} ${t('unit_types')}</div>
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #f4fbf7 100%); padding: 14px 16px; border-radius: 14px; border: 1px solid #d4edda; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">${t('stat_total_items')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #2E7D32; margin-top: 4px;">${totalJenis} <span style="font-size: 12px; font-weight: 600;">${t('unit_types')}</span></div>
+                    </div>
+                    <div style="background: #E8F5E9; color: #2E7D32; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; font-weight: 700; color: #2E7D32; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_inventory_value')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #2E7D32;">${formatRupiah(nilaiPersediaan)}</div>
+
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #f2f9ff 100%); padding: 14px 16px; border-radius: 14px; border: 1px solid #cce5ff; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">${t('stat_inventory_value')}</div>
+                        <div style="font-size: 17px; font-weight: 800; color: #0277BD; margin-top: 4px;">${formatRupiah(nilaiPersediaan)}</div>
+                    </div>
+                    <div style="background: #E1F5FE; color: #0277BD; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                </div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; font-weight: 700; color: #C62828; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_critical_stock')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #C62828;">${stokKritis} ${t('unit_items')}</div>
+
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%); padding: 14px 16px; border-radius: 14px; border: 1px solid #ffcdd2; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">${t('stat_critical_stock')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #C62828; margin-top: 4px;">${stokKritis} <span style="font-size: 12px; font-weight: 600;">${t('unit_items')}</span></div>
+                    </div>
+                    <div style="background: #FFEBEE; color: #C62828; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
             </div>
-            <div style="background: var(--card-bg, #fff); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">
-                <div style="font-size: 10px; font-weight: 700; color: #0277BD; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">${t('stat_expired_soon')}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #0277BD;">${expiredSoon} ${t('unit_items')}</div>
+
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #fffde7 100%); padding: 14px 16px; border-radius: 14px; border: 1px solid #fff9c4; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">${t('stat_expired_soon')}</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #F57F17; margin-top: 4px;">${expiredSoon} <span style="font-size: 12px; font-weight: 600;">${t('unit_items')}</span></div>
+                    </div>
+                    <div style="background: #FFFDE7; color: #F57F17; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                </div>
             </div>
         `;
     }
 
+    // ==========================================
+    // REKAP TABEL KATALOG BARANG
+    // ==========================================
     function loadTable() {
         var container = document.getElementById('containerGudangCards');
         var pageEl = document.getElementById('paginationGudangControls');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyBarang()) || []) : [];
+        var data = getValidBarangList();
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data_stock')}</div>`;
@@ -803,7 +807,7 @@ var gudang = (function() {
             if (item.expired && item.expired !== '-') {
                 var expDate = new Date(item.expired);
                 var diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                if (diffDays <= 30) isExpiredSoon = true;
+                if (diffDays <= 30 && diffDays >= 0) isExpiredSoon = true;
             }
 
             var matchStat = true;
@@ -836,13 +840,17 @@ var gudang = (function() {
             var badgeBg = isKritis ? '#FFEBEE' : '#E8F5E9';
             var badgeColor = isKritis ? '#C62828' : '#2E7D32';
             var badgeText = isKritis ? t('badge_restock') : t('badge_safe');
+            var isChecked = selectedItemIds.includes(item.id);
 
             html += `
-                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 15px; color: var(--text-color, #222);">${item.nama}</strong>
-                            <span style="font-size: 11px; background: var(--inner-card-bg, #F5F5F5); color: #666; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">${item.kategori}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" onchange="gudang.toggleSelectItem('${item.id}', this.checked)" ${isChecked ? 'checked' : ''} style="width: 17px; height: 17px; accent-color: #2E7D32; cursor: pointer;">
+                            <div>
+                                <strong style="font-size: 15px; color: var(--text-color, #222);">${item.nama}</strong>
+                                <span style="font-size: 10px; background: var(--inner-card-bg, #F5F5F5); color: #666; padding: 2px 6px; border-radius: 4px; margin-left: 4px; font-weight: 600;">${item.kategori}</span>
+                            </div>
                         </div>
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold;">${badgeText}</span>
                     </div>
@@ -869,8 +877,8 @@ var gudang = (function() {
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
-                        <span onclick="gudang.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
-                        <span onclick="gudang.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
+                        <span onclick="gudang.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i> Edit</span>
+                        <span onclick="gudang.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i> Hapus</span>
                     </div>
                 </div>
             `;
@@ -895,6 +903,8 @@ var gudang = (function() {
                 pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} ${t('unit_types')}</span>`;
             }
         }
+
+        updateBulkActionBarUI();
     }
 
     function loadMutasiLog() {
@@ -926,6 +936,91 @@ var gudang = (function() {
         });
 
         container.innerHTML = html;
+    }
+
+    // ==========================================
+    // LOGIKA CENTANG & HAPUS MASSAL (BULK DELETE)
+    // ==========================================
+    function toggleSelectItem(id, isChecked) {
+        if (isChecked) {
+            if (!selectedItemIds.includes(id)) selectedItemIds.push(id);
+        } else {
+            selectedItemIds = selectedItemIds.filter(function(i) { return i !== id; });
+        }
+        updateBulkActionBarUI();
+    }
+
+    function toggleSelectAll(isChecked) {
+        var data = getValidBarangList();
+        if (isChecked) {
+            selectedItemIds = data.map(function(item) { return item.id; });
+        } else {
+            selectedItemIds = [];
+        }
+        loadTable();
+    }
+
+    function updateBulkActionBarUI() {
+        var btnHapus = document.getElementById('btnHapusTerpilihGudang');
+        var cntSpan = document.getElementById('cntTerpilihGudang');
+        var chkAll = document.getElementById('chkSelectAllGudang');
+
+        if (cntSpan) cntSpan.innerText = selectedItemIds.length;
+
+        if (btnHapus) {
+            btnHapus.style.display = selectedItemIds.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        if (chkAll) {
+            var data = getValidBarangList();
+            chkAll.checked = data.length > 0 && selectedItemIds.length === data.length;
+        }
+    }
+
+    function deleteSelectedItems() {
+        if (selectedItemIds.length === 0) return;
+
+        if (confirm('Apakah kamu yakin ingin menghapus ' + selectedItemIds.length + ' barang yang dicentang dari gudang?')) {
+            if (typeof Storage !== 'undefined' && Storage.remove) {
+                selectedItemIds.forEach(function(id) {
+                    Storage.remove(getKeyBarang(), id);
+                });
+            }
+            selectedItemIds = [];
+            loadDashboard();
+            loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
+
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast(t('toast_deleted'), 'error');
+            }
+        }
+    }
+
+    // ==========================================
+    // LOGIKA RESET TOTAL DATA GUDANG
+    // ==========================================
+    function resetDataGudang() {
+        var confirmKey = prompt("PERINGATAN: Semua data master barang & mutasi gudang akan dihapus permanen!\n\nKetik 'RESET' untuk mengonfirmasi:");
+        if (confirmKey === 'RESET') {
+            if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                Storage.saveAll(getKeyBarang(), []);
+                Storage.saveAll(getKeyMutasi(), []);
+            }
+            selectedItemIds = [];
+            loadDashboard();
+            loadTable();
+            loadMutasiLog();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
+
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast('Seluruh data gudang berhasil di-reset!', 'success');
+            } else {
+                alert('Seluruh data gudang berhasil di-reset!');
+            }
+        } else if (confirmKey !== null) {
+            alert('Konfirmasi batal. Kata kunci yang dimasukkan salah.');
+        }
     }
 
     function editItem(id) {
@@ -961,6 +1056,7 @@ var gudang = (function() {
             if (typeof Storage !== 'undefined' && Storage.remove) {
                 Storage.remove(getKeyBarang(), id);
             }
+            selectedItemIds = selectedItemIds.filter(function(i) { return i !== id; });
             loadDashboard();
             loadTable();
             window.dispatchEvent(new Event('cozycs_data_changed'));
@@ -1005,7 +1101,11 @@ var gudang = (function() {
         handleSearch: handleSearch,
         handleCategoryFilter: handleCategoryFilter,
         handleStatusFilter: handleStatusFilter,
-        changePage: changePage
+        changePage: changePage,
+        toggleSelectItem: toggleSelectItem,
+        toggleSelectAll: toggleSelectAll,
+        deleteSelectedItems: deleteSelectedItems,
+        resetDataGudang: resetDataGudang
     };
 
 })();
