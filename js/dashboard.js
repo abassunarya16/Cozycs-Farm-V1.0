@@ -549,79 +549,126 @@ var dashboard = (function() {
     }
 
     function loadWelcomeBanner() {
-        var el = document.getElementById('dashWelcomeBanner');
-        if (!el) return;
+    var el = document.getElementById('dashWelcomeBanner');
+    if (!el) return;
 
-        var isEn = (localStorage.getItem('cozycs_lang') === 'en');
-        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Pagi' };
-        var greetingText = greeting.text;
-        if (isEn) {
-            if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
-            else if (greetingText.includes('Siang')) greetingText = 'Good Afternoon';
-            else if (greetingText.includes('Sore')) greetingText = 'Good Afternoon';
-            else greetingText = 'Good Evening';
+    var isEn = (localStorage.getItem('cozycs_lang') === 'en');
+    var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Pagi' };
+    var greetingText = greeting.text;
+    if (isEn) {
+        if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
+        else if (greetingText.includes('Siang')) greetingText = 'Good Afternoon';
+        else if (greetingText.includes('Sore')) greetingText = 'Good Afternoon';
+        else greetingText = 'Good Evening';
+    }
+
+    var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
+    
+    // ==========================================
+    // LOGIKA KALKULASI WINDOFW TIME & ACTION URGENCY
+    // ==========================================
+    var now = new Date();
+    var currentHour = now.getHours();
+    var currentMinute = now.getMinutes();
+    
+    var smartInsight = '';
+    var actionRecommendation = '';
+
+    if (currentHour >= 6 && currentHour < 18) {
+        // Fase Siang (Fotosintesis Aktif 06:00 - 18:00)
+        var remainingHours = 17 - currentHour;
+        var remainingMins = 60 - currentMinute;
+        if (remainingMins === 60) {
+            remainingMins = 0;
+            remainingHours += 1;
         }
 
-        var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
-        var currentHour = new Date().getHours();
-        var smartInsight = (currentHour >= 6 && currentHour < 18) ? '☀️ Fase Fotosintesis Aktif' : '🌙 Sesi Istirahat Tanaman';
+        var countdownText = remainingHours + 'j ' + remainingMins + 'm lagi';
+        smartInsight = '☀️ Fotosintesis Aktif (' + countdownText + ')';
 
-        el.innerHTML = `
-            <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
-                <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; pointer-events: none;"></div>
+        // Rekomendasi Aksi Spesifik Berdasarkan Jam Siang
+        if (currentHour >= 6 && currentHour < 9) {
+            actionRecommendation = '🌱 Waktu Optimal: Foliar Spray & Cek PPM Pagi';
+        } else if (currentHour >= 9 && currentHour < 14) {
+            actionRecommendation = '🔥 Puncak Panas: Pastikan Pompa & Airflow Aktif';
+        } else if (currentHour >= 14 && currentHour < 17) {
+            actionRecommendation = '💧 Sesi Nutrisi Sore & Inspek Polinasi';
+        } else {
+            actionRecommendation = '🌇 Persiapan Tutup Sesi & Cek Tandon Air';
+        }
+    } else {
+        // Fase Malam (Resting Period 18:00 - 06:00)
+        var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
+        smartInsight = '🌙 Fase Gelap / Istirahat (' + hoursUntilMorning + 'j ke Pagi)';
+        actionRecommendation = '💤 Tanaman Transpirasi Minimal: Jaga RH GH';
+    }
 
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; position: relative; z-index: 2;">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
-                        <div style="position: relative; flex-shrink: 0;">
-                            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                                👨‍🌾
-                            </div>
-                            <span class="pulse-green" style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background: #52B788; border: 2px solid #1b4332; border-radius: 50%;"></span>
+    el.innerHTML = `
+        <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
+            <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; pointer-events: none;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; position: relative; z-index: 2;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
+                    <div style="position: relative; flex-shrink: 0;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                            👨‍🌾
                         </div>
-
-                        <div style="overflow: hidden;">
-                            <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.2; letter-spacing: -0.2px;">
-                                ${greetingText}
-                            </div>
-                            <div style="font-size: 11px; color: #D8F3DC; margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${t('greeting_sub')}
-                            </div>
-                            <div style="display: inline-block; margin-top: 5px; font-size: 9px; font-weight: 700; background: rgba(255,255,255,0.15); color: #B7E4C7; padding: 2px 8px; border-radius: 10px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);">
-                                ${smartInsight}
-                            </div>
-                        </div>
+                        <span class="pulse-green" style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background: #52B788; border: 2px solid #1b4332; border-radius: 50%;"></span>
                     </div>
 
-                    <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                        <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
-                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
-                            ${pesawaranWeather.temp}
+                    <div style="overflow: hidden;">
+                        <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.2; letter-spacing: -0.2px;">
+                            ${greetingText}
                         </div>
-                        <div id="liveWeatherHumidity" style="font-size: 9px; color: #B7E4C7; font-weight: 700; margin-top: 1px;">
-                            💧 ${pesawaranWeather.humidity}
+                        <div style="font-size: 11px; color: #D8F3DC; margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${t('greeting_sub')}
+                        </div>
+                        
+                        <!-- BADGE COUNTDOWN SISA WAKTU FASE -->
+                        <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 9.5px; font-weight: 700; background: rgba(255,255,255,0.18); color: #FFF; padding: 3px 9px; border-radius: 10px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);">
+                            <i class="far fa-clock" style="color: #FFE082;"></i>
+                            <span>${smartInsight}</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
-                        <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
-                        <span id="liveDateTime">${dateTimeStr}</span>
+                <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
+                    <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
+                        ${pesawaranWeather.temp}
                     </div>
-
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #FFF;">
-                            <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
-                            <span id="liveLocationName">${currentLocation.city}</span>
-                        </div>
-                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-                            <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
-                        </button>
+                    <div id="liveWeatherHumidity" style="font-size: 9px; color: #B7E4C7; font-weight: 700; margin-top: 1px;">
+                        💧 ${pesawaranWeather.humidity}
                     </div>
                 </div>
             </div>
-        `;
-    }
+
+            <!-- BARIS REKOMENDASI AKSI / ACTION URGENCY -->
+            <div style="background: rgba(0, 0, 0, 0.25); border-radius: 10px; padding: 6px 10px; margin-bottom: 8px; font-size: 10px; color: #FFE082; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px dashed rgba(255,224,130,0.4);">
+                <i class="fas fa-lightbulb" style="color: #FFD54F;"></i>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${actionRecommendation}</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
+                <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
+                    <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
+                    <span id="liveDateTime">${dateTimeStr}</span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #FFF;">
+                        <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
+                        <span id="liveLocationName">${currentLocation.city}</span>
+                    </div>
+                    <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                        <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
