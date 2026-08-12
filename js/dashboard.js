@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (UNIFIED & HIGH-RELIABILITY ENGINE)
+// COZYCS FARM - EXECUTIVE DASHBOARD (SMART TARGET PPM & QUICK ACTIONS)
 // ==========================================
 
 var dashboard = (function() {
@@ -100,7 +100,7 @@ var dashboard = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
-    // HIGH PRIORITY FIX: Robust Date Parser for DD/MM/YYYY, MM/DD/YYYY & YYYY-MM-DD
+    // ROBUST DATE PARSER FOR DD/MM/YYYY, MM/DD/YYYY & YYYY-MM-DD
     function parseLocalDate(dateStr) {
         if (!dateStr) return null;
         if (dateStr instanceof Date) {
@@ -117,18 +117,14 @@ var dashboard = (function() {
                 var p2 = parseInt(parts[1], 10);
                 var p3 = parseInt(parts[2], 10);
 
-                // YYYY-MM-DD or YYYY/MM/DD
                 if (p1 > 1000) {
                     var monthY = Math.max(0, Math.min(11, p2 - 1));
                     var dayY = Math.max(1, Math.min(31, p3));
                     return new Date(p1, monthY, dayY, 0, 0, 0, 0);
-                } 
-                // DD/MM/YYYY or MM/DD/YYYY
-                else if (p3 > 1000) {
+                } else if (p3 > 1000) {
                     var day = p1;
                     var month = p2;
 
-                    // If p2 > 12, then it must be MM/DD/YYYY format
                     if (p2 > 12) {
                         day = p2;
                         month = p1;
@@ -149,7 +145,7 @@ var dashboard = (function() {
         return null;
     }
 
-    // MULTI-FALLBACK DATA READER (COVERING ALL 6 PILLARS)
+    // MULTI-FALLBACK DATA READER
     function getData(key) {
         try {
             var altKeys = [key];
@@ -181,6 +177,52 @@ var dashboard = (function() {
             console.error('[Dashboard] Gagal membaca data ' + key, e);
         }
         return [];
+    }
+
+    // FITUR 1: KALKULASI RANGE TARGET PPM & pH BERDASARKAN FASE HST TANAMAN
+    function getTargetPpmAndPh() {
+        var dataTanaman = getData('cozycs_tanaman');
+        var today = parseLocalDate(new Date());
+        var maxHst = 0;
+
+        var filteredTanaman = (selectedGh === 'ALL') 
+            ? dataTanaman 
+            : dataTanaman.filter(function(t) { return t && isGhMatched(t.gh || t.ghId, selectedGh); });
+
+        filteredTanaman.forEach(function(t) {
+            if (!t) return;
+            var tglT = parseLocalDate(t.tanggal || t.tanam || t.tglTanam);
+            if (tglT && today >= tglT) {
+                var hst = Math.floor((today - tglT) / (1000 * 60 * 60 * 24));
+                if (hst > maxHst) maxHst = hst;
+            }
+        });
+
+        // Standar Nutrisi Hidroponik Melon Presisi
+        if (maxHst <= 10) {
+            return { minPpm: 800, maxPpm: 1000, minPh: 5.8, maxPh: 6.5, phase: 'Veg Awal' };
+        } else if (maxHst <= 25) {
+            return { minPpm: 1000, maxPpm: 1200, minPh: 5.8, maxPh: 6.5, phase: 'Vegetatif' };
+        } else if (maxHst <= 40) {
+            return { minPpm: 1200, maxPpm: 1500, minPh: 6.0, maxPh: 6.8, phase: 'Polinasi' };
+        } else {
+            return { minPpm: 1500, maxPpm: 1800, minPh: 6.0, maxPh: 6.8, phase: 'Pembesaran' };
+        }
+    }
+
+    // FITUR 2: NAVIGASI SPA UNTUK BILAH AKSI CEPAT
+    function navigateTo(pageId) {
+        if (typeof app !== 'undefined' && typeof app.navigateTo === 'function') {
+            app.navigateTo(pageId);
+        } else if (typeof app !== 'undefined' && typeof app.showPage === 'function') {
+            app.showPage(pageId);
+        } else if (typeof showPage === 'function') {
+            showPage(pageId);
+        } else {
+            window.location.hash = '#' + pageId;
+            var btn = document.querySelector('[data-page="' + pageId + '"], [onclick*="' + pageId + '"]');
+            if (btn) btn.click();
+        }
     }
 
     function isGhMatched(itemGh, selected) {
@@ -360,7 +402,33 @@ var dashboard = (function() {
                 <!-- 2. EXECUTIVE SUMMARY WIDGET -->
                 <div id="dashExecutiveSummaryWidget" style="margin-bottom: 16px;"></div>
 
-                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 3. BILAH AKSI CEPAT (QUICK ACTION BAR) -->
+                <div class="dash-card-shadow" style="background: #FFFFFF; padding: 12px 14px; border-radius: 16px; border: 1px solid #E0E0E0; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 800; color: #37474F; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fas fa-bolt" style="color: #F57C00; margin-right: 5px;"></i> Pintasan Aksi Cepat</span>
+                        <span style="font-size: 9px; color: #78909C; font-weight: 600;">Quick Access</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <button onclick="dashboard.navigateTo('gudang')" style="background: #F3E5F5; border: 1px solid #E1BEE7; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-boxes" style="font-size: 18px; color: #7B1FA2; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #4A148C; display: block; line-height: 1.1;">Gudang</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('spray')" style="background: #E0F2F1; border: 1px solid #B2DFDB; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-spray-can" style="font-size: 18px; color: #00796B; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #004D40; display: block; line-height: 1.1;">Spray</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('jadwal')" style="background: #E8EAF6; border: 1px solid #C5CAE9; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-calendar-plus" style="font-size: 18px; color: #303F9F; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #1A237E; display: block; line-height: 1.1;">Jadwal</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('kalkulator')" style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-calculator" style="font-size: 18px; color: #E65100; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #BF360C; display: block; line-height: 1.1;">Kalkulator</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. MONITORING AIR DAN LINGKUNGAN -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); padding: 15px; border-radius: 16px; border: 1px solid #B2EBF2; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -392,7 +460,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 4. PROGRESS MUSIM & ANALISIS FASE TANAM -->
+                <!-- 5. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFFDE7 0%, #F1F8E9 100%); padding: 16px; border-radius: 18px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                         <i class="fas fa-seedling" style="color: #2E7D32; font-size: 14px;"></i> ${t('season_progress')}
@@ -400,7 +468,7 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 5. AGENDA HARI INI & LINTAS TANGGAL -->
+                <!-- 6. AGENDA HARI INI & LINTAS TANGGAL -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -409,7 +477,7 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 6. AKTIVITAS TERAKHIR (AUDIT LOG) -->
+                <!-- 7. AKTIVITAS TERAKHIR (AUDIT LOG) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 800; color: #283593;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
@@ -549,7 +617,6 @@ var dashboard = (function() {
         );
     }
 
-    // HIGH PRIORITY FIX: Weather Fetch Loading State & Offline Error Fallback
     function fetchWeatherByCoords(lat, lon, cityName) {
         var tempEl = document.getElementById('liveWeatherTemp');
         var humEl = document.getElementById('liveWeatherHumidity');
@@ -623,7 +690,6 @@ var dashboard = (function() {
         var actionRecommendation = '';
 
         if (currentHour >= 6 && currentHour < 18) {
-            // Fase Siang (Fotosintesis Aktif 06:00 - 18:00)
             var remainingHours = 17 - currentHour;
             var remainingMins = 60 - currentMinute;
             if (remainingMins === 60) {
@@ -644,7 +710,6 @@ var dashboard = (function() {
                 actionRecommendation = '🌇 Senja: Waktu cek tandon air sebelum malam tiba.';
             }
         } else {
-            // Fase Malam (Resting Period 18:00 - 06:00)
             var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
             smartInsight = '🌙 Malam: Tanaman beristirahat (' + hoursUntilMorning + ' jam menuju pagi)';
             actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
@@ -714,7 +779,6 @@ var dashboard = (function() {
         `;
     }
 
-    // WIDGET RINGKASAN EKSEKUTIF (GUDANG & KEUANGAN)
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummaryWidget');
         if (!el) return;
@@ -964,6 +1028,7 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
+    // PEMBARUAN LOGIKA LOAD PARAMETER AIR DENGAN INDIKATOR TARGET PPM/pH
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
@@ -1003,12 +1068,38 @@ var dashboard = (function() {
         var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined && latest.waterTemp !== '-') ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
         var valTandon = (latest && (latest.tandon || latest.levelAir || latest.tandonAir) !== undefined) ? (latest.tandon || latest.levelAir || latest.tandonAir) : '0';
 
-        var statusPpm = (latest && parseFloat(valPpm) > 0) ? t('recorded') : t('no_data');
-        var statusPh = (latest && parseFloat(valPh) > 0) ? t('recorded') : t('no_data');
+        // Hitung Range Target Sesuai Fase Tanam
+        var targetInfo = getTargetPpmAndPh();
+        var numPpm = parseFloat(valPpm) || 0;
+        var numPh = parseFloat(valPh) || 0;
+
+        // Badge Status PPM
+        var badgePpmBg = '#F5F5F5', badgePpmColor = '#888', badgePpmText = t('no_data');
+        if (numPpm > 0) {
+            if (numPpm < targetInfo.minPpm) {
+                badgePpmBg = '#FFF3E0'; badgePpmColor = '#E65100'; badgePpmText = '⚠️ Encer (<' + targetInfo.minPpm + ')';
+            } else if (numPpm > targetInfo.maxPpm) {
+                badgePpmBg = '#FFEBEE'; badgePpmColor = '#C62828'; badgePpmText = '⚠️ Pekat (>' + targetInfo.maxPpm + ')';
+            } else {
+                badgePpmBg = '#E8F5E9'; badgePpmColor = '#2E7D32'; badgePpmText = '✅ Ideal (' + targetInfo.minPpm + '-' + targetInfo.maxPpm + ')';
+            }
+        }
+
+        // Badge Status pH
+        var badgePhBg = '#F5F5F5', badgePhColor = '#888', badgePhText = t('no_data');
+        if (numPh > 0) {
+            if (numPh < targetInfo.minPh) {
+                badgePhBg = '#FFF3E0'; badgePhColor = '#E65100'; badgePhText = '⚠️ Asam (<' + targetInfo.minPh + ')';
+            } else if (numPh > targetInfo.maxPh) {
+                badgePhBg = '#FFEBEE'; badgePhColor = '#C62828'; badgePhText = '⚠️ Basa (>' + targetInfo.maxPh + ')';
+            } else {
+                badgePhBg = '#E8F5E9'; badgePhColor = '#2E7D32'; badgePhText = '✅ Ideal (' + targetInfo.minPh + '–' + targetInfo.maxPh + ')';
+            }
+        }
 
         el.innerHTML = `
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                     <div style="width: 40px; height: 40px; border-radius: 10px; background: #E8F5E9; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-seedling" style="color: #2E7D32; font-size: 20px;"></i>
                     </div>
@@ -1017,11 +1108,15 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valPpm} <span style="font-size: 10px; font-weight: 600; color: #777;">ppm</span></div>
                     </div>
                 </div>
-                <div><span style="background: ${parseFloat(valPpm) > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${parseFloat(valPpm) > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
+                <div>
+                    <span style="background: ${badgePpmBg}; color: ${badgePpmColor}; padding: 3px 8px; border-radius: 12px; font-size: 9.5px; font-weight: bold; display: inline-block;">
+                        ${badgePpmText}
+                    </span>
+                </div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                     <div style="width: 40px; height: 40px; border-radius: 10px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fas fa-vial" style="color: #0288D1; font-size: 20px;"></i>
                     </div>
@@ -1030,7 +1125,11 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valPh} <span style="font-size: 10px; font-weight: 600; color: #777;">pH</span></div>
                     </div>
                 </div>
-                <div><span style="background: ${parseFloat(valPh) > 0 ? '#E8F5E9' : '#F5F5F5'}; color: ${parseFloat(valPh) > 0 ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPh}</span></div>
+                <div>
+                    <span style="background: ${badgePhBg}; color: ${badgePhColor}; padding: 3px 8px; border-radius: 12px; font-size: 9.5px; font-weight: bold; display: inline-block;">
+                        ${badgePhText}
+                    </span>
+                </div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -1043,7 +1142,7 @@ var dashboard = (function() {
                         <div style="font-size: 17px; font-weight: 800; color: #006064;">${valWaterTemp}</div>
                     </div>
                 </div>
-                <div><span style="background: ${latest ? '#E8F5E9' : '#F5F5F5'}; color: ${latest ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${statusPpm}</span></div>
+                <div><span style="background: ${latest ? '#E8F5E9' : '#F5F5F5'}; color: ${latest ? '#2E7D32' : '#888'}; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">${latest ? t('recorded') : t('no_data')}</span></div>
             </div>
 
             <div style="background: rgba(255,255,255,0.9); padding: 12px; border-radius: 12px; border: 1px solid #B2EBF2; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
@@ -1674,6 +1773,7 @@ var dashboard = (function() {
     return {
         render: render,
         init: init,
+        navigateTo: navigateTo,
         selectGhFilter: selectGhFilter,
         setNutrientSessionFilter: setNutrientSessionFilter,
         toggleIotSection: toggleIotSection,
