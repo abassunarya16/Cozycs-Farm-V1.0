@@ -1248,6 +1248,7 @@ var dashboard = (function() {
         `;
     }
 
+    // AGENDA & TUGAS OPERASIONAL (INTERAKTIF & WRAP MULTI-BARIS)
     function loadTodayAgenda() {
         var el = document.getElementById('dashTodayAgendaList');
         var dateEl = document.getElementById('dashTodayDate');
@@ -1314,24 +1315,33 @@ var dashboard = (function() {
 
             var ghTag = (item.gh && item.gh !== 'Seluruh Kebun' && item.gh !== 'ALL') ? (' (' + item.gh + ')') : '';
             var textColor = isDone ? '#9E9E9E' : '#117A65';
+            var descText = item.deskripsi || item.keterangan || item.desc || '';
 
             html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: rgba(255,255,255,0.85); border-radius: 8px; margin-bottom: 6px; border: 1px solid #A3E4D7; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; overflow: hidden;">
-                        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="dashboard.toggleTask('${taskId}')" style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
-                        <span style="font-size: 12px; font-weight: 600; color: ${textColor}; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}${ghTag}
+                <div onclick="dashboard.toggleTask('${taskId}')" style="display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 12px; background: rgba(255,255,255,0.92); border-radius: 10px; margin-bottom: 6px; border: 1px solid #A3E4D7; gap: 10px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    
+                    <!-- KIRI: CHECKBOX + JUDUL / DESKRIPSI (WRAPPING MULTI-BARIS) -->
+                    <div style="display: flex; align-items: flex-start; gap: 10px; flex-grow: 1; min-width: 0;">
+                        <input type="checkbox" ${isDone ? 'checked' : ''} onclick="event.stopPropagation(); dashboard.toggleTask('${taskId}');" style="width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; margin-top: 2px;">
+                        
+                        <div style="flex-grow: 1; min-width: 0;">
+                            <div style="font-size: 12px; font-weight: 700; color: ${textColor}; line-height: 1.35; word-break: break-word; text-decoration: ${isDone ? 'line-through' : 'none'};">
+                                ${item.title || item.judul || item.kegiatan || item.nama || 'Agenda'}${ghTag}
+                            </div>
+                            ${descText ? `<div style="font-size: 10.5px; color: #5C6BC0; margin-top: 2px; line-height: 1.3; word-break: break-word;">${descText}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- KANAN: STATUS BADGE & TANGGAL (VERTIKAL KANAN) -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;">
+                        <span style="font-size: 9px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 7px; border-radius: 6px; font-weight: 800;">
+                            ${isDone ? 'DONE' : 'PENDING'}
+                        </span>
+                        <span style="font-size: 9px; background: #E0F2F1; color: #00796B; padding: 2px 6px; border-radius: 6px; font-weight: 700; border: 1px solid #B2DFDB; white-space: nowrap;">
+                            📅 ${dateBadge}
                         </span>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                        <span style="font-size: 9px; background: #E0F2F1; color: #00796B; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid #B2DFDB;">
-                            📅 ${dateBadge}
-                        </span>
-                        <span style="font-size: 9px; background: ${isDone ? '#E8F5E9' : '#FFF3E0'}; color: ${isDone ? '#2E7D32' : '#E65100'}; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                            ${isDone ? 'DONE' : 'PENDING'}
-                        </span>
-                    </div>
                 </div>
             `;
         });
