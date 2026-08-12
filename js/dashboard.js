@@ -807,6 +807,9 @@ var dashboard = (function() {
         `;
     }
 
+    // ==========================================
+    // EXECUTIVE SUMMARY WIDGET (KALKULASI STOK FISIK RILL)
+    // ==========================================
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummaryWidget');
         if (!el) return;
@@ -815,34 +818,43 @@ var dashboard = (function() {
         var totalNilaiGudang = 0;
         var totalKritisCount = 0;
 
-        dataGudang.forEach(function(item) {
-            if (!item) return;
-            var stok = parseFloat(item.stok) || 0;
-            var harga = parseFloat(item.harga) || 0;
-            var stokMin = parseFloat(item.stokMin) || 0;
+        if (Array.isArray(dataGudang)) {
+            dataGudang.forEach(function(item) {
+                if (!item) return;
 
-            if (stok > 0 && harga > 0) {
+                // 1. Ambil stok fisik terkini (di-clamp ke 0 jika minus)
+                var stok = parseFloat(item.stok) || 0;
+                if (stok < 0) stok = 0;
+
+                // 2. Ambil harga per unit dari berbagai opsi properti
+                var harga = parseFloat(item.harga || item.hargaSatuan || item.hargaBeli) || 0;
+                var stokMin = parseFloat(item.stokMin) || 0;
+
+                // 3. Hitung nilai persediaan riil (Stok x Harga Satuan)
                 totalNilaiGudang += (stok * harga);
-            }
-            if (stok <= stokMin && stokMin > 0) {
-                totalKritisCount++;
-            }
-        });
+
+                if (stok <= stokMin && stokMin > 0) {
+                    totalKritisCount++;
+                }
+            });
+        }
 
         var dataKeuangan = getData('cozycs_keuangan');
         var netCashflow = 0;
 
-        dataKeuangan.forEach(function(k) {
-            if (!k) return;
-            var nominal = parseFloat(k.nominal || k.jumlah || k.total) || 0;
-            var tipe = String(k.tipe || k.jenis || '').toLowerCase();
+        if (Array.isArray(dataKeuangan)) {
+            dataKeuangan.forEach(function(k) {
+                if (!k) return;
+                var nominal = parseFloat(k.nominal || k.jumlah || k.total) || 0;
+                var tipe = String(k.tipe || k.jenis || '').toLowerCase();
 
-            if (tipe === 'pemasukan' || tipe === 'income' || tipe === 'masuk') {
-                netCashflow += nominal;
-            } else if (tipe === 'pengeluaran' || tipe === 'expense' || tipe === 'keluar') {
-                netCashflow -= nominal;
-            }
-        });
+                if (tipe === 'pemasukan' || tipe === 'income' || tipe === 'masuk') {
+                    netCashflow += nominal;
+                } else if (tipe === 'pengeluaran' || tipe === 'expense' || tipe === 'keluar') {
+                    netCashflow -= nominal;
+                }
+            });
+        }
 
         var formatRp = function(val) {
             return 'Rp' + Math.round(val).toLocaleString('id-ID');
