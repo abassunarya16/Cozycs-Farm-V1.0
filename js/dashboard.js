@@ -587,20 +587,20 @@ var dashboard = (function() {
         smartInsight = '☀️ Fotosintesis Aktif (' + countdownText + ')';
 
         // Rekomendasi Aksi Spesifik Berdasarkan Jam Siang
-        if (currentHour >= 6 && currentHour < 9) {
-            actionRecommendation = '🌱 Waktu Optimal: Foliar Spray & Cek PPM Pagi';
-        } else if (currentHour >= 9 && currentHour < 14) {
-            actionRecommendation = '🔥 Puncak Panas: Pastikan Pompa & Airflow Aktif';
-        } else if (currentHour >= 14 && currentHour < 17) {
-            actionRecommendation = '💧 Sesi Nutrisi Sore & Inspek Polinasi';
-        } else {
-            actionRecommendation = '🌇 Persiapan Tutup Sesi & Cek Tandon Air';
-        }
-    } else {
-        // Fase Malam (Resting Period 18:00 - 06:00)
-        var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
-        smartInsight = '🌙 Fase Gelap / Istirahat (' + hoursUntilMorning + 'j ke Pagi)';
-        actionRecommendation = '💤 Tanaman Transpirasi Minimal: Jaga RH GH';
+if (currentHour >= 6 && currentHour < 9) {
+    actionRecommendation = '🌱 Pagi Cerah: Momen terbaik semprot daun & cek PPM nutrisi.';
+} else if (currentHour >= 9 && currentHour < 14) {
+    actionRecommendation = '☀️ Siang Terik: Pastikan pompa dan sirkulasi udara berjalan lancar.';
+} else if (currentHour >= 14 && currentHour < 17) {
+    actionRecommendation = '💧 Sore Sejuk: Cocok beri nutrisi tambahan & pantau polinasi.';
+} else {
+    actionRecommendation = '🌇 Senja: Waktu cek tandon air sebelum malam tiba.';
+}
+} else {
+// Fase Malam (Resting Period 18:00 - 06:00)
+var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
+smartInsight = '🌙 Malam: Tanaman beristirahat (' + hoursUntilMorning + ' jam menuju pagi)';
+actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
     }
 
     el.innerHTML = `
