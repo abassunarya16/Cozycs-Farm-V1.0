@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (SMART TARGET PPM & QUICK ACTIONS)
+// COZYCS FARM - EXECUTIVE DASHBOARD (REORDERED & RACIKAN LINKED)
 // ==========================================
 
 var dashboard = (function() {
@@ -179,7 +179,7 @@ var dashboard = (function() {
         return [];
     }
 
-    // FITUR 1: KALKULASI RANGE TARGET PPM & pH BERDASARKAN FASE HST TANAMAN
+    // KALKULASI RANGE TARGET PPM & pH BERDASARKAN FASE HST TANAMAN
     function getTargetPpmAndPh() {
         var dataTanaman = getData('cozycs_tanaman');
         var today = parseLocalDate(new Date());
@@ -198,7 +198,7 @@ var dashboard = (function() {
             }
         });
 
-        // Standar Nutrisi Hidroponik Melon Presisi
+        // Standar Nutrisi Hidroponik Melon
         if (maxHst <= 10) {
             return { minPpm: 800, maxPpm: 1000, minPh: 5.8, maxPh: 6.5, phase: 'Veg Awal' };
         } else if (maxHst <= 25) {
@@ -210,7 +210,7 @@ var dashboard = (function() {
         }
     }
 
-    // FITUR 2: NAVIGASI SPA UNTUK BILAH AKSI CEPAT
+    // NAVIGASI SPA UNTUK BILAH AKSI CEPAT
     function navigateTo(pageId) {
         if (typeof app !== 'undefined' && typeof app.navigateTo === 'function') {
             app.navigateTo(pageId);
@@ -399,36 +399,7 @@ var dashboard = (function() {
                 <!-- 1. GRID MATRIX GREENHOUSE -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
-                <!-- 2. EXECUTIVE SUMMARY WIDGET -->
-                <div id="dashExecutiveSummaryWidget" style="margin-bottom: 16px;"></div>
-
-                <!-- 3. BILAH AKSI CEPAT (QUICK ACTION BAR) -->
-                <div class="dash-card-shadow" style="background: #FFFFFF; padding: 12px 14px; border-radius: 16px; border: 1px solid #E0E0E0; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #37474F; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                        <span><i class="fas fa-bolt" style="color: #F57C00; margin-right: 5px;"></i> Pintasan Aksi Cepat</span>
-                        <span style="font-size: 9px; color: #78909C; font-weight: 600;">Quick Access</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                        <button onclick="dashboard.navigateTo('gudang')" style="background: #F3E5F5; border: 1px solid #E1BEE7; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
-                            <i class="fas fa-boxes" style="font-size: 18px; color: #7B1FA2; display: block; margin-bottom: 4px;"></i>
-                            <span style="font-size: 10px; font-weight: 800; color: #4A148C; display: block; line-height: 1.1;">Gudang</span>
-                        </button>
-                        <button onclick="dashboard.navigateTo('spray')" style="background: #E0F2F1; border: 1px solid #B2DFDB; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
-                            <i class="fas fa-spray-can" style="font-size: 18px; color: #00796B; display: block; margin-bottom: 4px;"></i>
-                            <span style="font-size: 10px; font-weight: 800; color: #004D40; display: block; line-height: 1.1;">Spray</span>
-                        </button>
-                        <button onclick="dashboard.navigateTo('jadwal')" style="background: #E8EAF6; border: 1px solid #C5CAE9; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
-                            <i class="fas fa-calendar-plus" style="font-size: 18px; color: #303F9F; display: block; margin-bottom: 4px;"></i>
-                            <span style="font-size: 10px; font-weight: 800; color: #1A237E; display: block; line-height: 1.1;">Jadwal</span>
-                        </button>
-                        <button onclick="dashboard.navigateTo('kalkulator')" style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
-                            <i class="fas fa-calculator" style="font-size: 18px; color: #E65100; display: block; margin-bottom: 4px;"></i>
-                            <span style="font-size: 10px; font-weight: 800; color: #BF360C; display: block; line-height: 1.1;">Kalkulator</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 4. MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); padding: 15px; border-radius: 16px; border: 1px solid #B2EBF2; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -459,6 +430,35 @@ var dashboard = (function() {
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="dashIotEnvCards"></div>
                     </div>
                 </div>
+
+                <!-- 3. BILAH AKSI CEPAT (QUICK ACTION BAR) -->
+                <div class="dash-card-shadow" style="background: #FFFFFF; padding: 12px 14px; border-radius: 16px; border: 1px solid #E0E0E0; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 800; color: #37474F; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fas fa-bolt" style="color: #F57C00; margin-right: 5px;"></i> Pintasan Aksi Cepat</span>
+                        <span style="font-size: 9px; color: #78909C; font-weight: 600;">Quick Access</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <button onclick="dashboard.navigateTo('gudang')" style="background: #F3E5F5; border: 1px solid #E1BEE7; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-boxes" style="font-size: 18px; color: #7B1FA2; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #4A148C; display: block; line-height: 1.1;">Gudang</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('spray')" style="background: #E0F2F1; border: 1px solid #B2DFDB; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-spray-can" style="font-size: 18px; color: #00796B; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #004D40; display: block; line-height: 1.1;">Spray</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('jadwal')" style="background: #E8EAF6; border: 1px solid #C5CAE9; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-calendar-plus" style="font-size: 18px; color: #303F9F; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #1A237E; display: block; line-height: 1.1;">Jadwal</span>
+                        </button>
+                        <button onclick="dashboard.navigateTo('racikan')" style="background: #FFF3E0; border: 1px solid #FFE0B2; border-radius: 12px; padding: 10px 4px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="fas fa-calculator" style="font-size: 18px; color: #E65100; display: block; margin-bottom: 4px;"></i>
+                            <span style="font-size: 10px; font-weight: 800; color: #BF360C; display: block; line-height: 1.1;">Kalkulator</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. EXECUTIVE SUMMARY WIDGET -->
+                <div id="dashExecutiveSummaryWidget" style="margin-bottom: 16px;"></div>
 
                 <!-- 5. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFFDE7 0%, #F1F8E9 100%); padding: 16px; border-radius: 18px; border: 1px solid #FFE082; margin-bottom: 16px;">
@@ -658,9 +658,9 @@ var dashboard = (function() {
     function refreshAllDashboardData() {
         loadWelcomeBanner();
         renderSwipeableGhCards();
-        loadExecutiveSummary();
         loadIotWaterData();
         loadIotEnvData();
+        loadExecutiveSummary();
         loadProgressMusim();
         loadTodayAgenda();
         loadRecentActivities();
@@ -1028,7 +1028,6 @@ var dashboard = (function() {
         refreshAllDashboardData();
     }
 
-    // PEMBARUAN LOGIKA LOAD PARAMETER AIR DENGAN INDIKATOR TARGET PPM/pH
     function loadIotWaterData() {
         var el = document.getElementById('dashIotWaterCards');
         var lastUpdatedEl = document.getElementById('dashIotLastUpdated');
@@ -1068,12 +1067,10 @@ var dashboard = (function() {
         var valWaterTemp = (latest && (latest.waterTemp || latest.suhuAir || latest.suhu_air) !== undefined && latest.waterTemp !== '-') ? (latest.waterTemp || latest.suhuAir || latest.suhu_air) + '°C' : '0°C';
         var valTandon = (latest && (latest.tandon || latest.levelAir || latest.tandonAir) !== undefined) ? (latest.tandon || latest.levelAir || latest.tandonAir) : '0';
 
-        // Hitung Range Target Sesuai Fase Tanam
         var targetInfo = getTargetPpmAndPh();
         var numPpm = parseFloat(valPpm) || 0;
         var numPh = parseFloat(valPh) || 0;
 
-        // Badge Status PPM
         var badgePpmBg = '#F5F5F5', badgePpmColor = '#888', badgePpmText = t('no_data');
         if (numPpm > 0) {
             if (numPpm < targetInfo.minPpm) {
@@ -1085,7 +1082,6 @@ var dashboard = (function() {
             }
         }
 
-        // Badge Status pH
         var badgePhBg = '#F5F5F5', badgePhColor = '#888', badgePhText = t('no_data');
         if (numPh > 0) {
             if (numPh < targetInfo.minPh) {
