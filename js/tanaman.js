@@ -1,15 +1,16 @@
 // ==========================================
 // COZYCS FARM - MODUL UNIFIED MONITORING & PERAWATAN TANAMAN
-// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - CLEAN TEXT ONLY)
+// (INTEGRATING: GROWTH, POLINASI, PRUNING & SELEKSI BUAH - WITH BULK DELETE & DATA RESET)
 // ==========================================
 
 var tanaman = (function() {
 
-    // VARIABEL STATE UNTUK PENCARIAN, SORTING & PAGINASI
+    // VARIABEL STATE UNTUK PENCARIAN, SORTING, PAGINASI & SELEKSI MASSAL
     var searchQuery = '';
     var sortBy = 'tanggal_desc'; // Default: Terbaru ke Terlama
     var currentPage = 1;
     var itemsPerPage = 20;
+    var selectedItemIds = []; // Menyimpan ID data tanaman yang dicentang
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -430,7 +431,14 @@ var tanaman = (function() {
     function render() {
         return `
             <div class="dashboard-container">
-                <div class="section-title"><i class="fas fa-seedling" style="color: #2E7D32;"></i> ${t('module_title')}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="section-title" style="margin-bottom: 0;">
+                        <i class="fas fa-seedling" style="color: #2E7D32;"></i> ${t('module_title')}
+                    </div>
+                    <button type="button" onclick="tanaman.resetDataTanaman()" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-power-off"></i> Reset Data
+                    </button>
+                </div>
                 
                 <!-- Form Terpadu Perawatan Tanaman -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
@@ -572,25 +580,39 @@ var tanaman = (function() {
                 <!-- Rekap Data Title -->
                 <div class="section-title"><i class="fas fa-list" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 
-                <!-- BAR KONTROL: PENCARIAN & DROPDOWN SORTING (CLEAN TEXT) -->
-                <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
-                    <div style="flex: 2; min-width: 180px;">
-                        <input type="text" id="inputSearchTanaman" 
-                               placeholder="${t('ph_search')}" 
-                               oninput="tanaman.handleSearch(this.value)"
-                               value="${searchQuery}"
-                               style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                <!-- BAR KONTROL: PENCARIAN, SORTING & TOOLBAR AKSI CENTANG MASSAL -->
+                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <div style="flex: 2; min-width: 180px;">
+                            <input type="text" id="inputSearchTanaman" 
+                                   placeholder="${t('ph_search')}" 
+                                   oninput="tanaman.handleSearch(this.value)"
+                                   value="${searchQuery}"
+                                   style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color, #ccc); font-size: 13px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #222);">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <select id="selectSortTanaman" onchange="tanaman.handleSort(this.value)"
+                                    style="width: 100%; padding: 10px 10px; border-radius: 10px; border: 1.5px solid #2E7D32; font-size: 12px; box-sizing: border-box; background: #E8F5E9; color: #2E7D32; font-weight: bold; cursor: pointer;">
+                                <option value="tanggal_desc" ${sortBy === 'tanggal_desc' ? 'selected' : ''}>${t('opt_sort_newest')}</option>
+                                <option value="tanggal_asc" ${sortBy === 'tanggal_asc' ? 'selected' : ''}>${t('opt_sort_oldest')}</option>
+                                <option value="talang_asc" ${sortBy === 'talang_asc' ? 'selected' : ''}>${t('opt_sort_talang_asc')}</option>
+                                <option value="varietas_asc" ${sortBy === 'varietas_asc' ? 'selected' : ''}>${t('opt_sort_variety_asc')}</option>
+                                <option value="varietas_desc" ${sortBy === 'varietas_desc' ? 'selected' : ''}>${t('opt_sort_variety_desc')}</option>
+                                <option value="gh_asc" ${sortBy === 'gh_asc' ? 'selected' : ''}>${t('opt_sort_gh_asc')}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div style="flex: 1; min-width: 140px;">
-                        <select id="selectSortTanaman" onchange="tanaman.handleSort(this.value)"
-                                style="width: 100%; padding: 10px 10px; border-radius: 10px; border: 1.5px solid #2E7D32; font-size: 12px; box-sizing: border-box; background: #E8F5E9; color: #2E7D32; font-weight: bold; cursor: pointer;">
-                            <option value="tanggal_desc" ${sortBy === 'tanggal_desc' ? 'selected' : ''}>${t('opt_sort_newest')}</option>
-                            <option value="tanggal_asc" ${sortBy === 'tanggal_asc' ? 'selected' : ''}>${t('opt_sort_oldest')}</option>
-                            <option value="talang_asc" ${sortBy === 'talang_asc' ? 'selected' : ''}>${t('opt_sort_talang_asc')}</option>
-                            <option value="varietas_asc" ${sortBy === 'varietas_asc' ? 'selected' : ''}>${t('opt_sort_variety_asc')}</option>
-                            <option value="varietas_desc" ${sortBy === 'varietas_desc' ? 'selected' : ''}>${t('opt_sort_variety_desc')}</option>
-                            <option value="gh_asc" ${sortBy === 'gh_asc' ? 'selected' : ''}>${t('opt_sort_gh_asc')}</option>
-                        </select>
+
+                    <!-- BILAH AKSI CENTANG MASSAL -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--inner-card-bg, #f9f9f9); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color, #eee);">
+                        <label style="font-size: 12px; font-weight: 600; color: #444; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="chkSelectAllTanaman" onchange="tanaman.toggleSelectAll(this.checked)" style="width: 16px; height: 16px; accent-color: #2E7D32;">
+                            <span>Pilih Semua</span>
+                        </label>
+
+                        <button type="button" id="btnHapusTerpilihTanaman" onclick="tanaman.deleteSelectedItems()" style="display: none; background: #C62828; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; align-items: center; gap: 5px;">
+                            <i class="fas fa-trash"></i> Hapus Terpilih (<span id="cntTerpilihTanaman">0</span>)
+                        </button>
                     </div>
                 </div>
 
@@ -764,6 +786,7 @@ var tanaman = (function() {
                 if (btnCancel) btnCancel.style.display = 'none';
 
                 loadTable();
+                window.dispatchEvent(new Event('cozycs_data_changed'));
             });
         }
 
@@ -790,6 +813,7 @@ var tanaman = (function() {
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             if (pageEl) pageEl.innerHTML = '';
+            updateBulkActionBarUI();
             return;
         }
 
@@ -809,6 +833,7 @@ var tanaman = (function() {
         if (filteredData.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             if (pageEl) pageEl.innerHTML = '';
+            updateBulkActionBarUI();
             return;
         }
 
@@ -849,6 +874,7 @@ var tanaman = (function() {
             var valTalang = item.talang ? item.talang : '-';
             var valFase = item.fase ? item.fase : '-';
             var valDesc = item.desc ? item.desc : '';
+            var isChecked = selectedItemIds.includes(item.id);
 
             var badgeBg = '#E8F5E9';
             var badgeColor = '#2E7D32';
@@ -874,9 +900,12 @@ var tanaman = (function() {
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
-                        <div>
-                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
-                            <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" onchange="tanaman.toggleSelectItem('${item.id}', this.checked)" ${isChecked ? 'checked' : ''} style="width: 17px; height: 17px; accent-color: #2E7D32; cursor: pointer;">
+                            <div>
+                                <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
+                                <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
+                            </div>
                         </div>
                         <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">${valKat}</span>
                     </div>
@@ -922,8 +951,8 @@ var tanaman = (function() {
                             <i class="fas fa-history"></i> Riwayat Rekam Jejak
                         </span>
                         <div>
-                            <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px; margin-right: 8px;"><i class="fas fa-pen"></i></span>
-                            <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
+                            <span onclick="tanaman.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px; margin-right: 8px;"><i class="fas fa-pen"></i> Edit</span>
+                            <span onclick="tanaman.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i> Hapus</span>
                         </div>
                     </div>
                 </div>
@@ -948,6 +977,111 @@ var tanaman = (function() {
             } else {
                 pageEl.innerHTML = `<span style="color: #777; font-size: 11px;">${t('total_lbl')}: ${filteredData.length} data</span>`;
             }
+        }
+
+        updateBulkActionBarUI();
+    }
+
+    // ==========================================
+    // LOGIKA CENTANG & HAPUS MASSAL (BULK DELETE)
+    // ==========================================
+    function toggleSelectItem(id, isChecked) {
+        if (isChecked) {
+            if (!selectedItemIds.includes(id)) selectedItemIds.push(id);
+        } else {
+            selectedItemIds = selectedItemIds.filter(function(i) { return i !== id; });
+        }
+        updateBulkActionBarUI();
+    }
+
+    function toggleSelectAll(isChecked) {
+        var storageKey = getKey();
+        var data = getData(storageKey);
+        if (isChecked) {
+            selectedItemIds = data.map(function(item) { return item.id; });
+        } else {
+            selectedItemIds = [];
+        }
+        loadTable();
+    }
+
+    function updateBulkActionBarUI() {
+        var btnHapus = document.getElementById('btnHapusTerpilihTanaman');
+        var cntSpan = document.getElementById('cntTerpilihTanaman');
+        var chkAll = document.getElementById('chkSelectAllTanaman');
+
+        if (cntSpan) cntSpan.innerText = selectedItemIds.length;
+
+        if (btnHapus) {
+            btnHapus.style.display = selectedItemIds.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        if (chkAll) {
+            var storageKey = getKey();
+            var data = getData(storageKey);
+            chkAll.checked = data.length > 0 && selectedItemIds.length === data.length;
+        }
+    }
+
+    function deleteSelectedItems() {
+        if (selectedItemIds.length === 0) return;
+
+        if (confirm('Apakah kamu yakin ingin menghapus ' + selectedItemIds.length + ' data perawatan tanaman yang dicentang?')) {
+            var storageKey = getKey();
+            try {
+                if (typeof Storage !== 'undefined' && Storage.remove) {
+                    selectedItemIds.forEach(function(id) {
+                        Storage.remove(storageKey, id);
+                    });
+                } else {
+                    var list = getData(storageKey);
+                    var filtered = list.filter(function(item) {
+                        return item && !selectedItemIds.includes(item.id);
+                    });
+                    localStorage.setItem(storageKey, JSON.stringify(filtered));
+                }
+            } catch(e) {
+                console.error('[Tanaman] Error hapus massal:', e);
+            }
+
+            selectedItemIds = [];
+            loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
+
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast(t('toast_deleted'), 'error');
+            }
+        }
+    }
+
+    // ==========================================
+    // LOGIKA RESET TOTAL DATA TANAMAN
+    // ==========================================
+    function resetDataTanaman() {
+        var confirmKey = prompt("PERINGATAN: Semua catatan perawatan & rekam jejak tanaman akan dihapus permanen!\n\nKetik 'RESET' untuk mengonfirmasi:");
+        if (confirmKey === 'RESET') {
+            var storageKey = getKey();
+            try {
+                if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                    Storage.saveAll(storageKey, []);
+                } else {
+                    localStorage.setItem(storageKey, JSON.stringify([]));
+                }
+            } catch(e) {
+                console.error('[Tanaman] Error reset data:', e);
+            }
+
+            selectedItemIds = [];
+            loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
+
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast('Seluruh data perawatan tanaman berhasil di-reset!', 'success');
+            } else {
+                alert('Seluruh data perawatan tanaman berhasil di-reset!');
+            }
+        } else if (confirmKey !== null) {
+            alert('Konfirmasi batal. Kata kunci yang dimasukkan salah.');
         }
     }
 
@@ -1008,7 +1142,9 @@ var tanaman = (function() {
                     localStorage.setItem(storageKey, JSON.stringify(filtered));
                 }
             } catch(e) {}
+            selectedItemIds = selectedItemIds.filter(function(i) { return i !== id; });
             loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
@@ -1046,7 +1182,11 @@ var tanaman = (function() {
         updateTotalPreview: updateTotalPreview,
         processGenerateCustom: processGenerateCustom,
         showHistoryModal: showHistoryModal,
-        closeHistoryModal: closeHistoryModal
+        closeHistoryModal: closeHistoryModal,
+        toggleSelectItem: toggleSelectItem,
+        toggleSelectAll: toggleSelectAll,
+        deleteSelectedItems: deleteSelectedItems,
+        resetDataTanaman: resetDataTanaman
     };
 
 })();
