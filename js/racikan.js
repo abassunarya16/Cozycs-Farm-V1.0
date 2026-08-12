@@ -668,11 +668,6 @@ var racikan = (function() {
     function potongStokGudang() {
         if (isProcessingStok) return;
 
-        if (typeof gudang === 'undefined' || typeof gudang.potongStokOtomatis !== 'function') {
-            alert('Modul Gudang belum terhubung.');
-            return;
-        }
-
         var validItems = [];
         var allItems = state.itemsA.concat(state.itemsB);
 
@@ -740,6 +735,58 @@ var racikan = (function() {
         pendingDeductItems = [];
     }
 
+    // HELPER HANDLER: UPDATE ATAL TAMBAH STOK PEKATAN DI STORAGE GUDANG (PENCARIAN FLEKSIBEL)
+    function updateAtauTambahStokPekatanGudang(namaPekatanTarget, jumlahLiter) {
+        try {
+            var gudangData = [];
+            var rawGudang = localStorage.getItem('cozycs_gudang');
+            if (rawGudang) {
+                try { gudangData = JSON.parse(rawGudang); } catch(e) {}
+            }
+            if (!Array.isArray(gudangData)) gudangData = [];
+
+            var targetStr = namaPekatanTarget.toLowerCase().trim(); // misal 'pekatan a'
+            var matchIdx = -1;
+
+            // Pencocokan Nama Fleksibel (Match "Pekatan A", "Pekatan A (20 Liter)", dll)
+            for (var i = 0; i < gudangData.length; i++) {
+                var itemNama = String(gudangData[i].nama || gudangData[i].namaBarang || '').toLowerCase();
+                if (itemNama.includes(targetStr) || targetStr.includes(itemNama)) {
+                    matchIdx = i;
+                    break;
+                }
+            }
+
+            if (matchIdx !== -1) {
+                // Update Stok item yang sudah ada
+                var stokLama = parseFloat(gudangData[matchIdx].stok) || 0;
+                gudangData[matchIdx].stok = stokLama + parseFloat(jumlahLiter);
+                if (!gudangData[matchIdx].satuan) gudangData[matchIdx].satuan = 'Liter';
+                if (!gudangData[matchIdx].kategori) gudangData[matchIdx].kategori = 'Nutrisi';
+            } else {
+                // Tambah Item Baru ke Gudang jika belum pernah ada
+                gudangData.push({
+                    id: 'gudang_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                    nama: namaPekatanTarget,
+                    kategori: 'Nutrisi',
+                    stok: parseFloat(jumlahLiter),
+                    satuan: 'Liter',
+                    stokMin: 5,
+                    harga: 0,
+                    updatedAt: new Date().toISOString()
+                });
+            }
+
+            // Simpan perubahan ke localStorage & Storage wrapper
+            localStorage.setItem('cozycs_gudang', JSON.stringify(gudangData));
+            if (typeof Storage !== 'undefined' && typeof Storage.saveAll === 'function') {
+                Storage.saveAll('cozycs_gudang', gudangData);
+            }
+        } catch(err) {
+            console.error('[Racikan] Gagal update stok pekatan di gudang:', err);
+        }
+    }
+
     function executePotongStok() {
         if (isProcessingStok || pendingDeductItems.length === 0) return;
 
@@ -753,22 +800,37 @@ var racikan = (function() {
         var count = 0;
 
         // 1. POTONG STOK BAHAN MENTAH (BAHAN TUNGGAL) DARI GUDANG (Gram -> Kg)
-        pendingDeductItems.forEach(function(item) {
-            var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin', 'kg');
-            if (success) count++;
-        });
+        if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
+            pendingDeductItems.forEach(function(item) {
+                var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin', 'kg');
+                if (success) count++;
+            });
+        }
 
         // 2. OTOMATIS TAMBAH STOK PEKATAN A & B HASIL PRODUKSI KE GUDANG (Dalam Liter)
         var volPekatan = parseFloat(state.volStock) || 0;
-        if (volPekatan > 0 && typeof gudang !== 'undefined' && typeof gudang.kembalikanStokOtomatis === 'function') {
-            gudang.kembalikanStokOtomatis('Pekatan A', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
-            gudang.kembalikanStokOtomatis('Pekatan B', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
+        if (volPekatan > 0) {
+            // Jalankan via modul Gudang bila ada
+            if (typeof gudang !== 'undefined' && typeof gudang.kembalikanStokOtomatis === 'function') {
+                gudang.kembalikanStokOtomatis('Pekatan A', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
+                gudang.kembalikanStokOtomatis('Pekatan B', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
+            }
+
+            // DUA ARAH: Jamin stok pasti bertambah/terbuat di localStorage Gudang
+            updateAtauTambahStokPekatanGudang('Pekatan A', volPekatan);
+            updateAtauTambahStokPekatanGudang('Pekatan B', volPekatan);
+        }
+
+        // 3. CATAT LOG AKTIVITAS SISTEM
+        if (window.logCozycsActivity) {
+            window.logCozycsActivity('Produksi Nutrisi', 'Pencampuran Pekatan AB Mix (' + volPekatan + ' Liter)', 'ALL', 'NUTRISI');
         }
 
         closeConfirmModal();
 
-        // 3. BROADCAST EVENT REFRESH SEMUA WIDGET/MODUL TERHUBUNG
+        // 4. BROADCAST EVENT REFRESH SEMUA WIDGET/MODUL TERHUBUNG (MODUL NUTRISI, GUDANG & DASHBOARD)
         window.dispatchEvent(new Event('cozycs_data_changed'));
+        window.dispatchEvent(new Event('storage'));
 
         if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
             Helper.showToast(t('toast_applied'), 'success');
