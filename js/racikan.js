@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL KALKULATOR RACIKAN AB MIX
-// (WITH REAL-TIME DRAFT AUTO-SAVE, CUSTOM MODAL & DATA PROTECTION)
+// (WITH REAL-TIME DRAFT AUTO-SAVE, TWO-WAY WAREHOUSE STOCK INTEGRATION & CUSTOM MODAL)
 // ==========================================
 
 var racikan = (function() {
@@ -48,12 +48,12 @@ var racikan = (function() {
             'lbl_grand_total_cost': 'ESTIMASI TOTAL BIAYA RACIKAN:',
             'btn_save_template': 'Simpan Template Racikan',
             'btn_update_template': 'Perbarui Template Racikan',
-            'btn_apply_gudang': 'Potong Stok Bahan dari Gudang',
+            'btn_apply_gudang': 'Eksekusi Produksi & Update Stok Gudang',
             'title_saved_templates': 'Daftar Template Racikan Tersimpan',
             'no_templates': 'Belum ada template racikan yang tersimpan.',
             'toast_saved': 'Template racikan berhasil disimpan!',
             'toast_deleted': 'Template racikan berhasil dihapus.',
-            'toast_applied': 'Stok bahan racikan berhasil dipotong dari Gudang!',
+            'toast_applied': 'Produksi selesai! Stok bahan dipotong & pekatan baru ditambahkan ke Gudang!',
             'confirm_delete_tpl': 'Apakah kamu yakin ingin menghapus template racikan ini?'
         },
         'en': {
@@ -71,12 +71,12 @@ var racikan = (function() {
             'lbl_grand_total_cost': 'ESTIMATED TOTAL COMPOUNDING COST:',
             'btn_save_template': 'Save Recipe Template',
             'btn_update_template': 'Update Recipe Template',
-            'btn_apply_gudang': 'Deduct Raw Materials from Warehouse',
+            'btn_apply_gudang': 'Execute Production & Update Warehouse Stock',
             'title_saved_templates': 'Saved Recipe Templates',
             'no_templates': 'No saved recipe templates found.',
             'toast_saved': 'Recipe template saved successfully!',
             'toast_deleted': 'Recipe template deleted successfully.',
-            'toast_applied': 'Raw materials deducted from Warehouse successfully!',
+            'toast_applied': 'Production completed! Raw materials deducted & new concentrates added to Warehouse!',
             'confirm_delete_tpl': 'Are you sure you want to delete this recipe template?'
         }
     };
@@ -135,7 +135,7 @@ var racikan = (function() {
     }
 
     function render() {
-        loadDraftFromStorage(); // Pastikan draf termuat saat HTML dibuat
+        loadDraftFromStorage();
 
         return `
             <div class="dashboard-container">
@@ -224,26 +224,35 @@ var racikan = (function() {
                     </div>
                 </div>
 
-                <!-- 5. CUSTOM PROFESSIONAL MODAL POPUP -->
+                <!-- 5. CUSTOM PROFESSIONAL MODAL POPUP (DUAL MUTASI) -->
                 <div id="racikConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99999; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; backdrop-filter: blur(3px);">
-                    <div style="background: var(--card-bg, #fff); width: 100%; max-width: 420px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #eee);">
+                    <div style="background: var(--card-bg, #fff); width: 100%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #eee);">
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                             <div style="background: #E8F5E9; color: #2E7D32; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
-                                <i class="fas fa-boxes"></i>
+                                <i class="fas fa-industry"></i>
                             </div>
                             <div>
-                                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-color, #222);">Konfirmasi Potong Stok</h3>
-                                <div style="font-size: 11px; color: #777; margin-top: 2px;">Gudang Utama • Cozycs Farm</div>
+                                <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-color, #222);">Konfirmasi Produksi AB Mix</h3>
+                                <div style="font-size: 11px; color: #777; margin-top: 2px;">Integrasi Gudang Utama • Cozycs Farm</div>
                             </div>
                         </div>
 
-                        <p style="font-size: 13px; color: var(--text-color, #444); margin-bottom: 12px; line-height: 1.4;">
-                            Apakah kamu yakin ingin memotong stok gudang sesuai racikan ini?
+                        <p style="font-size: 12px; color: var(--text-color, #444); margin-bottom: 12px; line-height: 1.4;">
+                            Sistem akan memotong stok bahan mentah dan otomatis menambahkan hasil pekatan baru ke stok Gudang.
                         </p>
 
-                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 12px; border-radius: 10px; max-height: 220px; overflow-y: auto; font-size: 12px; color: var(--text-color, #333); margin-bottom: 16px; border: 1px solid var(--border-color, #eee);">
-                            <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 8px; text-transform: uppercase;">Detail Bahan yang Akan Dipotong:</div>
-                            <div id="racikModalItemList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        <div style="background: var(--inner-card-bg, #f9f9f9); padding: 12px; border-radius: 10px; max-height: 240px; overflow-y: auto; font-size: 12px; color: var(--text-color, #333); margin-bottom: 16px; border: 1px solid var(--border-color, #eee);">
+                            <!-- DEDUCTION SECTION -->
+                            <div style="font-size: 11px; font-weight: 700; color: #C62828; margin-bottom: 6px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-arrow-down"></i> 1. Bahan Baku Dipotong (Keluar Gudang):
+                            </div>
+                            <div id="racikModalItemList" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; padding-left: 6px;"></div>
+
+                            <!-- ADDITION SECTION -->
+                            <div style="font-size: 11px; font-weight: 700; color: #2E7D32; margin-bottom: 6px; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-arrow-up"></i> 2. Hasil Produksi Bertambah (Masuk Gudang):
+                            </div>
+                            <div id="racikModalResultList" style="display: flex; flex-direction: column; gap: 4px; padding-left: 6px;"></div>
                         </div>
 
                         <div style="display: flex; gap: 10px;">
@@ -251,7 +260,7 @@ var racikan = (function() {
                                 Batal
                             </button>
                             <button type="button" onclick="racikan.executePotongStok()" id="btnExecuteDeduct" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                Ya, Potong Stok
+                                Ya, Eksekusi Produksi
                             </button>
                         </div>
                     </div>
@@ -481,7 +490,6 @@ var racikan = (function() {
 
         saveTemplatesToStorage(templates);
 
-        // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
         if (typeof Storage !== 'undefined' && Storage.add) {
             var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
             var now = new Date();
@@ -654,6 +662,9 @@ var racikan = (function() {
         container.innerHTML = html;
     }
 
+    // ==========================================
+    // INTEGRASI DUA ARAH DENGAN GUDANG
+    // ==========================================
     function potongStokGudang() {
         if (isProcessingStok) return;
 
@@ -677,20 +688,42 @@ var racikan = (function() {
             return;
         }
 
+        var volStock = parseFloat(state.volStock) || 0;
+        if (volStock <= 0) {
+            alert('Harap isi Target Volume Pekatan (Liter) terlebih dahulu.');
+            return;
+        }
+
         pendingDeductItems = validItems;
 
+        // Render Rincian Bahan yang Dipotong (Keluar)
         var listContainer = document.getElementById('racikModalItemList');
         if (listContainer) {
             var listHtml = '';
             validItems.forEach(function(v) {
                 listHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--border-color, #e0e0e0);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px dashed var(--border-color, #e0e0e0);">
                         <span style="font-weight: 600;">• ${v.name}</span>
-                        <span style="font-weight: 700; color: #C62828;">${v.kg.toFixed(2)} Kg <span style="font-size: 10px; color: #777;">(${v.gram.toLocaleString('id-ID')} Gram)</span></span>
+                        <span style="font-weight: 700; color: #C62828;">-${v.kg.toFixed(2)} Kg <span style="font-size: 10px; color: #777;">(${v.gram.toLocaleString('id-ID')} Gram)</span></span>
                     </div>
                 `;
             });
             listContainer.innerHTML = listHtml;
+        }
+
+        // Render Rincian Pekatan Cair yang Bertambah (Masuk)
+        var resultContainer = document.getElementById('racikModalResultList');
+        if (resultContainer) {
+            resultContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px dashed var(--border-color, #e0e0e0);">
+                    <span style="font-weight: 600;">• Pekatan A</span>
+                    <span style="font-weight: 700; color: #2E7D32;">+${volStock} Liter</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 0;">
+                    <span style="font-weight: 600;">• Pekatan B</span>
+                    <span style="font-weight: 700; color: #2E7D32;">+${volStock} Liter</span>
+                </div>
+            `;
         }
 
         var modal = document.getElementById('racikConfirmModal');
@@ -718,28 +751,38 @@ var racikan = (function() {
         }
 
         var count = 0;
+
+        // 1. POTONG STOK BAHAN MENTAH (BAHAN TUNGGAL) DARI GUDANG (Gram -> Kg)
         pendingDeductItems.forEach(function(item) {
-            var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin');
+            var success = gudang.potongStokOtomatis(item.name, item.kg, 'Kalkulator Racik AB Mix', 'Gudang Utama', 'Admin', 'kg');
             if (success) count++;
         });
 
+        // 2. OTOMATIS TAMBAH STOK PEKATAN A & B HASIL PRODUKSI KE GUDANG (Dalam Liter)
+        var volPekatan = parseFloat(state.volStock) || 0;
+        if (volPekatan > 0 && typeof gudang !== 'undefined' && typeof gudang.kembalikanStokOtomatis === 'function') {
+            gudang.kembalikanStokOtomatis('Pekatan A', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
+            gudang.kembalikanStokOtomatis('Pekatan B', volPekatan, 'Produksi Racik AB Mix', 'Gudang Utama', 'Admin', 'Liter');
+        }
+
         closeConfirmModal();
 
-        if (count > 0) {
-            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
-                Helper.showToast(t('toast_applied'), 'success');
-            } else {
-                alert(t('toast_applied'));
-            }
+        // 3. BROADCAST EVENT REFRESH SEMUA WIDGET/MODUL TERHUBUNG
+        window.dispatchEvent(new Event('cozycs_data_changed'));
+
+        if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+            Helper.showToast(t('toast_applied'), 'success');
+        } else {
+            alert(t('toast_applied'));
         }
 
         setTimeout(function() {
             isProcessingStok = false;
             if (btnEl) {
                 btnEl.disabled = false;
-                btnEl.innerText = 'Ya, Potong Stok';
+                btnEl.innerText = 'Ya, Eksekusi Produksi';
             }
-        }, 1500);
+        }, 1200);
     }
 
     return {
