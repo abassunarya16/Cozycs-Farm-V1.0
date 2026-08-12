@@ -102,6 +102,29 @@ var dashboard = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
+    // HELPER PARSING ANGKA RUPIAH / STRINGS KE FLOAT
+    function parseNumber(val) {
+        if (val === null || val === undefined) return 0;
+        if (typeof val === 'number') return isNaN(val) ? 0 : val;
+        var str = String(val).trim();
+        if (!str) return 0;
+
+        if (str.includes('.') && str.includes(',')) {
+            str = str.replace(/\./g, '').replace(',', '.');
+        } else if (str.includes('.')) {
+            var parts = str.split('.');
+            if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+                str = str.replace(/\./g, '');
+            }
+        } else if (str.includes(',')) {
+            str = str.replace(',', '.');
+        }
+
+        str = str.replace(/[^0-9.-]/g, '');
+        var num = parseFloat(str);
+        return isNaN(num) ? 0 : num;
+    }
+
     // ROBUST DATE PARSER FOR DD/MM/YYYY, MM/DD/YYYY & YYYY-MM-DD
     function parseLocalDate(dateStr) {
         if (!dateStr) return null;
@@ -808,7 +831,7 @@ var dashboard = (function() {
     }
 
     // ==========================================
-    // EXECUTIVE SUMMARY WIDGET (KALKULASI STOK FISIK RILL)
+    // EXECUTIVE SUMMARY WIDGET (SINKRONISASI STOK FISIK RILL)
     // ==========================================
     function loadExecutiveSummary() {
         var el = document.getElementById('dashExecutiveSummaryWidget');
@@ -822,15 +845,24 @@ var dashboard = (function() {
             dataGudang.forEach(function(item) {
                 if (!item) return;
 
-                // 1. Ambil stok fisik terkini (di-clamp ke 0 jika minus)
-                var stok = parseFloat(item.stok) || 0;
-                if (stok < 0) stok = 0;
+                // 1. Ambil Stok Fisik Terkini (Cek seluruh variasi key stok)
+                var rawStok = (item.stok !== undefined && item.stok !== null) ? item.stok : 
+                              (item.qty !== undefined ? item.qty : 
+                              (item.jumlah !== undefined ? item.jumlah : 
+                              (item.stokFisik !== undefined ? item.stokFisik : 
+                              (item.stok_fisik !== undefined ? item.stok_fisik : item.sisaStok))));
+                var stok = parseNumber(rawStok);
+                if (stok < 0) stok = 0; // Guard agar stok tidak minus
 
-                // 2. Ambil harga per unit dari berbagai opsi properti
-                var harga = parseFloat(item.harga || item.hargaSatuan || item.hargaBeli) || 0;
-                var stokMin = parseFloat(item.stokMin) || 0;
+                // 2. Ambil Harga Satuan (Cek seluruh variasi key harga)
+                var rawHarga = item.harga || item.hargaSatuan || item.harga_satuan || item.hargaBeli || item.harga_beli || item.modal || 0;
+                var harga = parseNumber(rawHarga);
 
-                // 3. Hitung nilai persediaan riil (Stok x Harga Satuan)
+                // 3. Ambil Stok Minimum
+                var rawMin = item.stokMin || item.stok_min || item.minStok || 0;
+                var stokMin = parseNumber(rawMin);
+
+                // 4. Hitung Nilai Rill (Stok x Harga Satuan)
                 totalNilaiGudang += (stok * harga);
 
                 if (stok <= stokMin && stokMin > 0) {
@@ -845,7 +877,7 @@ var dashboard = (function() {
         if (Array.isArray(dataKeuangan)) {
             dataKeuangan.forEach(function(k) {
                 if (!k) return;
-                var nominal = parseFloat(k.nominal || k.jumlah || k.total) || 0;
+                var nominal = parseNumber(k.nominal || k.jumlah || k.total || 0);
                 var tipe = String(k.tipe || k.jenis || '').toLowerCase();
 
                 if (tipe === 'pemasukan' || tipe === 'income' || tipe === 'masuk') {
