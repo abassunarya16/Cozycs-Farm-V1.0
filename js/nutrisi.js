@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (WITH INTEGRATED DOSAGE CALCULATOR)
+// COZYCS FARM - MODUL NUTRISI & PPM (WITH INTEGRATED CALCULATOR & DELTA STOCK DEDUCTION)
 // ==========================================
 
 var nutrisi = (function() {
@@ -230,11 +230,9 @@ var nutrisi = (function() {
         }
 
         var selisihPpm = ppmTarget - ppmSekarang;
-        // Rumus: (Selisih PPM * Volume Tandon) / Konsentrasi Stok
         var kebutuhanLiter = (selisihPpm * volTandon) / konsentrasi;
         var kebutuhanMl = Math.round(kebutuhanLiter * 1000);
 
-        // Auto-fill ke input form pemakaian
         setVal('nutrisiVolA', kebutuhanMl);
         setVal('nutrisiVolB', kebutuhanMl);
 
@@ -545,12 +543,29 @@ var nutrisi = (function() {
                 var roomTemp = getVal('nutrisiRoomTemp');
                 var desc = getVal('nutrisiDesc');
 
+                // 1. CARI PEMAKAIAN LAMA JIKA DALAM MODE EDIT
+                var oldVolA = 0;
+                var oldVolB = 0;
+                var storageKey = getKey();
+
+                if (id && typeof Storage !== 'undefined' && Storage.getById) {
+                    var oldItem = Storage.getById(storageKey, id);
+                    if (oldItem) {
+                        oldVolA = parseFloat(oldItem.volA) || 0;
+                        oldVolB = parseFloat(oldItem.volB) || 0;
+                    }
+                }
+
+                // 2. HITUNG SELISIH PENAMBAHAN (DELTA)
+                var deltaA = volA - oldVolA;
+                var deltaB = volB - oldVolB;
+
                 var extraNotes = [];
                 if (volA > 0) extraNotes.push('Pekatan A: ' + volA + 'ml');
                 if (volB > 0) extraNotes.push('Pekatan B: ' + volB + 'ml');
                 
                 var finalDesc = desc;
-                if (extraNotes.length > 0) {
+                if (extraNotes.length > 0 && !finalDesc.includes('Pekatan A')) {
                     finalDesc = (finalDesc ? finalDesc + ' | ' : '') + extraNotes.join(', ');
                 }
 
@@ -573,7 +588,6 @@ var nutrisi = (function() {
                 };
 
                 try {
-                    var storageKey = getKey();
                     if (id) {
                         payload.id = id;
                         if (typeof Storage !== 'undefined' && Storage.update) {
@@ -583,15 +597,15 @@ var nutrisi = (function() {
                         if (typeof Storage !== 'undefined' && Storage.add) {
                             Storage.add(storageKey, payload);
                         }
+                    }
 
-                        // PEMOTONGAN STOK GUDANG OTOMATIS BERDASARKAN TAKARAN (ml)
-                        if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
-                            if (volA > 0) {
-                                gudang.potongStokOtomatis('Pekatan A', volA, 'Nutrisi', gh || '-', 'Operator', 'ml');
-                            }
-                            if (volB > 0) {
-                                gudang.potongStokOtomatis('Pekatan B', volB, 'Nutrisi', gh || '-', 'Operator', 'ml');
-                            }
+                    // 3. PEMOTONGAN STOK GUDANG BERDASARKAN DELTA (HANYA MEMOTONG KEKURANGANNYA Saja)
+                    if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
+                        if (deltaA > 0) {
+                            gudang.potongStokOtomatis('Pekatan A', deltaA, id ? 'Nutrisi (Edit Top-Up)' : 'Nutrisi', gh || '-', 'Operator', 'ml');
+                        }
+                        if (deltaB > 0) {
+                            gudang.potongStokOtomatis('Pekatan B', deltaB, id ? 'Nutrisi (Edit Top-Up)' : 'Nutrisi', gh || '-', 'Operator', 'ml');
                         }
                     }
 
