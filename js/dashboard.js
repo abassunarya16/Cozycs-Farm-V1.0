@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - EXECUTIVE DASHBOARD (CLEAN UI & AUTO-SYNC WEATHER)
+// COZYCS FARM - EXECUTIVE DASHBOARD (UNIFIED & HIGH-RELIABILITY ENGINE)
 // ==========================================
 
 var dashboard = (function() {
@@ -52,7 +52,11 @@ var dashboard = (function() {
             'no_agenda': 'Tidak ada agenda kegiatan aktif saat ini.',
             'season_progress': 'Progress Musim & Analisis Fase Tanam',
             'recent_act': 'Aktivitas Terakhir (Audit Log)',
-            'no_logs': 'Belum ada riwayat aktivitas tercatat.'
+            'no_logs': 'Belum ada riwayat aktivitas tercatat.',
+            'exec_summary': 'Ringkasan Eksekutif & Asset Kebun',
+            'inventory_val': 'Nilai Persediaan Gudang',
+            'net_cashflow': 'Arus Kas Bersih',
+            'critical_items': 'Item Stok Kritis'
         },
         'en': {
             'greeting_sub': 'May your harvest be abundant today!',
@@ -83,7 +87,11 @@ var dashboard = (function() {
             'no_agenda': 'No active scheduled activities found.',
             'season_progress': 'Season Progress & Growth Phase Analysis',
             'recent_act': 'Recent Activities (Audit Log)',
-            'no_logs': 'No activity logs recorded yet.'
+            'no_logs': 'No activity logs recorded yet.',
+            'exec_summary': 'Executive Summary & Farm Assets',
+            'inventory_val': 'Inventory Stock Value',
+            'net_cashflow': 'Net Cashflow',
+            'critical_items': 'Critical Stock Items'
         }
     };
 
@@ -92,6 +100,7 @@ var dashboard = (function() {
         return (i18nDict[lang] && i18nDict[lang][key]) ? i18nDict[lang][key] : (i18nDict['id'][key] || key);
     }
 
+    // HIGH PRIORITY FIX: Robust Date Parser for DD/MM/YYYY, MM/DD/YYYY & YYYY-MM-DD
     function parseLocalDate(dateStr) {
         if (!dateStr) return null;
         if (dateStr instanceof Date) {
@@ -108,10 +117,26 @@ var dashboard = (function() {
                 var p2 = parseInt(parts[1], 10);
                 var p3 = parseInt(parts[2], 10);
 
+                // YYYY-MM-DD or YYYY/MM/DD
                 if (p1 > 1000) {
-                    return new Date(p1, p2 - 1, p3, 0, 0, 0, 0);
-                } else if (p3 > 1000) {
-                    return new Date(p3, p2 - 1, p1, 0, 0, 0, 0);
+                    var monthY = Math.max(0, Math.min(11, p2 - 1));
+                    var dayY = Math.max(1, Math.min(31, p3));
+                    return new Date(p1, monthY, dayY, 0, 0, 0, 0);
+                } 
+                // DD/MM/YYYY or MM/DD/YYYY
+                else if (p3 > 1000) {
+                    var day = p1;
+                    var month = p2;
+
+                    // If p2 > 12, then it must be MM/DD/YYYY format
+                    if (p2 > 12) {
+                        day = p2;
+                        month = p1;
+                    }
+
+                    month = Math.max(1, Math.min(12, month)) - 1;
+                    day = Math.max(1, Math.min(31, day));
+                    return new Date(p3, month, day, 0, 0, 0, 0);
                 }
             }
         }
@@ -124,12 +149,16 @@ var dashboard = (function() {
         return null;
     }
 
+    // MULTI-FALLBACK DATA READER (COVERING ALL 6 PILLARS)
     function getData(key) {
         try {
             var altKeys = [key];
             if (key === 'cozycs_greenhouse') altKeys = ['cozycs_greenhouse', 'cozycs_gh', 'cozycs_greenhouses', 'greenhouses'];
             if (key === 'cozycs_schedules' || key === 'cozycs_jadwal') altKeys = ['cozycs_jadwal', 'cozycs_schedules', 'schedules', 'jadwal'];
             if (key === 'cozycs_nutrisi') altKeys = ['cozycs_nutrisi', 'nutrisi', 'cozycs_nutrition'];
+            if (key === 'cozycs_gudang') altKeys = ['cozycs_gudang', 'gudang', 'cozycs_inventory'];
+            if (key === 'cozycs_keuangan') altKeys = ['cozycs_keuangan', 'keuangan', 'cozycs_finance'];
+            if (key === 'cozycs_tanaman') altKeys = ['cozycs_tanaman', 'tanaman', 'cozycs_plants'];
 
             for (var i = 0; i < altKeys.length; i++) {
                 var k = altKeys[i];
@@ -203,6 +232,7 @@ var dashboard = (function() {
     function sortGhList(list) {
         if (!Array.isArray(list)) return [];
         return list.slice().sort(function(a, b) {
+            if (!a || !b) return 0;
             var nameA = String(a.nama || a.kode || a.id || '').toLowerCase();
             var nameB = String(b.nama || b.kode || b.id || '').toLowerCase();
 
@@ -327,7 +357,10 @@ var dashboard = (function() {
                 <!-- 1. GRID MATRIX GREENHOUSE -->
                 <div id="dashSwipeableGhContainer" style="margin-bottom: 16px;"></div>
 
-                <!-- 2. MONITORING AIR DAN LINGKUNGAN -->
+                <!-- 2. EXECUTIVE SUMMARY WIDGET -->
+                <div id="dashExecutiveSummaryWidget" style="margin-bottom: 16px;"></div>
+
+                <!-- 3. MONITORING AIR DAN LINGKUNGAN -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E0F7FA 0%, #E1F5FE 100%); padding: 15px; border-radius: 16px; border: 1px solid #B2EBF2; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -359,7 +392,7 @@ var dashboard = (function() {
                     </div>
                 </div>
 
-                <!-- 3. PROGRESS MUSIM & ANALISIS FASE TANAM -->
+                <!-- 4. PROGRESS MUSIM & ANALISIS FASE TANAM -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFFDE7 0%, #F1F8E9 100%); padding: 16px; border-radius: 18px; border: 1px solid #FFE082; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 800; color: #E65100; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
                         <i class="fas fa-seedling" style="color: #2E7D32; font-size: 14px;"></i> ${t('season_progress')}
@@ -367,7 +400,7 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 4. AGENDA HARI INI & LINTAS TANGGAL -->
+                <!-- 5. AGENDA HARI INI & LINTAS TANGGAL -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
@@ -376,7 +409,7 @@ var dashboard = (function() {
                     <div id="dashTodayAgendaList"></div>
                 </div>
 
-                <!-- 5. AKTIVITAS TERAKHIR (AUDIT LOG) -->
+                <!-- 6. AKTIVITAS TERAKHIR (AUDIT LOG) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 800; color: #283593;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
@@ -516,31 +549,49 @@ var dashboard = (function() {
         );
     }
 
+    // HIGH PRIORITY FIX: Weather Fetch Loading State & Offline Error Fallback
     function fetchWeatherByCoords(lat, lon, cityName) {
+        var tempEl = document.getElementById('liveWeatherTemp');
+        var humEl = document.getElementById('liveWeatherHumidity');
+        var iconEl = document.getElementById('liveWeatherIcon');
+
+        if (tempEl) tempEl.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;"></i>';
+        if (humEl) humEl.textContent = 'Memuat...';
+
         var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FJakarta';
+        
         fetch(apiUrl)
-            .then(function(res) { return res.json(); })
+            .then(function(res) { 
+                if (!res.ok) throw new Error('Weather API network error');
+                return res.json(); 
+            })
             .then(function(data) {
                 if (data && data.current) {
                     var temp = Math.round(data.current.temperature_2m) + '°C';
                     var humidity = Math.round(data.current.relative_humidity_2m) + '%';
                     pesawaranWeather = { temp: temp, humidity: humidity, icon: '⛅' };
-                    var tempEl = document.getElementById('liveWeatherTemp');
-                    var humEl = document.getElementById('liveWeatherHumidity');
-                    var cityEl = document.getElementById('liveLocationName');
+                    
                     if (tempEl) tempEl.textContent = temp;
-                    if (humEl) humEl.textContent = humidity;
+                    if (humEl) humEl.textContent = '💧 ' + humidity;
+                    if (iconEl) iconEl.textContent = '⛅';
+
+                    var cityEl = document.getElementById('liveLocationName');
                     if (cityEl) cityEl.textContent = cityName;
 
                     loadIotEnvData();
                 }
             })
-            .catch(function(err) {});
+            .catch(function(err) {
+                console.warn('[Dashboard] Weather fetch fallback:', err);
+                if (tempEl) tempEl.textContent = 'N/A';
+                if (humEl) humEl.textContent = 'Offline';
+            });
     }
 
     function refreshAllDashboardData() {
         loadWelcomeBanner();
         renderSwipeableGhCards();
+        loadExecutiveSummary();
         loadIotWaterData();
         loadIotEnvData();
         loadProgressMusim();
@@ -549,126 +600,190 @@ var dashboard = (function() {
     }
 
     function loadWelcomeBanner() {
-    var el = document.getElementById('dashWelcomeBanner');
-    if (!el) return;
+        var el = document.getElementById('dashWelcomeBanner');
+        if (!el) return;
 
-    var isEn = (localStorage.getItem('cozycs_lang') === 'en');
-    var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Pagi' };
-    var greetingText = greeting.text;
-    if (isEn) {
-        if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
-        else if (greetingText.includes('Siang')) greetingText = 'Good Afternoon';
-        else if (greetingText.includes('Sore')) greetingText = 'Good Afternoon';
-        else greetingText = 'Good Evening';
-    }
-
-    var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
-    
-    // ==========================================
-    // LOGIKA KALKULASI WINDOFW TIME & ACTION URGENCY
-    // ==========================================
-    var now = new Date();
-    var currentHour = now.getHours();
-    var currentMinute = now.getMinutes();
-    
-    var smartInsight = '';
-    var actionRecommendation = '';
-
-    if (currentHour >= 6 && currentHour < 18) {
-        // Fase Siang (Fotosintesis Aktif 06:00 - 18:00)
-        var remainingHours = 17 - currentHour;
-        var remainingMins = 60 - currentMinute;
-        if (remainingMins === 60) {
-            remainingMins = 0;
-            remainingHours += 1;
+        var isEn = (localStorage.getItem('cozycs_lang') === 'en');
+        var greeting = (typeof Helper !== 'undefined' && Helper.getGreeting) ? Helper.getGreeting() : { text: 'Selamat Pagi' };
+        var greetingText = greeting.text;
+        if (isEn) {
+            if (greetingText.includes('Pagi')) greetingText = 'Good Morning';
+            else if (greetingText.includes('Siang')) greetingText = 'Good Afternoon';
+            else if (greetingText.includes('Sore')) greetingText = 'Good Afternoon';
+            else greetingText = 'Good Evening';
         }
 
-        var countdownText = remainingHours + 'j ' + remainingMins + 'm lagi';
-        smartInsight = '☀️ Fotosintesis Aktif (' + countdownText + ')';
+        var dateTimeStr = (typeof Helper !== 'undefined' && Helper.getFullDateTime) ? Helper.getFullDateTime() : '';
+        
+        var now = new Date();
+        var currentHour = now.getHours();
+        var currentMinute = now.getMinutes();
+        
+        var smartInsight = '';
+        var actionRecommendation = '';
 
-        // Rekomendasi Aksi Spesifik Berdasarkan Jam Siang
-if (currentHour >= 6 && currentHour < 9) {
-    actionRecommendation = '🌱 Pagi Cerah: Momen terbaik semprot daun & cek PPM nutrisi.';
-} else if (currentHour >= 9 && currentHour < 14) {
-    actionRecommendation = '☀️ Siang Terik: Pastikan pompa dan sirkulasi udara berjalan lancar.';
-} else if (currentHour >= 14 && currentHour < 17) {
-    actionRecommendation = '💧 Sore Sejuk: Cocok beri nutrisi tambahan & pantau polinasi.';
-} else {
-    actionRecommendation = '🌇 Senja: Waktu cek tandon air sebelum malam tiba.';
-}
-} else {
-// Fase Malam (Resting Period 18:00 - 06:00)
-var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
-smartInsight = '🌙 Malam: Tanaman beristirahat (' + hoursUntilMorning + ' jam menuju pagi)';
-actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
+        if (currentHour >= 6 && currentHour < 18) {
+            // Fase Siang (Fotosintesis Aktif 06:00 - 18:00)
+            var remainingHours = 17 - currentHour;
+            var remainingMins = 60 - currentMinute;
+            if (remainingMins === 60) {
+                remainingMins = 0;
+                remainingHours += 1;
+            }
+
+            var countdownText = remainingHours + 'j ' + remainingMins + 'm lagi';
+            smartInsight = '☀️ Fotosintesis Aktif (' + countdownText + ')';
+
+            if (currentHour >= 6 && currentHour < 9) {
+                actionRecommendation = '🌱 Pagi Cerah: Momen terbaik semprot daun & cek PPM nutrisi.';
+            } else if (currentHour >= 9 && currentHour < 14) {
+                actionRecommendation = '☀️ Siang Terik: Pastikan pompa dan sirkulasi udara berjalan lancar.';
+            } else if (currentHour >= 14 && currentHour < 17) {
+                actionRecommendation = '💧 Sore Sejuk: Cocok beri nutrisi tambahan & pantau polinasi.';
+            } else {
+                actionRecommendation = '🌇 Senja: Waktu cek tandon air sebelum malam tiba.';
+            }
+        } else {
+            // Fase Malam (Resting Period 18:00 - 06:00)
+            var hoursUntilMorning = (currentHour >= 18) ? (30 - currentHour) : (6 - currentHour);
+            smartInsight = '🌙 Malam: Tanaman beristirahat (' + hoursUntilMorning + ' jam menuju pagi)';
+            actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
+        }
+
+        el.innerHTML = `
+            <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
+                <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; pointer-events: none;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; position: relative; z-index: 2;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                                👨‍🌾
+                            </div>
+                            <span class="pulse-green" style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background: #52B788; border: 2px solid #1b4332; border-radius: 50%;"></span>
+                        </div>
+
+                        <div style="overflow: hidden;">
+                            <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.2; letter-spacing: -0.2px;">
+                                ${greetingText}
+                            </div>
+                            <div style="font-size: 11px; color: #D8F3DC; margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${t('greeting_sub')}
+                            </div>
+                            
+                            <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 9.5px; font-weight: 700; background: rgba(255,255,255,0.18); color: #FFF; padding: 3px 9px; border-radius: 10px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);">
+                                <i class="far fa-clock" style="color: #FFE082;"></i>
+                                <span>${smartInsight}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
+                        <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
+                            ${pesawaranWeather.temp}
+                        </div>
+                        <div id="liveWeatherHumidity" style="font-size: 9px; color: #B7E4C7; font-weight: 700; margin-top: 1px;">
+                            💧 ${pesawaranWeather.humidity}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0, 0, 0, 0.25); border-radius: 10px; padding: 6px 10px; margin-bottom: 8px; font-size: 10px; color: #FFE082; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px dashed rgba(255,224,130,0.4);">
+                    <i class="fas fa-lightbulb" style="color: #FFD54F;"></i>
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${actionRecommendation}</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
+                        <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
+                        <span id="liveDateTime">${dateTimeStr}</span>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #FFF;">
+                            <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
+                            <span id="liveLocationName">${currentLocation.city}</span>
+                        </div>
+                        <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                            <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    el.innerHTML = `
-        <div style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%); border-radius: 20px; padding: 18px 16px; color: #ffffff; box-shadow: 0 8px 24px rgba(27,67,50,0.28); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">
-            <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.08); border-radius: 50%; pointer-events: none;"></div>
+    // WIDGET RINGKASAN EKSEKUTIF (GUDANG & KEUANGAN)
+    function loadExecutiveSummary() {
+        var el = document.getElementById('dashExecutiveSummaryWidget');
+        if (!el) return;
 
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; position: relative; z-index: 2;">
-                <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; padding-right: 8px;">
-                    <div style="position: relative; flex-shrink: 0;">
-                        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1.5px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                            👨‍🌾
-                        </div>
-                        <span class="pulse-green" style="position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background: #52B788; border: 2px solid #1b4332; border-radius: 50%;"></span>
-                    </div>
+        var dataGudang = getData('cozycs_gudang');
+        var totalNilaiGudang = 0;
+        var totalKritisCount = 0;
 
-                    <div style="overflow: hidden;">
-                        <div id="liveGreetingText" style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.2; letter-spacing: -0.2px;">
-                            ${greetingText}
-                        </div>
-                        <div style="font-size: 11px; color: #D8F3DC; margin-top: 3px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${t('greeting_sub')}
-                        </div>
-                        
-                        <!-- BADGE COUNTDOWN SISA WAKTU FASE -->
-                        <div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 9.5px; font-weight: 700; background: rgba(255,255,255,0.18); color: #FFF; padding: 3px 9px; border-radius: 10px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);">
-                            <i class="far fa-clock" style="color: #FFE082;"></i>
-                            <span>${smartInsight}</span>
-                        </div>
-                    </div>
+        dataGudang.forEach(function(item) {
+            if (!item) return;
+            var stok = parseFloat(item.stok) || 0;
+            var harga = parseFloat(item.harga) || 0;
+            var stokMin = parseFloat(item.stokMin) || 0;
+
+            if (stok > 0 && harga > 0) {
+                totalNilaiGudang += (stok * harga);
+            }
+            if (stok <= stokMin && stokMin > 0) {
+                totalKritisCount++;
+            }
+        });
+
+        var dataKeuangan = getData('cozycs_keuangan');
+        var netCashflow = 0;
+
+        dataKeuangan.forEach(function(k) {
+            if (!k) return;
+            var nominal = parseFloat(k.nominal || k.jumlah || k.total) || 0;
+            var tipe = String(k.tipe || k.jenis || '').toLowerCase();
+
+            if (tipe === 'pemasukan' || tipe === 'income' || tipe === 'masuk') {
+                netCashflow += nominal;
+            } else if (tipe === 'pengeluaran' || tipe === 'expense' || tipe === 'keluar') {
+                netCashflow -= nominal;
+            }
+        });
+
+        var formatRp = function(val) {
+            return 'Rp' + Math.round(val).toLocaleString('id-ID');
+        };
+
+        el.innerHTML = `
+            <div class="dash-card-shadow" style="background: linear-gradient(135deg, #FFFFFF 0%, #F4FBF7 100%); padding: 14px 15px; border-radius: 16px; border: 1px solid #D4EDDA;">
+                <div style="font-size: 12px; font-weight: 800; color: #1B5E20; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fas fa-chart-pie" style="color: #2E7D32; margin-right: 6px;"></i> ${t('exec_summary')}</span>
+                    <span style="font-size: 9px; background: #E8F5E9; color: #2E7D32; font-weight: 700; padding: 2px 7px; border-radius: 8px;">Real-time Sync</span>
                 </div>
 
-                <div style="background: rgba(0, 0, 0, 0.22); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 14px; text-align: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                    <div id="liveWeatherIcon" style="font-size: 20px; line-height: 1;">${pesawaranWeather.icon}</div>
-                    <div id="liveWeatherTemp" style="font-size: 15px; font-weight: 800; color: #FFF; margin-top: 2px;">
-                        ${pesawaranWeather.temp}
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <div style="background: #FFF; padding: 10px 8px; border-radius: 10px; border: 1px solid #E8F5E9; text-align: center;">
+                        <div style="font-size: 9px; color: #666; font-weight: 700; text-transform: uppercase;">${t('inventory_val')}</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #2E7D32; margin-top: 3px;">${formatRp(totalNilaiGudang)}</div>
                     </div>
-                    <div id="liveWeatherHumidity" style="font-size: 9px; color: #B7E4C7; font-weight: 700; margin-top: 1px;">
-                        💧 ${pesawaranWeather.humidity}
+
+                    <div style="background: #FFF; padding: 10px 8px; border-radius: 10px; border: 1px solid #E1F5FE; text-align: center;">
+                        <div style="font-size: 9px; color: #666; font-weight: 700; text-transform: uppercase;">${t('net_cashflow')}</div>
+                        <div style="font-size: 12px; font-weight: 800; color: ${netCashflow >= 0 ? '#0277BD' : '#C62828'}; margin-top: 3px;">${formatRp(netCashflow)}</div>
+                    </div>
+
+                    <div style="background: #FFF; padding: 10px 8px; border-radius: 10px; border: 1px solid #FFCDD2; text-align: center;">
+                        <div style="font-size: 9px; color: #666; font-weight: 700; text-transform: uppercase;">${t('critical_items')}</div>
+                        <div style="font-size: 12px; font-weight: 800; color: ${totalKritisCount > 0 ? '#C62828' : '#2E7D32'}; margin-top: 3px;">
+                            ${totalKritisCount} <span style="font-size: 9px; font-weight: normal;">Item</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- BARIS REKOMENDASI AKSI / ACTION URGENCY -->
-            <div style="background: rgba(0, 0, 0, 0.25); border-radius: 10px; padding: 6px 10px; margin-bottom: 8px; font-size: 10px; color: #FFE082; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px dashed rgba(255,224,130,0.4);">
-                <i class="fas fa-lightbulb" style="color: #FFD54F;"></i>
-                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${actionRecommendation}</span>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.18); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; position: relative; z-index: 2;">
-                <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #E8F5E9;">
-                    <span class="pulse-green" style="width: 6px; height: 6px; background: #74C69D; border-radius: 50%; display: inline-block;"></span>
-                    <span id="liveDateTime">${dateTimeStr}</span>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: #FFF;">
-                        <i class="fas fa-map-marker-alt" style="color: #FF8A80; font-size: 10px;"></i>
-                        <span id="liveLocationName">${currentLocation.city}</span>
-                    </div>
-                    <button onclick="dashboard.detectUserLocation()" title="GPS Location" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #FFF; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-                        <i id="btnGpsTargetIcon" class="fas fa-crosshairs" style="font-size: 10px;"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
+        `;
+    }
 
     function renderSwipeableGhCards() {
         var el = document.getElementById('dashSwipeableGhContainer');
@@ -697,6 +812,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         var tBuahALL = 0;
 
         dataTanaman.forEach(function(t) {
+            if (!t) return;
             if (t.talang && t.talang !== '-') {
                 uniqueHolesALL.add((t.gh || 'GH') + '_' + t.talang);
             }
@@ -708,8 +824,8 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             }
         });
 
-        dataPolinasi.forEach(function(p) { tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0); });
-        dataBuah.forEach(function(b) { tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
+        dataPolinasi.forEach(function(p) { if (p) tPolALL += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0); });
+        dataBuah.forEach(function(b) { if (b) tBuahALL += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
         var tPopALL = uniqueHolesALL.size > 0 ? uniqueHolesALL.size : dataTanaman.length;
         var isAllActive = (selectedGh === 'ALL');
@@ -757,15 +873,16 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         ];
 
         dataGh.forEach(function(g, index) {
+            if (!g) return;
             var gId = g.kode || g.id;
             var isActive = (selectedGh === gId);
             var theme = themes[index % themes.length];
 
-            var filteredTanaman = dataTanaman.filter(function(t) { return isGhMatched(t.gh || t.ghId, gId); });
+            var filteredTanaman = dataTanaman.filter(function(t) { return t && isGhMatched(t.gh || t.ghId, gId); });
 
             var uniqueHoles = new Set();
             filteredTanaman.forEach(function(t) {
-                if (t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
+                if (t && t.talang && t.talang !== '-') uniqueHoles.add(t.talang);
             });
             var tPop = uniqueHoles.size > 0 ? uniqueHoles.size : filteredTanaman.length;
 
@@ -790,14 +907,15 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             var tBuah = 0;
 
             filteredTanaman.forEach(function(t) {
+                if (!t) return;
                 if (t.kategori === 'Polinasi' && (t.statusPolinasi === 'Sukses' || !t.statusPolinasi)) tPol += 1;
                 if (t.kategori === 'Buah') tBuah += 1;
             });
 
-            var filteredPol = dataPolinasi.filter(function(p) { return isGhMatched(p.gh || p.ghId, gId); });
+            var filteredPol = dataPolinasi.filter(function(p) { return p && isGhMatched(p.gh || p.ghId, gId); });
             filteredPol.forEach(function(p) { tPol += (parseFloat(p.berhasil) || parseFloat(p.jumlah) || 0); });
             
-            var filteredBuah = dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, gId); });
+            var filteredBuah = dataBuah.filter(function(b) { return b && isGhMatched(b.gh || b.ghId, gId); });
             filteredBuah.forEach(function(b) { tBuah += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
             html += `
@@ -1038,6 +1156,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         var todayMurni = parseLocalDate(new Date());
 
         var filteredTasks = schedules.filter(function(s) {
+            if (!s) return false;
             var sGh = s.gh || s.greenhouse || 'ALL';
             var matchGh = (selectedGh === 'ALL') || isGhMatched(sGh, selectedGh) || (sGh === 'ALL') || (sGh === 'Seluruh Kebun');
             if (!matchGh) return false;
@@ -1064,8 +1183,8 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         }
 
         filteredTasks.sort(function(a, b) {
-            var dateA = parseLocalDate(a.tanggal || a.date) || new Date(0);
-            var dateB = parseLocalDate(b.tanggal || b.date) || new Date(0);
+            var dateA = parseLocalDate(a ? (a.tanggal || a.date) : null) || new Date(0);
+            var dateB = parseLocalDate(b ? (b.tanggal || b.date) : null) || new Date(0);
             return dateA - dateB;
         });
 
@@ -1073,6 +1192,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         var html = '';
         filteredTasks.forEach(function(item, idx) {
+            if (!item) return;
             var isDone = (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true);
             var taskId = item.id || ('task_' + idx);
 
@@ -1148,16 +1268,17 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         var targetGhList = (selectedGh === 'ALL') 
             ? dataGh 
-            : dataGh.filter(function(g) { return isGhMatched(g.kode || g.id || g.nama, selectedGh); });
+            : dataGh.filter(function(g) { return g && isGhMatched(g.kode || g.id || g.nama, selectedGh); });
 
         var filteredTanaman = (selectedGh === 'ALL') 
             ? dataTanaman 
-            : dataTanaman.filter(function(t) { return isGhMatched(t.gh || t.ghId, selectedGh); });
+            : dataTanaman.filter(function(t) { return t && isGhMatched(t.gh || t.ghId, selectedGh); });
 
         var explicitTanamDate = null;
         var explicitHarvestDate = null;
 
         for (var i = 0; i < targetGhList.length; i++) {
+            if (!targetGhList[i]) continue;
             var gDates = parseGhDates(targetGhList[i]);
             if (gDates.target) explicitHarvestDate = gDates.target;
             if (gDates.tanam) explicitTanamDate = gDates.tanam;
@@ -1166,6 +1287,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         if (!explicitTanamDate || !explicitHarvestDate) {
             filteredTanaman.forEach(function(t) {
+                if (!t) return;
                 var tglT = parseLocalDate(t.tanggal || t.tanam || t.tglTanam);
                 var tglH = parseLocalDate(t.target || t.targetPanen || t.tglTarget || t.estimasiPanen);
                 if (tglT && !explicitTanamDate) explicitTanamDate = tglT;
@@ -1219,6 +1341,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         if (selectedGh === 'ALL') {
             var uniqueHolesALL = new Set();
             dataTanaman.forEach(function(t) {
+                if (!t) return;
                 if (t.talang && t.talang !== '-') {
                     uniqueHolesALL.add((t.gh || t.ghId || 'GH') + '_' + t.talang);
                 }
@@ -1228,6 +1351,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
             if (totalPopulasi === 0 && dataGh.length > 0) {
                 dataGh.forEach(function(g) {
+                    if (!g) return;
                     totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.totalPop) || 0);
                     if (g.varietas) varietasSet.add(g.varietas);
                 });
@@ -1235,6 +1359,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         } else {
             var uniqueHolesGH = new Set();
             filteredTanaman.forEach(function(t) {
+                if (!t) return;
                 if (t.talang && t.talang !== '-') {
                     uniqueHolesGH.add(t.talang);
                 }
@@ -1244,6 +1369,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
             if (totalPopulasi === 0 && targetGhList.length > 0) {
                 targetGhList.forEach(function(g) {
+                    if (!g) return;
                     totalPopulasi += (parseFloat(g.lubang) || parseFloat(g.kapasitas) || parseFloat(g.populasi) || parseFloat(g.totalPop) || 0);
                     if (g.varietas) varietasSet.add(g.varietas);
                 });
@@ -1273,8 +1399,8 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
         }
 
         var totalBuahFix = 0;
-        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return isGhMatched(b.gh || b.ghId, selectedGh); });
-        filteredBuah.forEach(function(b) { totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
+        var filteredBuah = (selectedGh === 'ALL') ? dataBuah : dataBuah.filter(function(b) { return b && isGhMatched(b.gh || b.ghId, selectedGh); });
+        filteredBuah.forEach(function(b) { if (b) totalBuahFix += (parseFloat(b.jumlahFix) || parseFloat(b.jumlah) || 0); });
 
         var progressPercent = Math.min(100, Math.max(0, isBelumTanam ? 0 : Math.round((maxHst / totalTargetDays) * 100)));
 
@@ -1366,6 +1492,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         if (explicitLogs.length > 0) {
             explicitLogs.forEach(function(item) {
+                if (!item) return;
                 var itemGh = item.gh;
                 if (!itemGh && item.deskripsi) {
                     var match = item.deskripsi.match(/(GH[-\w\d]+)/i);
@@ -1389,6 +1516,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
             var plantGroupMap = {};
             allTanaman.forEach(function(item) {
+                if (!item) return;
                 var groupKey = (item.varietas || 'Melon') + '_' + (item.gh || 'GH') + '_' + (item.tanggal || 'Today');
                 if (!plantGroupMap[groupKey]) {
                     plantGroupMap[groupKey] = {
@@ -1402,7 +1530,9 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
                 plantGroupMap[groupKey].totalJumlah += (parseFloat(item.jumlah) || 1);
             });
 
-            Object.values(plantGroupMap).forEach(function(g) {
+            Object.keys(plantGroupMap).forEach(function(k) {
+                var g = plantGroupMap[k];
+                if (!g) return;
                 allLogs.push({
                     timestamp: g.timestamp,
                     jam: g.jam,
@@ -1413,6 +1543,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             });
 
             allNutrisi.forEach(function(item) {
+                if (!item) return;
                 allLogs.push({
                     timestamp: item.createdAt || item.date || item.tanggal || new Date().toISOString(),
                     jam: item.jam || item.waktu || 'Tercatat',
@@ -1423,6 +1554,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             });
 
             allSpray.forEach(function(item) {
+                if (!item) return;
                 allLogs.push({
                     timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
                     jam: item.jam || item.waktu || 'Tercatat',
@@ -1433,6 +1565,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             });
 
             allPanen.forEach(function(item) {
+                if (!item) return;
                 allLogs.push({
                     timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
                     jam: item.jam || item.waktu || 'Tercatat',
@@ -1443,6 +1576,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
             });
 
             allBuah.forEach(function(item) {
+                if (!item) return;
                 allLogs.push({
                     timestamp: item.createdAt || item.tanggal || new Date().toISOString(),
                     jam: item.jam || item.waktu || 'Tercatat',
@@ -1455,7 +1589,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         var filteredLogs = (selectedGh === 'ALL') 
             ? allLogs 
-            : allLogs.filter(function(l) { return isGhMatched(l.gh, selectedGh) || l.gh === 'ALL' || !l.gh; });
+            : allLogs.filter(function(l) { return l && (isGhMatched(l.gh, selectedGh) || l.gh === 'ALL' || !l.gh); });
 
         if (filteredLogs.length === 0) {
             el.innerHTML = `<div style="font-size: 11px; color: #5C6BC0; text-align: center; padding: 12px 0; font-weight: 600;">${t('no_logs')}</div>`;
@@ -1468,6 +1602,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
 
         var html = '';
         filteredLogs.slice(0, 5).forEach(function(l) {
+            if (!l) return;
             var jamStr = (l.jam && l.jam !== 'Tercatat') ? l.jam : parseJamFromTimestamp(l.timestamp);
             var mainText = l.text || 'Aktivitas';
             var descText = l.desc ? (' - ' + l.desc) : '';
@@ -1512,7 +1647,7 @@ actionRecommendation = '💤 Tutup rapat GH, jaga kelembapan tetap stabil.';
     function toggleTask(id) {
         var schedules = getData('cozycs_jadwal');
 
-        var item = schedules.find(function(s, idx) { return (s.id === id || idx == id); });
+        var item = schedules.find(function(s, idx) { return s && (s.id === id || idx == id); });
         if (item) {
             if (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true) {
                 item.status = 'Pending';
