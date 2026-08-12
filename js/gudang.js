@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT, PEKATAN API & DASHBOARD LOG)
+// COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG (WITH AUTO-DRAFT, PEKATAN API, SMART DEDUCTION & AUTO-RETURN STOCK)
 // ==========================================
 
 var gudang = (function() {
@@ -31,7 +31,7 @@ var gudang = (function() {
             'lbl_date_buy': 'Tanggal Beli / Masuk',
             'lbl_category': 'Kategori',
             'opt_cat_nutrition': 'Nutrisi',
-            'opt_cat_pesticide': 'Pestisida',
+            'opt_cat_pesticide': 'Pesticida',
             'opt_cat_seeds': 'Benih',
             'opt_cat_rockwool': 'Rockwool',
             'opt_cat_netpot': 'Netpot',
@@ -330,7 +330,111 @@ var gudang = (function() {
         loadTable();
         loadMutasiLog();
 
-        // Broadcast event agar UI lain (seperti widget nutrisi.js) langsung ter-update otomatis
+        window.dispatchEvent(new Event('cozycs_data_changed'));
+        return true;
+    }
+
+    // ==========================================
+    // API PENGEMBALIAN STOK OTOMATIS (SAAT HAPUS / EDIT DATA)
+    // ==========================================
+    function kembalikanStokOtomatis(namaBarang, jumlahDikembalikan, modulPengirim, idGh, namaPetugas, satuanInput) {
+        if (typeof Storage === 'undefined' || !Storage.getAll) return false;
+
+        var dataBarang = Storage.getAll(getKeyBarang()) || [];
+        if (!Array.isArray(dataBarang) || dataBarang.length === 0) return false;
+
+        var targetKw = String(namaBarang || '').toLowerCase().trim();
+
+        // 1. Match Exact Name
+        var item = dataBarang.find(function(b) {
+            return b && b.nama && b.nama.toLowerCase().trim() === targetKw;
+        });
+
+        // 2. Match Partial Name
+        if (!item) {
+            item = dataBarang.find(function(b) {
+                if (!b || !b.nama) return false;
+                var bName = String(b.nama).toLowerCase().trim();
+                return bName.includes(targetKw) || targetKw.includes(bName);
+            });
+        }
+
+        // 3. Fallback Khusus Pekatan A & B
+        if (!item && (targetKw.includes('pekatan a') || targetKw.includes('ab mix a') || targetKw === 'a')) {
+            item = dataBarang.find(function(b) {
+                var bName = String(b.nama || '').toLowerCase();
+                return bName.includes('pekatan a') || bName.includes('ab mix a') || (bName.includes('a') && bName.includes('pekatan'));
+            });
+        }
+
+        if (!item && (targetKw.includes('pekatan b') || targetKw.includes('ab mix b') || targetKw === 'b')) {
+            item = dataBarang.find(function(b) {
+                var bName = String(b.nama || '').toLowerCase();
+                return bName.includes('pekatan b') || bName.includes('ab mix b') || (bName.includes('b') && bName.includes('pekatan'));
+            });
+        }
+
+        if (!item) {
+            console.warn("Gudang: Barang '" + namaBarang + "' tidak ditemukan di inventaris untuk dikembalikan.");
+            return false;
+        }
+
+        var stokLama = parseFloat(item.stok) || 0;
+        var jumlah = parseFloat(jumlahDikembalikan) || 0;
+        var inputSat = String(satuanInput || item.satuan || '').toLowerCase().trim();
+        var itemSat = String(item.satuan || '').toLowerCase().trim();
+
+        // Konversi Satuan Otomatis (ml -> Liter)
+        if ((inputSat === 'ml' || inputSat === 'milliliter') && (itemSat === 'liter' || itemSat === 'l')) {
+            jumlah = jumlah / 1000;
+        } else if ((inputSat === 'liter' || inputSat === 'l') && (itemSat === 'ml' || itemSat === 'milliliter')) {
+            jumlah = jumlah * 1000;
+        }
+
+        var stokBaru = roundNumber(stokLama + jumlah);
+
+        item.stok = stokBaru;
+        var minStok = parseFloat(item.stokMin) || 0;
+        if (stokBaru <= 0) item.status = 'Habis';
+        else if (stokBaru <= minStok) item.status = 'Hampir Habis';
+        else item.status = 'Aktif';
+
+        Storage.update(getKeyBarang(), item);
+
+        // 1. Catat ke Mutasi Gudang
+        catatMutasi({
+            barangId: item.id,
+            namaBarang: item.nama,
+            jenis: 'Masuk',
+            jumlah: roundNumber(jumlah),
+            satuan: item.satuan,
+            alasan: 'Pengembalian Stok (Hapus Data ' + (modulPengirim || 'Nutrisi') + ')',
+            gh: idGh || '-',
+            petugas: namaPetugas || 'Sistem Otomatis',
+            tanggal: new Date().toISOString().split('T')[0]
+        });
+
+        // 2. Catat ke Aktivitas Terakhir Dasbor
+        if (typeof Storage !== 'undefined' && Storage.add) {
+            var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+            var now = new Date();
+            var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            
+            Storage.add(keyAktivitas, {
+                judul: 'Pengembalian Stok Gudang',
+                deskripsi: 'Dikembalikan ' + roundNumber(jumlah) + ' ' + item.satuan + ' ' + item.nama + ' (' + (modulPengirim || 'Nutrisi') + ')',
+                tanggal: now.toISOString().split('T')[0],
+                jam: timeStr,
+                kategori: 'Gudang',
+                icon: 'fas fa-boxes',
+                color: '#2E7D32'
+            });
+        }
+
+        loadDashboard();
+        loadTable();
+        loadMutasiLog();
+
         window.dispatchEvent(new Event('cozycs_data_changed'));
         return true;
     }
@@ -502,7 +606,6 @@ var gudang = (function() {
         loadTable();
         loadMutasiLog();
 
-        // KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formGudang');
         }
@@ -569,7 +672,6 @@ var gudang = (function() {
                     });
                 }
 
-                // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
                 if (typeof Storage !== 'undefined' && Storage.add) {
                     var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                     var now = new Date();
@@ -898,6 +1000,7 @@ var gudang = (function() {
         editItem: editItem,
         deleteItem: deleteItem,
         potongStokOtomatis: potongStokOtomatis,
+        kembalikanStokOtomatis: kembalikanStokOtomatis,
         getStokPekatan: getStokPekatan,
         handleSearch: handleSearch,
         handleCategoryFilter: handleCategoryFilter,
