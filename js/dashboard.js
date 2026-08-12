@@ -7,6 +7,8 @@ var dashboard = (function() {
     var selectedGh = 'ALL';
     var selectedNutrientSession = 'AUTO'; // 'AUTO', 'Pagi', atau 'Sore'
     var isIotCollapsed = false;
+    var isAgendaCollapsed = false;
+    var isActivitiesCollapsed = false;
     var isAirflowOn = false;
     var clockInterval = null;
 
@@ -468,24 +470,40 @@ var dashboard = (function() {
                     <div id="dashProgressMusim"></div>
                 </div>
 
-                <!-- 6. AGENDA HARI INI & LINTAS TANGGAL -->
+                <!-- 6. AGENDA HARI INI & LINTAS TANGGAL (BISA DI-MINIMIZE) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E8F8F5 0%, #E8F5E9 100%); padding: 15px; border-radius: 16px; border: 1px solid #A3E4D7; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
-                        <span style="font-size: 10px; color: #16A085; font-weight: bold;" id="dashTodayDate">${t('today')}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px; font-weight: 800; color: #117A65;"><i class="fas fa-tasks" style="color: #2E7D32; margin-right: 6px;"></i> ${t('today_agenda')}</span>
+                            <span style="font-size: 10px; color: #16A085; font-weight: bold;" id="dashTodayDate">${t('today')}</span>
+                        </div>
+                        <button onclick="dashboard.toggleAgendaSection()" title="Toggle Agenda" style="width: 28px; height: 28px; border-radius: 50%; background: #FFF; border: 1px solid #A3E4D7; color: #117A65; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                            <i id="iconToggleAgenda" class="fas ${isAgendaCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}" style="font-size: 12px;"></i>
+                        </button>
                     </div>
-                    <div id="dashTodayAgendaList"></div>
+
+                    <div id="wrapperAgendaContent" style="display: ${isAgendaCollapsed ? 'none' : 'block'}; transition: all 0.3s ease;">
+                        <div id="dashTodayAgendaList"></div>
+                    </div>
                 </div>
 
-                <!-- 7. AKTIVITAS TERAKHIR (AUDIT LOG) -->
+                <!-- 7. AKTIVITAS TERAKHIR / AUDIT LOG (BISA DI-MINIMIZE) -->
                 <div class="dash-card-shadow" style="background: linear-gradient(135deg, #E1F5FE 0%, #EDE7F6 100%); padding: 15px; border-radius: 16px; border: 1px solid #B3E5FC;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <div style="font-size: 13px; font-weight: 800; color: #283593;"><i class="fas fa-history" style="color: #0277BD; margin-right: 6px;"></i> ${t('recent_act')}</div>
-                        <button id="btnManualRefreshLog" onclick="dashboard.manualRefreshLogs()" style="background: #FFF; border: 1px solid #B3E5FC; color: #0277BD; font-size: 11px; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-                            <i id="iconRefreshBtn" class="fas fa-sync-alt"></i> Refresh
-                        </button>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button id="btnManualRefreshLog" onclick="dashboard.manualRefreshLogs()" style="background: #FFF; border: 1px solid #B3E5FC; color: #0277BD; font-size: 11px; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                                <i id="iconRefreshBtn" class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button onclick="dashboard.toggleActivitiesSection()" title="Toggle Aktivitas" style="width: 28px; height: 28px; border-radius: 50%; background: #FFF; border: 1px solid #B3E5FC; color: #0277BD; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                                <i id="iconToggleActivities" class="fas ${isActivitiesCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}" style="font-size: 12px;"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+                    <div id="wrapperActivitiesContent" style="display: ${isActivitiesCollapsed ? 'none' : 'block'}; transition: all 0.3s ease;">
+                        <div id="dashRecentActivities" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    </div>
                 </div>
 
             </div>
@@ -1754,6 +1772,24 @@ var dashboard = (function() {
         if (iconEl) iconEl.className = isIotCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
 
+    function toggleAgendaSection() {
+        isAgendaCollapsed = !isAgendaCollapsed;
+        var contentEl = document.getElementById('wrapperAgendaContent');
+        var iconEl = document.getElementById('iconToggleAgenda');
+
+        if (contentEl) contentEl.style.display = isAgendaCollapsed ? 'none' : 'block';
+        if (iconEl) iconEl.className = isAgendaCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    }
+
+    function toggleActivitiesSection() {
+        isActivitiesCollapsed = !isActivitiesCollapsed;
+        var contentEl = document.getElementById('wrapperActivitiesContent');
+        var iconEl = document.getElementById('iconToggleActivities');
+
+        if (contentEl) contentEl.style.display = isActivitiesCollapsed ? 'none' : 'block';
+        if (iconEl) iconEl.className = isActivitiesCollapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+    }
+
     function toggleAirflow() {
         isAirflowOn = !isAirflowOn;
         loadIotEnvData();
@@ -1793,6 +1829,8 @@ var dashboard = (function() {
         selectGhFilter: selectGhFilter,
         setNutrientSessionFilter: setNutrientSessionFilter,
         toggleIotSection: toggleIotSection,
+        toggleAgendaSection: toggleAgendaSection,
+        toggleActivitiesSection: toggleActivitiesSection,
         toggleAirflow: toggleAirflow,
         toggleTask: toggleTask,
         detectUserLocation: detectUserLocation,
