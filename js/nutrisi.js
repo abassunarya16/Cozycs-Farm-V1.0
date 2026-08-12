@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL NUTRISI & PPM (WITH INTEGRATED CALCULATOR & DELTA STOCK DEDUCTION)
+// COZYCS FARM - MODUL NUTRISI & PPM (WITH INTEGRATED CALCULATOR, DELTA DEDUCTION & AUTO RETURN STOCK ON DELETE)
 // ==========================================
 
 var nutrisi = (function() {
@@ -599,7 +599,7 @@ var nutrisi = (function() {
                         }
                     }
 
-                    // 3. PEMOTONGAN STOK GUDANG BERDASARKAN DELTA (HANYA MEMOTONG KEKURANGANNYA Saja)
+                    // 3. PEMOTONGAN STOK GUDANG BERDASARKAN DELTA (HANYA MEMOTONG KEKURANGANNYA SAJA)
                     if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
                         if (deltaA > 0) {
                             gudang.potongStokOtomatis('Pekatan A', deltaA, id ? 'Nutrisi (Edit Top-Up)' : 'Nutrisi', gh || '-', 'Operator', 'ml');
@@ -850,16 +850,45 @@ var nutrisi = (function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // ==========================================
+    // PEMBARUAN: HAPUS DATA & KEMBALIKAN STOK GUDANG OTOMATIS
+    // ==========================================
     function deleteItem(id) {
         if (confirm(t('confirm_delete'))) {
             try {
                 var storageKey = getKey();
+                var item = null;
+
+                // 1. Ambil data record sebelum dihapus
+                if (typeof Storage !== 'undefined' && Storage.getById) {
+                    item = Storage.getById(storageKey, id);
+                }
+
+                // 2. Kembalikan stok ke Gudang jika ada rekaman penuangan Pekatan A/B
+                if (item && typeof gudang !== 'undefined' && typeof gudang.kembalikanStokOtomatis === 'function') {
+                    var volA = parseFloat(item.volA) || 0;
+                    var volB = parseFloat(item.volB) || 0;
+
+                    if (volA > 0) {
+                        gudang.kembalikanStokOtomatis('Pekatan A', volA, 'Nutrisi', item.gh || '-', 'Operator', 'ml');
+                    }
+                    if (volB > 0) {
+                        gudang.kembalikanStokOtomatis('Pekatan B', volB, 'Nutrisi', item.gh || '-', 'Operator', 'ml');
+                    }
+                }
+
+                // 3. Hapus record dari penyimpanan
                 if (typeof Storage !== 'undefined' && Storage.remove) {
                     Storage.remove(storageKey, id);
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error("Delete Error:", e);
+            }
+
+            loadPekatanWidget();
             loadTable();
             window.dispatchEvent(new Event('cozycs_data_changed'));
+
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
