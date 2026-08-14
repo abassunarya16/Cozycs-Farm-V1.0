@@ -3,7 +3,7 @@
 // ==========================================
 
 // UBAH NAMA VERSI INI SETIAP KALI ADA PERUBAHAN KODE DI GITHUB UNTUK MEMICU UPDATE TOAST
-var CACHE_NAME = 'cozycs-farm-v1.1.3';
+var CACHE_NAME = 'cozycs-farm-v1.1.4';
 
 var urlsToCache = [
     './',
