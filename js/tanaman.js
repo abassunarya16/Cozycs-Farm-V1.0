@@ -246,17 +246,246 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // RENDER MARKUP DYNAMIC MODULE (SPA ROUTER COMPATIBILITY)
+    // RENDER MARKUP DYNAMIC MODULE (SPA ROUTER LENGKAP)
     // ==========================================
     function render() {
         return `
-            <div id="page-tanaman-content" class="module-page" style="padding: 16px;">
-                <div id="titleFormTanaman" style="font-size: 16px; font-weight: 800; color: #1B5E20; margin-bottom: 12px;">
-                    ${t('module_title')}
-                </div>
+            <div id="page-tanaman-content" style="padding: 12px; max-width: 800px; margin: 0 auto; font-family: inherit;">
                 
-                <!-- CONTAINER UTAMA UNTUK DAFTAR & FORM REKAP TANAMAN -->
+                <!-- 1. FORM INPUT REKAM JEJAK TANAMAN -->
+                <div style="background: #ffffff; border-radius: 16px; border: 1px solid #E0E0E0; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                    <div id="titleFormTanaman" style="font-size: 15px; font-weight: 800; color: #1B5E20; margin-bottom: 14px; border-bottom: 2px solid #E8F5E9; padding-bottom: 8px;">
+                        ${t('form_title_add')}
+                    </div>
+
+                    <input type="hidden" id="tanamanId" value="">
+
+                    <!-- BARIS 1: GH, TGL TANAM, TGL CEK, HST -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_gh')}</label>
+                            <select id="tanamanGh" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff;"></select>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_tgl_tanam')}</label>
+                            <input type="date" id="tanamanTglTanam" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_date')}</label>
+                            <input type="date" id="tanamanTanggal" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_hst')}</label>
+                            <div id="textHstDisplay" style="padding: 8px 10px; background: #E8F5E9; border-radius: 8px; font-size: 12px; font-weight: 800; color: #2E7D32; text-align: center;">0 HST</div>
+                        </div>
+                    </div>
+
+                    <!-- BARIS 2: KATEGORI, TALANG/LUBANG, VARIETAS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_category')}</label>
+                            <select id="tanamanKategori" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff;">
+                                <option value="Growth">${t('opt_cat_growth')}</option>
+                                <option value="Pruning">${t('opt_cat_pruning')}</option>
+                                <option value="Polinasi">${t('opt_cat_polinasi')}</option>
+                                <option value="Buah">${t('opt_cat_buah')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_gutter')}</label>
+                            <input type="text" id="tanamanTalang" placeholder="${t('ph_gutter')}" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_variety')}</label>
+                            <input type="text" id="tanamanVarietas" placeholder="${t('ph_variety')}" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                    </div>
+
+                    <!-- BARIS 3: PETUGAS & FASE -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_petugas')}</label>
+                            <input type="text" id="tanamanPetugas" placeholder="${t('ph_petugas')}" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_phase')}</label>
+                            <select id="tanamanFase" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff;">
+                                <option value="${t('opt_phase_nursery')}">${t('opt_phase_nursery')}</option>
+                                <option value="${t('opt_phase_veg')}">${t('opt_phase_veg')}</option>
+                                <option value="${t('opt_phase_flowering')}">${t('opt_phase_flowering')}</option>
+                                <option value="${t('opt_phase_fruiting')}">${t('opt_phase_fruiting')}</option>
+                                <option value="${t('opt_phase_harvest')}">${t('opt_phase_harvest')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- METRIK GROWTH (1. Growth) -->
+                    <div id="secMetrikGrowth" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_height')}</label>
+                            <input type="number" id="tanamanTinggi" placeholder="${t('ph_height')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_leaves')}</label>
+                            <input type="number" id="tanamanDaun" placeholder="${t('ph_leaves')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_stem')}</label>
+                            <input type="number" step="0.1" id="tanamanBatang" placeholder="${t('ph_stem')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_population')}</label>
+                            <input type="number" id="tanamanPopulasi" value="1" placeholder="${t('ph_population')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                    </div>
+
+                    <!-- METRIK PRUNING (2. Pruning) -->
+                    <div id="secMetrikPruning" style="display: none; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
+                        <div style="margin-bottom: 8px;">
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_ruas_target')}</label>
+                            <input type="text" id="tanamanRuasTarget" placeholder="${t('ph_ruas_target')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_prune_type')}</label>
+                            <input type="text" id="tanamanTipePruning" placeholder="${t('ph_prune_type')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                    </div>
+
+                    <!-- METRIK POLINASI (3. Polinasi) -->
+                    <div id="secMetrikPolinasi" style="display: none; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_flower_num')}</label>
+                            <input type="text" id="tanamanPosisiBunga" placeholder="${t('ph_flower_num')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_pol_status')}</label>
+                            <select id="tanamanStatusPolinasi" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff;">
+                                <option value="${t('opt_pol_success')}">${t('opt_pol_success')}</option>
+                                <option value="${t('opt_pol_fail')}">${t('opt_pol_fail')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- METRIK BUAH & BRIX (4. Buah) -->
+                    <div id="secMetrikBuah" style="display: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_fruit_weight')}</label>
+                            <input type="number" id="tanamanBobotBuah" placeholder="${t('ph_fruit_weight')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_fruit_brix')}</label>
+                            <input type="number" step="0.1" id="tanamanBrixBuah" placeholder="${t('ph_fruit_brix')}" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_netting')}</label>
+                            <select id="tanamanNetting" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff;">
+                                <option value="${t('opt_net_low')}">${t('opt_net_low')}</option>
+                                <option value="${t('opt_net_mid')}">${t('opt_net_mid')}</option>
+                                <option value="${t('opt_net_full')}">${t('opt_net_full')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CATATAN KHUSUS -->
+                    <div style="margin-bottom: 14px;">
+                        <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_desc')}</label>
+                        <textarea id="tanamanDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; resize: vertical;"></textarea>
+                    </div>
+
+                    <!-- TOMBOL AKSI FORM -->
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <button type="button" onclick="tanaman.resetForm()" style="background: #F5F5F5; color: #666; border: 1px solid #CCC; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                            ${t('btn_cancel')}
+                        </button>
+                        <button type="button" onclick="tanaman.saveData()" style="background: #2E7D32; color: #ffffff; border: none; padding: 8px 20px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                            <i class="fas fa-save"></i> ${t('btn_save')}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. CONTROL BAR (SEARCH, SORT, BATCH GENERATE, BULK DELETE) -->
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                    <div style="flex: 1; min-width: 180px; position: relative;">
+                        <input type="text" id="tanamanSearchInput" placeholder="${t('ph_search')}" style="width: 100%; padding: 8px 12px 8px 32px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px;">
+                        <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888; font-size: 12px;"></i>
+                    </div>
+
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <select id="tanamanSortSelect" style="padding: 8px 10px; border-radius: 8px; border: 1px solid #CCC; font-size: 12px; background: #fff; cursor: pointer;">
+                            <option value="tanggal_desc">${t('opt_sort_newest')}</option>
+                            <option value="oldest">${t('opt_sort_oldest')}</option>
+                            <option value="talang_asc">${t('opt_sort_talang_asc')}</option>
+                            <option value="variety_asc">${t('opt_sort_variety_asc')}</option>
+                            <option value="variety_desc">${t('opt_sort_variety_desc')}</option>
+                            <option value="gh_asc">${t('opt_sort_gh_asc')}</option>
+                        </select>
+
+                        <button type="button" onclick="tanaman.openGenerateModal()" style="background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap;">
+                            <i class="fas fa-magic"></i> ${t('btn_generate_batch')}
+                        </button>
+
+                        <button type="button" onclick="tanaman.deleteSelectedItems()" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. HEADER DAFTAR REKAP TANAMAN -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 14px; font-weight: 800; color: #1B5E20;">
+                        <i class="fas fa-list-ul"></i> ${t('recap_title')}
+                    </div>
+                    <label style="font-size: 11px; font-weight: 700; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" onchange="tanaman.toggleSelectAll(this)" style="cursor: pointer;"> Pilih Semua
+                    </label>
+                </div>
+
+                <!-- 4. CONTAINER DAFTAR KARTU REKAP TANAMAN -->
                 <div id="recapTanamanList"></div>
+
+            </div>
+
+            <!-- MODAL GENERATE CUSTOM LUBANG -->
+            <div id="modalGenerateCustom" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 16px;">
+                <div style="background: #ffffff; border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                    <div style="font-size: 15px; font-weight: 800; color: #1B5E20; margin-bottom: 12px;">
+                        <i class="fas fa-cubes"></i> Generate Custom Lubang Tanam
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #555;">Jalur</label>
+                            <input type="number" id="genJalur" value="2" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #555;">Talang</label>
+                            <input type="number" id="genTalang" value="2" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #555;">Lubang/Talang</label>
+                            <input type="number" id="genLubang" value="17" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px;">
+                        </div>
+                    </div>
+                    <div style="background: #E8F5E9; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; color: #2E7D32; text-align: center; margin-bottom: 14px;">
+                        Total: <span id="textTotalGeneratePreview">68 Lubang Tanam</span>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                        <button type="button" onclick="tanaman.closeGenerateModal()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; font-size: 12px;">Batal</button>
+                        <button type="button" onclick="tanaman.processGenerateCustom()" style="padding: 6px 16px; border-radius: 6px; border: none; background: #2E7D32; color: #fff; font-size: 12px; font-weight: bold;">Generate</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL TIMELINE / LOG RIWAYAT -->
+            <div id="modalHistoryLogContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 16px;">
+                <div style="background: #ffffff; border-radius: 16px; padding: 20px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="font-size: 15px; font-weight: 800; color: #1B5E20;">
+                            <i class="fas fa-history"></i> Timeline Siklus Tanaman
+                        </div>
+                        <button type="button" onclick="tanaman.closeHistoryModal()" style="background: none; border: none; font-size: 16px; color: #888; cursor: pointer;">&times;</button>
+                    </div>
+                    <div id="modalHistoryLogBody"></div>
+                </div>
             </div>
         `;
     }
