@@ -1,98 +1,164 @@
 // ==========================================
-// COZYCS FARM - MODUL MONITORING & PERAWATAN TANAMAN PRESISI
-// (UNIFIED LIFE-CYCLE STYLE: SAMA DENGAN MODUL NUTRISI)
+// COZYCS FARM - MODUL MONITORING & PERAWATAN TANAMAN
+// (CLEAN & SIMPLE VERSION)
 // ==========================================
 
 var tanaman = (function() {
 
-    // ... (Fungsi i18nDict, t, getKey, getData, getVal, setVal, hitungHST, dll tetap SAMA seperti sebelumnya) ...
-    // Saya hanya mengubah bagian renderCard dan sedikit styling di render() agar lebih luas
+    var searchQuery = '';
+    var sortBy = 'tanggal_desc';
+    var currentPage = 1;
+    var itemsPerPage = 20;
 
-    // [COPY PASTE SELURUH BAGIAN DI BAWAH INI KE TANAMAN.JS ANDA]
+    var i18nDict = {
+        'id': {
+            'module_title': 'Monitoring & Perawatan Tanaman',
+            'form_title_add': 'Tambah Catatan Perawatan',
+            'form_title_edit': 'Edit Data Perawatan',
+            'lbl_gh': 'Greenhouse',
+            'select_gh': '-- Pilih GH --',
+            'gh_default': 'GH-01',
+            'lbl_date': 'Tanggal',
+            'lbl_category': 'Kategori',
+            'opt_cat_growth': 'Pertumbuhan',
+            'opt_cat_polinasi': 'Polinasi',
+            'opt_cat_pruning': 'Pruning',
+            'opt_cat_buah': 'Pembuahan',
+            'lbl_gutter': 'Posisi (Talang/Lubang)',
+            'lbl_variety': 'Varietas',
+            'lbl_petugas': 'Petugas',
+            'lbl_phase': 'Fase',
+            'lbl_height': 'Tinggi (cm)',
+            'lbl_leaves': 'Jumlah Daun',
+            'lbl_stem': 'Batang (mm)',
+            'lbl_population': 'Populasi',
+            'lbl_flower_num': 'Posisi Bunga',
+            'lbl_pol_status': 'Status Polinasi',
+            'lbl_prune_type': 'Tipe Pruning',
+            'lbl_fruit_weight': 'Berat Buah (g)',
+            'lbl_fruit_brix': 'Brix (°Brix)',
+            'lbl_desc': 'Catatan',
+            'btn_save': 'Simpan Data',
+            'btn_cancel': 'Batal',
+            'recap_title': 'Riwayat Perawatan',
+            'no_data': 'Belum ada data.',
+            'toast_saved': 'Data berhasil disimpan!',
+            'toast_deleted': 'Data dihapus.',
+            'confirm_delete': 'Hapus data ini?',
+            'btn_edit': 'Edit',
+            'btn_delete': 'Hapus',
+            'btn_history': 'Riwayat',
+            'opt_sort_newest': 'Terbaru ➔ Terlama',
+            'opt_sort_oldest': 'Terlama ➔ Terbaru',
+            'opt_sort_talang_asc': 'Talang / Lubang (A-Z)',
+            'opt_sort_variety_asc': 'Varietas (A-Z)',
+            'opt_sort_variety_desc': 'Varietas (Z-A)',
+            'opt_sort_gh_asc': 'Greenhouse (A-Z)'
+        }
+    };
 
-    function render() {
-        return `
-            <div id="page-tanaman-content" style="padding: 16px; max-width: 800px; margin: 0 auto;">
-                <div id="titleFormTanaman" style="font-size: 16px; font-weight: 800; color: #1B5E20; margin-bottom: 16px;">
-                    ${t('module_title')}
-                </div>
-                <!-- Form Input... (tetap sama) -->
-                <div id="recapTanamanList"></div>
-            </div>
-        `;
+    function t(key) { return i18nDict['id'][key] || key; }
+    function getKey() { return (typeof Storage !== 'undefined' && Storage.KEYS) ? Storage.KEYS.TANAMAN : 'cozycs_tanaman'; }
+    function getData(key) {
+        try {
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') return Storage.getAll(key);
+            return JSON.parse(localStorage.getItem(key)) || [];
+        } catch(e) { return []; }
     }
-
-    // ... (Fungsi Helper, SaveData, ResetForm, dll tetap SAMA) ...
+    function getVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function setVal(id, val) { var el = document.getElementById(id); if(el) el.value = val; }
+    
+    // Helper hitung HST
+    function hitungHST(tglTanam, tglSekarang) {
+        if (!tglTanam) return 0;
+        var start = new Date(tglTanam);
+        var end = new Date(tglSekarang);
+        var diff = end - start;
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
 
     function renderCard(item) {
         if (!item) return '';
-
-        var kat = item.kategori || 'Growth';
-        var tglTanamAwal = item.tglTanam || item.tanggal;
-        var hstRill = hitungHST(tglTanamAwal, new Date());
+        var kat = item.kategori || 'Pertumbuhan';
+        var hst = hitungHST(item.tanggal, new Date());
 
         return `
-            <div style="background: #ffffff; border-radius: 16px; border: 1px solid #EAEAEA; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <div style="background: #ffffff; border-radius: 12px; border: 1px solid #E0E0E0; padding: 16px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="font-weight: 800; color: #2E7D32;">${item.tanggal}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #555;">${hst} HST</div>
+                </div>
                 
-                <!-- HEADER: DATE & BADGES -->
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                    <span style="font-size: 14px; font-weight: 800; color: #333;">${item.tanggal || '-'}</span>
-                    <span style="background: #2E7D32; color: #fff; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 8px;">GH: ${item.gh || 'GH-01'}</span>
-                    <span style="background: #E3F2FD; color: #1976D2; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 8px;">${hstRill} HST</span>
-                </div>
-
-                <!-- GRID 2x2 (STYLE NUTRISI) -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-                    
-                    <!-- Box 1: Varietas -->
-                    <div style="background: #F8F9FA; padding: 12px; border-radius: 12px;">
-                        <div style="font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase;">VARIETAS & LOKASI</div>
-                        <div style="font-size: 12px; font-weight: 800; color: #2E7D32; margin-top: 4px;">🌱 ${item.varietas || '-'}</div>
-                        <div style="font-size: 11px; font-weight: 700; color: #555;">📍 ${item.talang || '-'}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                    <div style="background: #F5F5F5; padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 9px; color: #888; font-weight: 700;">VARIETAS & LOKASI</div>
+                        <div style="font-size: 12px; font-weight: 700;">${item.varietas || '-'}</div>
+                        <div style="font-size: 11px; color: #444;">${item.talang || '-'}</div>
                     </div>
-
-                    <!-- Box 2: Metrik -->
-                    <div style="background: #F8F9FA; padding: 12px; border-radius: 12px;">
-                        <div style="font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase;">METRIK PERTUMBUHAN</div>
-                        <div style="font-size: 12px; font-weight: 800; color: #333; margin-top: 4px;">📏 ${item.tinggi || 0} cm | 🍃 ${item.daun || 0} Daun</div>
-                        <div style="font-size: 11px; font-weight: 700; color: #555;">↔️ Ø ${item.batang || 0} mm</div>
+                    <div style="background: #F5F5F5; padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 9px; color: #888; font-weight: 700;">METRIK</div>
+                        <div style="font-size: 12px; font-weight: 700;">${item.tinggi || 0} cm | ${item.daun || 0} daun</div>
+                        <div style="font-size: 11px; color: #444;">Ø ${item.batang || 0} mm</div>
                     </div>
-
-                    <!-- Box 3: Kategori & PIC -->
-                    <div style="background: #F8F9FA; padding: 12px; border-radius: 12px;">
-                        <div style="font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase;">KATEGORI & PIC</div>
-                        <div style="font-size: 12px; font-weight: 800; color: #333; margin-top: 4px;">👤 ${item.petugas || '-'}</div>
-                        <div style="font-size: 11px; font-weight: 700; color: #555;">📋 ${kat}</div>
+                    <div style="background: #F5F5F5; padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 9px; color: #888; font-weight: 700;">KATEGORI & PIC</div>
+                        <div style="font-size: 12px; font-weight: 700;">${item.petugas || '-'}</div>
+                        <div style="font-size: 11px; color: #444;">${kat}</div>
                     </div>
-
-                    <!-- Box 4: Fase -->
-                    <div style="background: #F8F9FA; padding: 12px; border-radius: 12px;">
-                        <div style="font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase;">FASE & TIMBAL BALIK</div>
-                        <div style="font-size: 12px; font-weight: 800; color: #C62828; margin-top: 4px;">❤️ ${item.fase || '-'}</div>
-                        <div style="font-size: 11px; font-weight: 700; color: #555;">💬 Tercatat Rapi</div>
+                    <div style="background: #F5F5F5; padding: 8px; border-radius: 8px;">
+                        <div style="font-size: 9px; color: #888; font-weight: 700;">FASE</div>
+                        <div style="font-size: 12px; font-weight: 700; color: #C62828;">${item.fase || '-'}</div>
                     </div>
                 </div>
 
-                <!-- CATATAN -->
-                <div style="font-size: 12px; color: #444; margin-bottom: 12px; padding: 4px 0;">
-                    <strong>Catatan:</strong> ${item.desc || '-'}
+                <div style="font-size: 12px; color: #333; margin-bottom: 12px; border-top: 1px solid #EEE; padding-top: 8px;">
+                    ${item.desc || '-'}
                 </div>
 
-                <!-- TOMBOL AKSI -->
-                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #DDD; padding-top: 10px;">
-                    <i class="fas fa-history" onclick="tanaman.showHistoryModal('${item.talang}', '${item.gh}')" style="color: #2E7D32; cursor: pointer; font-size: 16px;"></i>
-                    <div style="display: flex; gap: 16px;">
-                        <i class="fas fa-pencil-alt" onclick="tanaman.editData('${item.id}')" style="color: #E67E22; cursor: pointer; font-size: 16px;"></i>
-                        <i class="fas fa-trash-alt" onclick="tanaman.deleteData('${item.id}')" style="color: #C62828; cursor: pointer; font-size: 16px;"></i>
-                    </div>
+                <div style="display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #EEE; padding-top: 8px;">
+                    <span onclick="tanaman.showHistoryModal('${item.talang}', '${item.gh}')" style="cursor: pointer; color: #2E7D32; font-size: 12px; font-weight: 700;">${t('btn_history')}</span>
+                    <span onclick="tanaman.editItem('${item.id}')" style="cursor: pointer; color: #E67E22; font-size: 12px; font-weight: 700;">${t('btn_edit')}</span>
+                    <span onclick="tanaman.deleteItem('${item.id}')" style="cursor: pointer; color: #C62828; font-size: 12px; font-weight: 700;">${t('btn_delete')}</span>
                 </div>
             </div>
         `;
     }
 
-    // ... (sisanya fungsi lain seperti toggleSelectAll, deleteSelectedItems, dll tetap SAMA) ...
-    // Pastikan untuk menyalin kembali fungsi-fungsi tersebut di bawah renderCard()
-    
+    function render() {
+        return `
+            <div style="padding: 16px;">
+                <div style="font-weight: 800; font-size: 16px; margin-bottom: 16px;">${t('module_title')}</div>
+                <div id="containerTanamanCards"></div>
+                <div id="paginationTanamanControls" style="display:flex; justify-content:space-between; margin-top:10px;"></div>
+            </div>
+        `;
+    }
+
+    function loadTable() {
+        var container = document.getElementById('containerTanamanCards');
+        if (!container) return;
+        var data = getData(getKey());
+        
+        // Sorting
+        data.sort(function(a, b) {
+            if (sortBy === 'tanggal_desc') return new Date(b.tanggal) - new Date(a.tanggal);
+            return 0;
+        });
+
+        var html = data.map(renderCard).join('');
+        container.innerHTML = html || `<div style="text-align:center;">${t('no_data')}</div>`;
+    }
+
+    function deleteItem(id) {
+        if(confirm(t('confirm_delete'))) {
+            if (typeof Storage !== 'undefined' && Storage.remove) Storage.remove(getKey(), id);
+            loadTable();
+        }
+    }
+
+    function init() { loadTable(); }
+
+    return { render: render, init: init, deleteItem: deleteItem, loadTable: loadTable, editItem: function(id){ console.log("Edit:", id); } };
 })();
 
 window.tanaman = tanaman;
