@@ -4,20 +4,20 @@
 
 var Router = (function() {
     
-    // Daftar halaman yang tersedia di aplikasi (Modul terpadu)
-    var routes = {
-        'dashboard': { title: 'Dashboard', render: typeof dashboard !== 'undefined' ? dashboard.render : function() { return '<div>Dashboard belum dimuat</div>'; }, init: typeof dashboard !== 'undefined' ? dashboard.init : null },
-        'greenhouse': { title: 'Greenhouse', render: typeof greenhouse !== 'undefined' ? greenhouse.render : function() { return '<div>Halaman Greenhouse</div>'; }, init: typeof greenhouse !== 'undefined' ? greenhouse.init : null },
-        'tanaman': { title: 'Database & Perawatan Tanaman', render: typeof tanaman !== 'undefined' ? tanaman.render : function() { return '<div>Halaman Tanaman</div>'; }, init: typeof tanaman !== 'undefined' ? tanaman.init : null },
-        'nutrisi': { title: 'Nutrisi & PPM', render: typeof nutrisi !== 'undefined' ? nutrisi.render : function() { return '<div>Halaman Nutrisi</div>'; }, init: typeof nutrisi !== 'undefined' ? nutrisi.init : null },
-        'hama': { title: 'Hama & Penyakit', render: typeof hama !== 'undefined' ? hama.render : function() { return '<div>Halaman Hama</div>'; }, init: typeof hama !== 'undefined' ? hama.init : null },
-        'spray': { title: 'Penyemprotan (Spray)', render: typeof spray !== 'undefined' ? spray.render : function() { return '<div>Halaman Spray</div>'; }, init: typeof spray !== 'undefined' ? spray.init : null },
-        'jadwal': { title: 'Jadwal & Tugas', render: typeof jadwal !== 'undefined' ? jadwal.render : function() { return '<div>Halaman Jadwal</div>'; }, init: typeof jadwal !== 'undefined' ? jadwal.init : null },
-        'panen': { title: 'Data Panen', render: typeof panen !== 'undefined' ? panen.render : function() { return '<div>Halaman Panen</div>'; }, init: typeof panen !== 'undefined' ? panen.init : null },
-        'laporan': { title: 'Laporan', render: typeof laporan !== 'undefined' ? laporan.render : function() { return '<div>Halaman Laporan</div>'; }, init: typeof laporan !== 'undefined' ? laporan.init : null },
-        'gudang': { title: 'Gudang & Stok', render: typeof gudang !== 'undefined' ? gudang.render : function() { return '<div>Halaman Gudang</div>'; }, init: typeof gudang !== 'undefined' ? gudang.init : null },
-        'keuangan': { title: 'Keuangan', render: typeof keuangan !== 'undefined' ? keuangan.render : function() { return '<div>Halaman Keuangan</div>'; }, init: typeof keuangan !== 'undefined' ? keuangan.init : null },
-        'setting': { title: 'Pengaturan', render: typeof setting !== 'undefined' ? setting.render : function() { return '<div>Halaman Pengaturan</div>'; }, init: typeof setting !== 'undefined' ? setting.init : null }
+    // Kamus Judul Halaman
+    var pageTitles = {
+        'dashboard': 'Dashboard',
+        'greenhouse': 'Greenhouse',
+        'tanaman': 'Database & Perawatan Tanaman',
+        'nutrisi': 'Nutrisi & PPM',
+        'hama': 'Hama & Penyakit',
+        'spray': 'Penyemprotan (Spray)',
+        'jadwal': 'Jadwal & Tugas',
+        'panen': 'Data Panen',
+        'laporan': 'Laporan',
+        'gudang': 'Gudang & Stok',
+        'keuangan': 'Keuangan',
+        'setting': 'Pengaturan'
     };
 
     var currentPage = 'dashboard';
@@ -27,18 +27,45 @@ var Router = (function() {
         navigate('dashboard');
     }
 
+    // HELPER EVALUASI MODUL SECARA DINAMIS (RUNTIME)
+    function getModule(pageName) {
+        var moduleMap = {
+            'dashboard': typeof dashboard !== 'undefined' ? dashboard : null,
+            'greenhouse': typeof greenhouse !== 'undefined' ? greenhouse : null,
+            'tanaman': typeof tanaman !== 'undefined' ? tanaman : null,
+            'nutrisi': typeof nutrisi !== 'undefined' ? nutrisi : null,
+            'hama': typeof hama !== 'undefined' ? hama : null,
+            'spray': typeof spray !== 'undefined' ? spray : null,
+            'jadwal': typeof jadwal !== 'undefined' ? jadwal : null,
+            'panen': typeof panen !== 'undefined' ? panen : null,
+            'laporan': typeof laporan !== 'undefined' ? laporan : null,
+            'gudang': typeof gudang !== 'undefined' ? gudang : null,
+            'keuangan': typeof keuangan !== 'undefined' ? keuangan : null,
+            'setting': typeof setting !== 'undefined' ? setting : null
+        };
+
+        var mod = moduleMap[pageName] || window[pageName];
+        
+        return {
+            title: pageTitles[pageName] || 'Cozycs Farm',
+            render: (mod && typeof mod.render === 'function') ? function() { return mod.render(); } : function() { return '<div style="padding:20px; text-align:center; color:#666;">Halaman ' + pageName + ' sedang dimuat...</div>'; },
+            init: (mod && typeof mod.init === 'function') ? function() { mod.init(); } : null
+        };
+    }
+
     function navigate(pageName) {
         // Redirect jika mengakses modul lama yang sudah digabung ke tanaman
         if (pageName === 'polinasi' || pageName === 'buah' || pageName === 'pruning') {
             pageName = 'tanaman';
         }
 
-        if (!routes[pageName]) {
+        if (!pageTitles[pageName]) {
             pageName = 'dashboard';
         }
         currentPage = pageName;
 
-        var route = routes[pageName];
+        // Ambil modul secara dinamis sesuai kondisi variabel JS terkini
+        var route = getModule(pageName);
         var mainContent = document.getElementById('mainContent');
         var headerTitle = document.getElementById('headerTitle');
 
