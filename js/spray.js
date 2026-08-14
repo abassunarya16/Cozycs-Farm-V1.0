@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL JADWAL & RIWAYAT SPRAY (WITH AUTO-DRAFT, COMPATIBILITY VALIDATION & DASHBOARD LOG)
 // ==========================================
 
 var spray = (function() {
@@ -23,9 +23,9 @@ var spray = (function() {
             'opt_morning': 'Pagi (06:00 - 08:00)',
             'opt_afternoon': 'Sore (16:00 - 17:30)',
             'lbl_prod_bubuk': 'Nama Produk (Bubuk)',
-            'ph_prod_bubuk': 'Contoh: Antracol',
+            'ph_prod_bubuk': 'Contoh: Antracol 70 WP',
             'lbl_prod_cairan': 'Nama Produk (Cairan)',
-            'ph_prod_cairan': 'Contoh: Demolish',
+            'ph_prod_cairan': 'Contoh: Demolish 18 EC',
             'lbl_type_fung_insek': 'Fungisida & Insektisida',
             'ph_type_fung_insek': 'Contoh: Antracol / Demolish',
             'lbl_type_fertilizer': 'Fertilizer / Pupuk Daun',
@@ -53,9 +53,9 @@ var spray = (function() {
             'toast_added': 'Jadwal spray berhasil ditambahkan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal spray ini?',
             'toast_deleted': 'Jadwal spray berhasil dihapus',
-            'ph_search': '🔍 Cari tanggal, GH, produk, jenis, atau target spray...',
-            'btn_prev': '⬅️ Sebelum',
-            'btn_next': 'Selanjutnya ➡️',
+            'ph_search': 'Cari tanggal, GH, produk, jenis, atau target spray...',
+            'btn_prev': 'Sebelumnya',
+            'btn_next': 'Selanjutnya',
             'page_lbl': 'Halaman',
             'total_lbl': 'Total Data'
         },
@@ -71,9 +71,9 @@ var spray = (function() {
             'opt_morning': 'Morning (06:00 - 08:00)',
             'opt_afternoon': 'Afternoon (16:00 - 17:30)',
             'lbl_prod_bubuk': 'Product Name (Powder)',
-            'ph_prod_bubuk': 'e.g., Antracol',
+            'ph_prod_bubuk': 'e.g., Antracol 70 WP',
             'lbl_prod_cairan': 'Product Name (Liquid)',
-            'ph_prod_cairan': 'e.g., Demolish',
+            'ph_prod_cairan': 'e.g., Demolish 18 EC',
             'lbl_type_fung_insek': 'Fungicide & Insecticide',
             'ph_type_fung_insek': 'e.g., Antracol / Demolish',
             'lbl_type_fertilizer': 'Fertilizer / Foliar Fertilizer',
@@ -101,9 +101,9 @@ var spray = (function() {
             'toast_added': 'Spray schedule added successfully!',
             'confirm_delete': 'Are you sure you want to delete this spray schedule?',
             'toast_deleted': 'Spray schedule deleted successfully',
-            'ph_search': '🔍 Search date, GH, product, type, or spray target...',
-            'btn_prev': '⬅️ Prev',
-            'btn_next': 'Next ➡️',
+            'ph_search': 'Search date, GH, product, type, or spray target...',
+            'btn_prev': 'Prev',
+            'btn_next': 'Next',
             'page_lbl': 'Page',
             'total_lbl': 'Total Items'
         }
@@ -119,6 +119,76 @@ var spray = (function() {
             return Storage.KEYS.SPRAY;
         }
         return 'cozycs_spray';
+    }
+
+    // ==========================================
+    // LOGIKA CEK ATURAN PENCAMPURAN PESTISIDA (DGW RULES)
+    // ==========================================
+    function detectFormulationCategory(productName) {
+        if (!productName || typeof productName !== 'string') return null;
+        var str = productName.toUpperCase();
+
+        // Kategori 1: Larut Air
+        if (/\b(AS|SL|SP|SC|WSC|SG)\b/.test(str)) {
+            return { cat: 1, type: 'Larut Air (AS/SL/SP/SC/WSC/SG)' };
+        }
+        // Kategori 2: Suspensi / Tidak Larut Air
+        if (/\b(WP|F|WDG|DF)\b/.test(str)) {
+            return { cat: 2, type: 'Suspensi (WP/F/WDG/DF)' };
+        }
+        // Kategori 3: Emulsi / Minyak
+        if (/\b(EC|E|EW)\b/.test(str)) {
+            return { cat: 3, type: 'Emulsi (EC/E/EW)' };
+        }
+        return null;
+    }
+
+    function validateMixingCompatibility() {
+        var alertEl = document.getElementById('sprayMixAlert');
+        if (!alertEl) return;
+
+        var prodBubuk = document.getElementById('sprayProductBubuk') ? document.getElementById('sprayProductBubuk').value : '';
+        var prodCairan = document.getElementById('sprayProductCairan') ? document.getElementById('sprayProductCairan').value : '';
+
+        if (!prodBubuk.trim() || !prodCairan.trim()) {
+            alertEl.style.display = 'none';
+            alertEl.innerHTML = '';
+            return;
+        }
+
+        var formA = detectFormulationCategory(prodBubuk);
+        var formB = detectFormulationCategory(prodCairan);
+
+        if (!formA || !formB) {
+            alertEl.style.display = 'none';
+            return;
+        }
+
+        alertEl.style.display = 'block';
+
+        // Aturan 1: Larut Air + Larut Air -> DILARANG
+        if (formA.cat === 1 && formB.cat === 1) {
+            alertEl.style.background = '#FFEBEE';
+            alertEl.style.border = '1px solid #EF5350';
+            alertEl.style.color = '#C62828';
+            alertEl.innerHTML = '<strong>PERINGATAN DILARANG DICAMPUR:</strong> Kedua bahan berformulasi Larut Air. Berisiko tinggi menggumpal atau merusak ikatan molekul.';
+            return;
+        }
+
+        // Aturan 2: Emulsi + Emulsi -> DILARANG
+        if (formA.cat === 3 && formB.cat === 3) {
+            alertEl.style.background = '#FFEBEE';
+            alertEl.style.border = '1px solid #EF5350';
+            alertEl.style.color = '#C62828';
+            alertEl.innerHTML = '<strong>PERINGATAN DILARANG DICAMPUR:</strong> Kedua bahan berformulasi Emulsi/Minyak (EC/EW). Berisiko membakar daun melon (phytotoxicity).';
+            return;
+        }
+
+        // Boleh Dicampur
+        alertEl.style.background = '#E8F5E9';
+        alertEl.style.border = '1px solid #66BB6A';
+        alertEl.style.color = '#2E7D32';
+        alertEl.innerHTML = '<strong>BOLEH DICAMPUR.</strong> Urutan pelarutan: Larutkan bahan tepung/suspensi (' + formA.type + ') terlebih dahulu sampai rata, baru masukkan bahan emulsi/cairan (' + formB.type + ').';
     }
 
     function populateGhDropdown() {
@@ -151,6 +221,8 @@ var spray = (function() {
     }
 
     function render() {
+        var todayStr = new Date().toISOString().split('T')[0];
+
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> ${t('module_title')}</div>
@@ -171,7 +243,7 @@ var spray = (function() {
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
-                                <input type="date" id="sprayDate" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                                <input type="date" id="sprayDate" value="${todayStr}" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
@@ -195,6 +267,9 @@ var spray = (function() {
                                 <input type="text" id="sprayProductCairan" placeholder="${t('ph_prod_cairan')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
+
+                        <!-- BORDER KOTAK INFORMASI VALIDASI PENCAMPURAN PESTISIDA -->
+                        <div id="sprayMixAlert" style="display: none; padding: 10px 12px; border-radius: 8px; font-size: 11px; margin-bottom: 12px; line-height: 1.4;"></div>
 
                         <!-- Jenis Penyemprotan Terpisah -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
@@ -270,10 +345,15 @@ var spray = (function() {
         populateGhDropdown();
         loadTable();
 
-        // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formSpray');
         }
+
+        var prodBubukEl = document.getElementById('sprayProductBubuk');
+        var prodCairanEl = document.getElementById('sprayProductCairan');
+
+        if (prodBubukEl) prodBubukEl.addEventListener('input', validateMixingCompatibility);
+        if (prodCairanEl) prodCairanEl.addEventListener('input', validateMixingCompatibility);
 
         var form = document.getElementById('formSpray');
         var btnCancel = document.getElementById('btnCancelSprayEdit');
@@ -337,6 +417,20 @@ var spray = (function() {
                         syncToSchedules(added);
                     }
 
+                    // --- KALKULASI JADWAL ROTASI SPRAY 5 HARI SEKALI ---
+                    if (payload.date) {
+                        var currentDate = new Date(payload.date);
+                        currentDate.setDate(currentDate.getDate() + 5);
+                        var nextSprayDateStr = currentDate.toISOString().split('T')[0];
+
+                        var nextPayload = Object.assign({}, payload, {
+                            id: 'SPRAY-NEXT-' + Date.now(),
+                            date: nextSprayDateStr,
+                            desc: '[Otomatis H+5] Rencana Spray Rutin Berikutnya'
+                        });
+                        syncToSchedules(nextPayload);
+                    }
+
                     // --- AUTOCUT STOK GUDANG OTOMATIS ---
                     if (typeof gudang !== 'undefined' && typeof gudang.potongStokOtomatis === 'function') {
                         var ghVal = (ghEl && ghEl.value) ? ghEl.value : '-';
@@ -359,7 +453,7 @@ var spray = (function() {
                     }
                 }
 
-                // 2. CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
+                // CATAT LOG KE AKTIVITAS TERAKHIR DASBOR
                 if (typeof Storage !== 'undefined' && Storage.add) {
                     var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                     var now = new Date();
@@ -381,6 +475,9 @@ var spray = (function() {
 
                 form.reset();
                 if (idEl) idEl.value = '';
+                var alertEl = document.getElementById('sprayMixAlert');
+                if (alertEl) alertEl.style.display = 'none';
+
                 var titleEl = document.getElementById('formTitleSpray');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 if (btnCancel) btnCancel.style.display = 'none';
@@ -394,6 +491,8 @@ var spray = (function() {
                 if (form) form.reset();
                 var idEl = document.getElementById('sprayId');
                 if (idEl) idEl.value = '';
+                var alertEl = document.getElementById('sprayMixAlert');
+                if (alertEl) alertEl.style.display = 'none';
                 var titleEl = document.getElementById('formTitleSpray');
                 if (titleEl) titleEl.innerText = t('form_title_add');
                 btnCancel.style.display = 'none';
@@ -418,12 +517,10 @@ var spray = (function() {
             return;
         }
 
-        // 1. Urutkan dari tanggal terbaru
         data.sort(function(a, b) {
             return new Date(b.date || 0) - new Date(a.date || 0);
         });
 
-        // 2. Filter data berdasarkan kata kunci pencarian
         var filteredData = data.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
@@ -446,7 +543,6 @@ var spray = (function() {
             return;
         }
 
-        // 3. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -455,7 +551,6 @@ var spray = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             var valGh = item.gh ? item.gh : '-';
@@ -466,7 +561,6 @@ var spray = (function() {
 
             html += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-                    <!-- Header Card: Tanggal, ID GH & Waktu -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
                         <div>
                             <strong style="font-size: 14px; color: var(--text-color, #222);">${item.date || '-'}</strong>
@@ -475,10 +569,7 @@ var spray = (function() {
                         </div>
                     </div>
 
-                    <!-- Grid 4 Kotak (2x2) Ukuran Sama Rata -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
-                        
-                        <!-- 1. Kiri Atas: Nama Produk (Bubuk & Cairan) -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_product')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -487,7 +578,6 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 2. Kanan Atas: Dosis (Gram & ml) -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_dose')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -496,7 +586,6 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 3. Kiri Bawah: Jenis Penyemprotan -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_spray_type')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -505,7 +594,6 @@ var spray = (function() {
                             </div>
                         </div>
 
-                        <!-- 4. Kanan Bawah: Sasaran Hama & Penyakit -->
                         <div style="background: var(--inner-card-bg, #f9f9f9); padding: 10px; border-radius: 8px; min-height: 54px; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 10px; color: #777; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${t('lbl_target')}</div>
                             <div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); line-height: 1.4;">
@@ -513,13 +601,10 @@ var spray = (function() {
                                 <div style="margin-top: 3px;"><i class="fas fa-shield-virus" style="color: #7B1FA2; width: 14px;"></i> <strong>${item.targetPenyakit || '-'}</strong></div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Catatan Tambahan (Jika Ada) -->
                     ${item.desc ? `<div style="font-size: 12px; font-weight: bold; color: var(--text-color, #000); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${item.desc}</div>` : ''}
 
-                    <!-- Tombol Aksi Logo Saja -->
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
                         <span onclick="spray.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
                         <span onclick="spray.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
@@ -530,7 +615,6 @@ var spray = (function() {
 
         container.innerHTML = html;
 
-        // 5. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -594,6 +678,7 @@ var spray = (function() {
         var btnCancel = document.getElementById('btnCancelSprayEdit');
         if (btnCancel) btnCancel.style.display = 'block';
 
+        validateMixingCompatibility();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
