@@ -238,6 +238,27 @@ var tanaman = (function() {
     }
 
     // ==========================================
+    // HELPER MENGAMBIL DATA HASIL FILTER PENCARIAN
+    // ==========================================
+    function getFilteredData() {
+        var storageKey = getKey();
+        var data = getData(storageKey);
+        if (!searchQuery) return data;
+        var kw = searchQuery.toLowerCase();
+        return data.filter(function(item) {
+            if (!item) return false;
+            var varietas = (item.varietas || '').toLowerCase();
+            var gh = (item.gh || '').toLowerCase();
+            var talang = (item.talang || '').toLowerCase();
+            var petugas = (item.petugas || '').toLowerCase();
+            var kat = (item.kategori || '').toLowerCase();
+            var desc = (item.desc || '').toLowerCase();
+            var ruas = (item.ruasTarget || '').toLowerCase();
+            return varietas.includes(kw) || gh.includes(kw) || talang.includes(kw) || petugas.includes(kw) || kat.includes(kw) || desc.includes(kw) || ruas.includes(kw);
+        });
+    }
+
+    // ==========================================
     // HELPER HITUNG KALKULASI HST & AUTOMATISASI FASE
     // ==========================================
     function hitungHST(tglTanam, tglCek) {
@@ -918,38 +939,16 @@ var tanaman = (function() {
         var pageEl = document.getElementById('paginationTanamanControls');
         if (!container) return;
 
-        var storageKey = getKey();
-        var data = getData(storageKey);
+        var filteredData = getFilteredData();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!Array.isArray(filteredData) || filteredData.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
             if (pageEl) pageEl.innerHTML = '';
             updateBulkActionBarUI();
             return;
         }
 
-        // 1. FILTERING DATA BERDASARKAN QUERY PENCARIAN
-        var filteredData = data.filter(function(item) {
-            if (!searchQuery) return true;
-            var kw = searchQuery.toLowerCase();
-            var varietas = (item.varietas || '').toLowerCase();
-            var gh = (item.gh || '').toLowerCase();
-            var talang = (item.talang || '').toLowerCase();
-            var petugas = (item.petugas || '').toLowerCase();
-            var kat = (item.kategori || '').toLowerCase();
-            var desc = (item.desc || '').toLowerCase();
-            var ruas = (item.ruasTarget || '').toLowerCase();
-            return varietas.includes(kw) || gh.includes(kw) || talang.includes(kw) || petugas.includes(kw) || kat.includes(kw) || desc.includes(kw) || ruas.includes(kw);
-        });
-
-        if (filteredData.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
-            if (pageEl) pageEl.innerHTML = '';
-            updateBulkActionBarUI();
-            return;
-        }
-
-        // 2. SORTING DATA
+        // SORTING DATA
         filteredData.sort(function(a, b) {
             if (sortBy === 'tanggal_asc') {
                 return (new Date(a.tanggal || 0)) - (new Date(b.tanggal || 0));
@@ -967,7 +966,7 @@ var tanaman = (function() {
             return 0;
         });
 
-        // 3. PAGINASI DATA
+        // PAGINASI DATA
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -1096,7 +1095,7 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // LOGIKA CENTANG & HAPUS MASSAL (BULK DELETE)
+    // LOGIKA CENTANG & HAPUS MASSAL (HANYA DATA HASIL FILTER)
     // ==========================================
     function toggleSelectItem(id, isChecked) {
         if (isChecked) {
@@ -1108,12 +1107,18 @@ var tanaman = (function() {
     }
 
     function toggleSelectAll(isChecked) {
-        var storageKey = getKey();
-        var data = getData(storageKey);
+        var filteredData = getFilteredData();
         if (isChecked) {
-            selectedItemIds = data.map(function(item) { return item.id; });
+            filteredData.forEach(function(item) {
+                if (item && item.id && !selectedItemIds.includes(item.id)) {
+                    selectedItemIds.push(item.id);
+                }
+            });
         } else {
-            selectedItemIds = [];
+            var filteredIds = filteredData.map(function(item) { return item.id; });
+            selectedItemIds = selectedItemIds.filter(function(id) {
+                return !filteredIds.includes(id);
+            });
         }
         loadTable();
     }
@@ -1130,9 +1135,10 @@ var tanaman = (function() {
         }
 
         if (chkAll) {
-            var storageKey = getKey();
-            var data = getData(storageKey);
-            chkAll.checked = data.length > 0 && selectedItemIds.length === data.length;
+            var filteredData = getFilteredData();
+            chkAll.checked = filteredData.length > 0 && filteredData.every(function(item) {
+                return selectedItemIds.includes(item.id);
+            });
         }
     }
 
