@@ -18,11 +18,11 @@ var tanaman = (function() {
             'module_title': 'Monitoring & Perawatan Tanaman Presisi',
             'form_title_add': 'Catat Rekam Jejak / Perawatan Tanaman',
             'form_title_edit': 'Edit Data Rekam Jejak Tanaman',
-            'lbl_gh': 'ID Greenhouse',
+            'lbl_gh': 'Greenhouse',
             'select_gh': '-- Pilih Greenhouse --',
             'gh_default': 'GH-01 (Default)',
             'lbl_tgl_tanam': 'Tanggal Tanam Awal',
-            'lbl_date': 'Tanggal Kegiatan / Cek',
+            'lbl_date': 'Tanggal Pengecekan',
             'lbl_hst': 'HST (Hari Setelah Tanam)',
             'lbl_category': 'Kategori Perawatan / Kegiatan',
             
@@ -73,10 +73,6 @@ var tanaman = (function() {
             'ph_fruit_weight': 'Contoh: 1250',
             'lbl_fruit_brix': 'Kadar Gula (°Brix)',
             'ph_fruit_brix': 'Contoh: 14.5',
-            'lbl_netting': 'Kualitas Jaring (Netting)',
-            'opt_net_low': 'Mulai Pembentukan Net (20%)',
-            'opt_net_mid': 'Net Tebal Merata (60%)',
-            'opt_net_full': 'Net sempurna & Rapat (100%)',
 
             'lbl_desc': 'Catatan Khusus & Pengamatan',
             'ph_desc': 'Catatan defisiensi, kondisi fisik, perlakuan khusus...',
@@ -115,7 +111,7 @@ var tanaman = (function() {
             'module_title': 'Precision Crop Life-Cycle Monitoring',
             'form_title_add': 'Record Crop Care & Growth Track',
             'form_title_edit': 'Edit Crop Record',
-            'lbl_gh': 'Greenhouse ID',
+            'lbl_gh': 'Greenhouse',
             'select_gh': '-- Select Greenhouse --',
             'gh_default': 'GH-01 (Default)',
             'lbl_tgl_tanam': 'Planting Date',
@@ -166,10 +162,6 @@ var tanaman = (function() {
             'ph_fruit_weight': 'e.g., 1250',
             'lbl_fruit_brix': 'Brix Degree (°Brix)',
             'ph_fruit_brix': 'e.g., 14.5',
-            'lbl_netting': 'Netting Quality',
-            'opt_net_low': 'Net Starting (20%)',
-            'opt_net_mid': 'Dense Netting (60%)',
-            'opt_net_full': 'Full & Perfect Netting (100%)',
 
             'lbl_desc': 'Observation Notes',
             'ph_desc': 'Notes on deficiency, physical condition, treatment...',
@@ -283,7 +275,7 @@ var tanaman = (function() {
 
     function populateGhDropdown() {
         var selectEl = document.getElementById('tanamanGh');
-        if (!selectEl) return;
+        var genGhEl = document.getElementById('genGh');
 
         var keyGh = (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GREENHOUSE) ? Storage.KEYS.GREENHOUSE : 'cozycs_greenhouse';
         var dataGh = getData(keyGh);
@@ -299,7 +291,8 @@ var tanaman = (function() {
             optionsHtml += `<option value="GH-01">${t('gh_default')}</option>`;
         }
 
-        selectEl.innerHTML = optionsHtml;
+        if (selectEl) selectEl.innerHTML = optionsHtml;
+        if (genGhEl) genGhEl.innerHTML = optionsHtml;
     }
 
     function toggleKategoriFields(cat) {
@@ -316,6 +309,12 @@ var tanaman = (function() {
 
     function openGenerateModal() {
         var modalEl = document.getElementById('modalGenerateCustom');
+        var currentGh = getVal('tanamanGh') || 'GH-01';
+        var currentVarietas = getVal('tanamanVarietas') || 'Inthanon';
+
+        setVal('genGh', currentGh);
+        setVal('genVarietas', currentVarietas);
+
         if (modalEl) {
             modalEl.style.display = 'flex';
             updateTotalPreview();
@@ -328,40 +327,57 @@ var tanaman = (function() {
     }
 
     function updateTotalPreview() {
-        var j = parseInt(getVal('genJalur')) || 0;
+        var jAwal = parseInt(getVal('genJalurAwal')) || 1;
+        var jAkhir = parseInt(getVal('genJalurAkhir')) || 1;
         var tVal = parseInt(getVal('genTalang')) || 0;
         var l = parseInt(getVal('genLubang')) || 0;
-        var total = j * tVal * l;
+
+        var totalJalur = Math.max(0, (jAkhir - jAwal + 1));
+        var total = totalJalur * tVal * l;
         
         var previewEl = document.getElementById('textTotalGeneratePreview');
         if (previewEl) {
-            previewEl.innerText = total + ' Lubang Tanam';
+            if (jAkhir < jAwal) {
+                previewEl.innerText = '⚠️ Jalur Akhir harus >= Jalur Awal!';
+                previewEl.style.color = '#C62828';
+            } else {
+                previewEl.innerText = total + ' Lubang Tanam (Jalur ' + jAwal + ' s/d ' + jAkhir + ')';
+                previewEl.style.color = '#2E7D32';
+            }
         }
     }
 
     function processGenerateCustom() {
-        var gh = getVal('tanamanGh') || 'GH-01';
+        var gh = getVal('genGh') || getVal('tanamanGh') || 'GH-01';
+        var varietas = getVal('genVarietas') || getVal('tanamanVarietas') || 'Inthanon';
         var tglTanam = getVal('tanamanTglTanam') || new Date().toISOString().split('T')[0];
         var tanggal = getVal('tanamanTanggal') || new Date().toISOString().split('T')[0];
-        var varietas = getVal('tanamanVarietas') || 'Inthanon';
         var petugas = getVal('tanamanPetugas') || t('default_petugas');
 
-        var totalJalur = parseInt(getVal('genJalur')) || 0;
+        var jAwal = parseInt(getVal('genJalurAwal')) || 1;
+        var jAkhir = parseInt(getVal('genJalurAkhir')) || 1;
         var totalTalang = parseInt(getVal('genTalang')) || 0;
         var totalLubang = parseInt(getVal('genLubang')) || 0;
 
-        if (totalJalur <= 0 || totalTalang <= 0 || totalLubang <= 0) {
-            alert('Harap isi jumlah Jalur, Talang, dan Lubang dengan benar!');
+        if (jAkhir < jAwal) {
+            alert('Jalur Akhir tidak boleh lebih kecil dari Jalur Awal!');
             return;
         }
 
+        if (totalTalang <= 0 || totalLubang <= 0) {
+            alert('Harap isi jumlah Talang dan Lubang dengan benar!');
+            return;
+        }
+
+        var totalJalur = (jAkhir - jAwal + 1);
         var totalExpected = totalJalur * totalTalang * totalLubang;
-        if (!confirm('Generate otomatis ' + totalExpected + ' data lubang tanam untuk ' + gh + '?')) return;
+
+        if (!confirm('Generate otomatis ' + totalExpected + ' data lubang tanam (' + varietas + ') untuk Jalur ' + jAwal + ' s/d ' + jAkhir + ' di ' + gh + '?')) return;
 
         var storageKey = getKey();
         var totalInput = 0;
 
-        for (var j = 1; j <= totalJalur; j++) {
+        for (var j = jAwal; j <= jAkhir; j++) {
             for (var tIdx = 1; tIdx <= totalTalang; tIdx++) {
                 for (var l = 1; l <= totalLubang; l++) {
                     var padLubang = l < 10 ? '0' + l : '' + l;
@@ -506,21 +522,29 @@ var tanaman = (function() {
                             </select>
                         </div>
 
-                        <!-- ID GH, Tanggal Tanam & Tanggal Cek/Kegiatan -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                        <!-- ID GH & Tanggal Pengecekan -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
-                                <select id="tanamanGh" required style="width: 100%; padding: 9px 6px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
+                                <select id="tanamanGh" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
                                     <option value="">${t('select_gh')}</option>
                                 </select>
                             </div>
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_tgl_tanam')}</label>
-                                <input type="date" id="tanamanTglTanam" onchange="tanaman.updateHstDisplay()" required style="width: 100%; padding: 9px 6px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
+                                <input type="date" id="tanamanTanggal" onchange="tanaman.updateHstDisplay()" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <!-- Tanggal Tanam Awal & Varietas Melon -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_tgl_tanam')}</label>
+                                <input type="date" id="tanamanTglTanam" onchange="tanaman.updateHstDisplay()" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
-                                <input type="date" id="tanamanTanggal" onchange="tanaman.updateHstDisplay()" required style="width: 100%; padding: 9px 6px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 12px; margin-top: 4px;">
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_variety')}</label>
+                                <input type="text" id="tanamanVarietas" required placeholder="${t('ph_variety')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
                         </div>
 
@@ -530,34 +554,28 @@ var tanaman = (function() {
                             <span id="textHstDisplay" style="font-size: 14px; font-weight: 800; color: #1B5E20; background: #DCEDC8; padding: 2px 10px; border-radius: 6px;">0 HST</span>
                         </div>
 
-                        <!-- Varietas & Posisi Talang/Lubang -->
+                        <!-- Posisi Talang/Lubang & Penanggung Jawab -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_variety')}</label>
-                                <input type="text" id="tanamanVarietas" required placeholder="${t('ph_variety')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gutter')}</label>
                                 <input type="text" id="tanamanTalang" placeholder="${t('ph_gutter')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
-                            </div>
-                        </div>
-
-                        <!-- Fase Pertumbuhan & Penanggung Jawab -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_phase')}</label>
-                                <select id="tanamanFase" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
-                                    <option value="Semaian (0-10 HST)">${t('opt_phase_nursery')}</option>
-                                    <option value="Vegetatif (11-25 HST)">${t('opt_phase_veg')}</option>
-                                    <option value="Generatif / Bunga (26-40 HST)">${t('opt_phase_flowering')}</option>
-                                    <option value="Pembesaran Buah (41-65 HST)">${t('opt_phase_fruiting')}</option>
-                                    <option value="Pematangan / Panen (66+ HST)">${t('opt_phase_harvest')}</option>
-                                </select>
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_petugas')}</label>
                                 <input type="text" id="tanamanPetugas" placeholder="${t('ph_petugas')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;">
                             </div>
+                        </div>
+
+                        <!-- Fase Pertumbuhan -->
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_phase')}</label>
+                            <select id="tanamanFase" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff);">
+                                <option value="Semaian (0-10 HST)">${t('opt_phase_nursery')}</option>
+                                <option value="Vegetatif (11-25 HST)">${t('opt_phase_veg')}</option>
+                                <option value="Generatif / Bunga (26-40 HST)">${t('opt_phase_flowering')}</option>
+                                <option value="Pembesaran Buah (41-65 HST)">${t('opt_phase_fruiting')}</option>
+                                <option value="Pematangan / Panen (66+ HST)">${t('opt_phase_harvest')}</option>
+                            </select>
                         </div>
 
                         <!-- METRIK 1: VEGETATIF & GROWTH -->
@@ -683,32 +701,55 @@ var tanaman = (function() {
                 <!-- Kontrol Navigasi Paginasi -->
                 <div id="paginationTanamanControls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 20px; font-size: 12px;"></div>
 
-                <!-- Modal Pop-up Custom Generate -->
+                <!-- MODAL POP-UP CUSTOM GENERATE (MULTI-VARIETAS & RANGE JALUR SUPPORT) -->
                 <div id="modalGenerateCustom" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box;">
-                    <div style="background: var(--card-bg, #fff); border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; border: 1px solid var(--border-color, #ccc);">
+                    <div style="background: var(--card-bg, #fff); border-radius: 12px; width: 100%; max-width: 420px; padding: 20px; border: 1px solid var(--border-color, #ccc); box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
                         <div style="font-size: 15px; font-weight: 700; color: #2E7D32; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                            <span>Custom Auto-Generate</span>
-                            <span onclick="tanaman.closeGenerateModal()" style="cursor: pointer; color: #888; font-size: 18px;">&times;</span>
+                            <span>Custom Auto-Generate Batch</span>
+                            <span onclick="tanaman.closeGenerateModal()" style="cursor: pointer; color: #888; font-size: 20px;">&times;</span>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                        <!-- Target GH & Varietas untuk Batch ini -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                             <div>
-                                <label style="font-size: 11px; font-weight: 600; color: #555;">Jumlah Jalur</label>
-                                <input type="number" id="genJalur" value="6" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-top: 4px;">
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">Greenhouse</label>
+                                <select id="genGh" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+                                    <option value="GH-01">GH-01</option>
+                                </select>
                             </div>
                             <div>
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">Varietas Batch</label>
+                                <input type="text" id="genVarietas" placeholder="Inthanon" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <!-- Range Jalur (Awal - Akhir) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">Mulai Jalur Ke-</label>
+                                <input type="number" id="genJalurAwal" value="1" min="1" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; font-weight: 600; color: #555;">Sampai Jalur Ke-</label>
+                                <input type="number" id="genJalurAkhir" value="6" min="1" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+                            </div>
+                        </div>
+
+                        <!-- Talang per Jalur & Lubang per Talang -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                            <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">Talang / Jalur</label>
-                                <input type="number" id="genTalang" value="2" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="genTalang" value="2" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
                             </div>
                             <div>
                                 <label style="font-size: 11px; font-weight: 600; color: #555;">Lubang / Talang</label>
-                                <input type="number" id="genLubang" value="30" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-top: 4px;">
+                                <input type="number" id="genLubang" value="30" oninput="tanaman.updateTotalPreview()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; margin-top: 4px;">
                             </div>
                         </div>
 
                         <div style="background: #E8F5E9; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 16px;">
                             <div style="font-size: 11px; color: #555;">Total Data Yang Akan Dibuat:</div>
-                            <div id="textTotalGeneratePreview" style="font-size: 16px; font-weight: bold; color: #2E7D32; margin-top: 2px;">360 Lubang Tanam</div>
+                            <div id="textTotalGeneratePreview" style="font-size: 15px; font-weight: bold; color: #2E7D32; margin-top: 2px;">360 Lubang Tanam (Jalur 1 s/d 6)</div>
                         </div>
 
                         <div style="display: flex; gap: 8px;">
@@ -915,7 +956,7 @@ var tanaman = (function() {
             } else if (sortBy === 'tanggal_desc') {
                 return (new Date(b.tanggal || 0)) - (new Date(a.tanggal || 0));
             } else if (sortBy === 'varietas_asc') {
-                return (a.varietas || '').localeCompare(a.varietas || '', undefined, {numeric: true, sensitivity: 'base'});
+                return (a.varietas || '').localeCompare(b.varietas || '', undefined, {numeric: true, sensitivity: 'base'});
             } else if (sortBy === 'varietas_desc') {
                 return (b.varietas || '').localeCompare(a.varietas || '', undefined, {numeric: true, sensitivity: 'base'});
             } else if (sortBy === 'talang_asc') {
