@@ -246,7 +246,7 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // RENDER MARKUP DYNAMIC MODULE (SPA ROUTER LENGKAP)
+    // RENDER MARKUP DYNAMIC MODULE (SPA ROUTER)
     // ==========================================
     function render() {
         return `
@@ -319,7 +319,7 @@ var tanaman = (function() {
                         </div>
                     </div>
 
-                    <!-- METRIK GROWTH (1. Growth) -->
+                    <!-- METRIK GROWTH -->
                     <div id="secMetrikGrowth" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
                         <div>
                             <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_height')}</label>
@@ -339,7 +339,7 @@ var tanaman = (function() {
                         </div>
                     </div>
 
-                    <!-- METRIK PRUNING (2. Pruning) -->
+                    <!-- METRIK PRUNING -->
                     <div id="secMetrikPruning" style="display: none; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
                         <div style="margin-bottom: 8px;">
                             <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_ruas_target')}</label>
@@ -351,7 +351,7 @@ var tanaman = (function() {
                         </div>
                     </div>
 
-                    <!-- METRIK POLINASI (3. Polinasi) -->
+                    <!-- METRIK POLINASI -->
                     <div id="secMetrikPolinasi" style="display: none; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
                         <div>
                             <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_flower_num')}</label>
@@ -366,7 +366,7 @@ var tanaman = (function() {
                         </div>
                     </div>
 
-                    <!-- METRIK BUAH & BRIX (4. Buah) -->
+                    <!-- METRIK BUAH & BRIX -->
                     <div id="secMetrikBuah" style="display: none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; background: #F9F9F9; padding: 10px; border-radius: 10px;">
                         <div>
                             <label style="font-size: 11px; font-weight: 700; color: #444; display: block; margin-bottom: 4px;">${t('lbl_fruit_weight')}</label>
@@ -707,7 +707,6 @@ var tanaman = (function() {
             var badgeColor = '#2E7D32';
             var detailText = '';
 
-            // KALKULASI HST DINAMIS PADA RIWAYAT LOG
             var hstHistory = hitungHST(h.tglTanam || h.tanggal, h.tanggal || new Date());
 
             if (kat === 'Pruning') {
@@ -915,7 +914,7 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // RENDER LIST KARTU TANAMAN & DYNAMIC HST
+    // RENDER LIST KARTU TANAMAN (DISESUAIKAN DENGAN DESIGN NUTRISI.JS)
     // ==========================================
     function loadTable() {
         var elContainer = document.getElementById('recapTanamanList');
@@ -996,7 +995,7 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // RENDER KARTU TANAMAN SINGLE ITEM
+    // RENDER KARTU TANAMAN SINGLE ITEM (NUTRISI CARD EXACT STYLE)
     // ==========================================
     function renderCard(item) {
         if (!item) return '';
@@ -1009,119 +1008,127 @@ var tanaman = (function() {
         else if (kat === 'Polinasi') { katBadgeBg = '#FFF3E0'; katBadgeColor = '#E65100'; }
         else if (kat === 'Buah') { katBadgeBg = '#F3E5F5'; katBadgeColor = '#6A1B9A'; }
 
-        // KALKULASI HST RIIL BERDASARKAN TANGGAL TANAM AWAL DAN TANGGAL SEKARANG
+        // KALKULASI HST RIIL
         var tglTanamAwal = item.tglTanam || item.tanggal;
         var hstRill = hitungHST(tglTanamAwal, new Date());
 
+        // FORMAT METRIK KONSISTEN & TERSTRUKTUR
         var metricsContent = '';
         if (kat === 'Pruning') {
             metricsContent = `
-                <div style="font-size: 11px; color: #333;">
-                    <div>⚙️ Perlakuan: <strong>${item.tipePruning || 'Pruning Cabang'}</strong></div>
-                    <div>🎯 Target: <strong>${item.ruasTarget || 'Ruas 9-12'}</strong></div>
-                </div>
+                <div style="font-size: 11px; font-weight: 800; color: #0288D1; margin-top: 2px;">⚙️ ${item.tipePruning || 'Pruning Cabang'}</div>
+                <div style="font-size: 10px; font-weight: 700; color: #555; margin-top: 2px;">🎯 Target: ${item.ruasTarget || '-'}</div>
             `;
         } else if (kat === 'Polinasi') {
             metricsContent = `
-                <div style="font-size: 11px; color: #333;">
-                    <div>🌺 Bunga Kawin: <strong>${item.posisiBunga || 'Ruas 10'}</strong></div>
-                    <div>⚡ Status: <strong style="color:${item.statusPolinasi === 'Gagal' ? '#C62828' : '#2E7D32'};">${item.statusPolinasi || 'Berhasil'}</strong></div>
-                </div>
+                <div style="font-size: 11px; font-weight: 800; color: #E65100; margin-top: 2px;">🌺 Bunga: ${item.posisiBunga || '-'}</div>
+                <div style="font-size: 10px; font-weight: 700; color: ${item.statusPolinasi === 'Gagal' ? '#C62828' : '#2E7D32'}; margin-top: 2px;">⚡ Status: ${item.statusPolinasi || 'Berhasil'}</div>
             `;
         } else if (kat === 'Buah') {
             metricsContent = `
-                <div style="font-size: 11px; color: #333;">
-                    <div>⚖️ Bobot: <strong>${item.bobotBuah || 0} ${t('unit_gram')}</strong></div>
-                    <div>🍬 Brix: <strong>${item.brixBuah || 0}° Brix</strong></div>
-                    <div>🕸️ Net: <strong>${item.netting || 'Merata'}</strong></div>
-                </div>
+                <div style="font-size: 11px; font-weight: 800; color: #6A1B9A; margin-top: 2px;">⚖️ ${item.bobotBuah || 0} g &nbsp;|&nbsp; 🍬 ${item.brixBuah || 0}° Brix</div>
+                <div style="font-size: 10px; font-weight: 700; color: #555; margin-top: 2px;">🕸️ Net: ${item.netting || '-'}</div>
             `;
         } else {
             metricsContent = `
-                <div style="display: flex; gap: 8px; font-size: 11px; color: #333;">
-                    <span>📏 <strong>${item.tinggi || 0} ${t('unit_cm')}</strong></span> | 
-                    <span>🍃 <strong>${item.daun || 0} ${t('unit_leaves')}</strong></span> | 
-                    <span>↔️ <strong>Ø ${item.batang || 0} ${t('unit_mm')}</strong></span>
-                </div>
+                <div style="font-size: 11px; font-weight: 800; color: #2E7D32; margin-top: 2px;">📏 ${item.tinggi || 0} cm &nbsp;|&nbsp; 🍃 ${item.daun || 0} Daun</div>
+                <div style="font-size: 10px; font-weight: 700; color: #555; margin-top: 2px;">↔️ Ø ${item.batang || 0} mm</div>
             `;
         }
 
         var isChecked = selectedItemIds.includes(item.id);
 
         return `
-            <div style="background: #ffffff; border-radius: 14px; border: 1px solid #E0E0E0; padding: 14px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div style="background: #ffffff; border-radius: 16px; border: 1px solid #EAEAEA; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
                 
-                <!-- CARD HEADER -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <!-- KEPALA KARTU (DATE, CHECKBOX, BADGES) -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="tanaman.toggleSelectItem('${item.id}')" style="width: 16px; height: 16px; cursor: pointer;">
-                        <span style="font-size: 12px; font-weight: 800; color: #1B5E20;">
-                            📅 ${item.tanggal || '-'}
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="tanaman.toggleSelectItem('${item.id}')" style="width: 15px; height: 15px; cursor: pointer;">
+                        <span style="font-size: 13px; font-weight: 800; color: #2C3E50;">
+                            ${item.tanggal || '-'}
                         </span>
-                        <span style="background: #2E7D32; color: #ffffff; font-weight: 800; padding: 2px 8px; border-radius: 8px; font-size: 10px;">
+                        <span style="background: #2E7D32; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px;">
                             ${hstRill} HST
                         </span>
                     </div>
 
-                    <span style="background: ${katBadgeBg}; color: ${katBadgeColor}; font-weight: 800; padding: 3px 10px; border-radius: 10px; font-size: 10px; text-transform: uppercase;">
+                    <span style="background: ${katBadgeBg}; color: ${katBadgeColor}; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 6px; text-transform: uppercase;">
                         ${kat}
                     </span>
                 </div>
 
-                <!-- CARD GRID CONTENT -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #F9F9F9; padding: 10px; border-radius: 10px; border: 1px solid #EEEEEE; margin-bottom: 10px;">
-                    <div>
-                        <div style="font-size: 9px; font-weight: 700; color: #777; text-transform: uppercase;">${t('card_lbl_loc_variety')}</div>
-                        <div style="font-size: 11px; font-weight: 800; color: #1B5E20; margin-top: 2px;">
+                <!-- GRID METRIK 2x2 KONSISTEN DENGAN MODUL NUTRISI -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                    
+                    <!-- BOX 1: VARIETAS & LOKASI -->
+                    <div style="background: #F8F9FA; border-radius: 10px; padding: 8px 10px;">
+                        <div style="font-size: 9px; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 3px;">
+                            ${t('card_lbl_loc_variety')}
+                        </div>
+                        <div style="font-size: 11px; font-weight: 800; color: #2E7D32;">
                             🌱 ${item.varietas || 'Melon'}
                         </div>
-                        <div style="font-size: 10px; font-weight: 700; color: #0277BD; margin-top: 2px;">
+                        <div style="font-size: 10px; font-weight: 700; color: #2980B9; margin-top: 2px;">
                             🏢 ${item.gh || 'GH-01'} - ${item.talang || '-'}
                         </div>
                     </div>
 
-                    <div>
-                        <div style="font-size: 9px; font-weight: 700; color: #777; text-transform: uppercase;">${t('card_lbl_metrics')}</div>
-                        <div style="margin-top: 2px;">
-                            ${metricsContent}
+                    <!-- BOX 2: METRIK PERTUMBUHAN / HASIL -->
+                    <div style="background: #F8F9FA; border-radius: 10px; padding: 8px 10px;">
+                        <div style="font-size: 9px; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 3px;">
+                            ${t('card_lbl_metrics')}
                         </div>
+                        ${metricsContent}
                     </div>
 
-                    <div>
-                        <div style="font-size: 9px; font-weight: 700; color: #777; text-transform: uppercase;">${t('card_lbl_pop_petugas')}</div>
-                        <div style="font-size: 10.5px; color: #444; margin-top: 2px;">
+                    <!-- BOX 3: KATEGORI & PIC -->
+                    <div style="background: #F8F9FA; border-radius: 10px; padding: 8px 10px;">
+                        <div style="font-size: 9px; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 3px;">
+                            ${t('card_lbl_pop_petugas')}
+                        </div>
+                        <div style="font-size: 11px; font-weight: 700; color: #333;">
                             👤 ${item.petugas || t('default_petugas')}
                         </div>
-                    </div>
-
-                    <div>
-                        <div style="font-size: 9px; font-weight: 700; color: #777; text-transform: uppercase;">${t('card_lbl_status')}</div>
-                        <div style="font-size: 10.5px; color: #2E7D32; font-weight: 700; margin-top: 2px;">
-                            ❤️ ${item.fase || deteksiFaseOtomatis(hstRill)}
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            📋 ${kat}
                         </div>
                     </div>
+
+                    <!-- BOX 4: FASE & STATUS TIMBAL BALIK -->
+                    <div style="background: #F8F9FA; border-radius: 10px; padding: 8px 10px;">
+                        <div style="font-size: 9px; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 3px;">
+                            ${t('card_lbl_status')}
+                        </div>
+                        <div style="font-size: 11px; font-weight: 800; color: #27AE60;">
+                            ❤️ ${item.fase || deteksiFaseOtomatis(hstRill)}
+                        </div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            💬 Tercatat Rapi
+                        </div>
+                    </div>
+
                 </div>
 
+                <!-- CATATAN KHUSUS (CLEAN TEXT STYLE) -->
                 ${item.desc ? `
-                    <div style="font-size: 10.5px; color: #555; background: #FFFDE7; padding: 6px 10px; border-radius: 8px; border: 1px solid #FFE082; margin-bottom: 10px;">
+                    <div style="font-size: 11px; color: #333; margin-top: 8px; margin-bottom: 6px; padding: 0 2px;">
                         <strong>Catatan:</strong> ${item.desc}
                     </div>
                 ` : ''}
 
-                <!-- CARD ACTIONS -->
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #E0E0E0; padding-top: 8px;">
-                    <button onclick="tanaman.showHistoryModal('${item.talang}', '${item.gh}')" style="background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; cursor: pointer;">
+                <!-- GARIS PEMBATAS PUTUS-PUTUS DENGAN IKON AKSI RAPI -->
+                <div style="border-top: 1px dashed #EAEAEA; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    
+                    <button onclick="tanaman.showHistoryModal('${item.talang}', '${item.gh}')" style="background: none; border: none; color: #2E7D32; font-size: 11px; font-weight: 700; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 4px;">
                         <i class="fas fa-history"></i> Timeline Siklus
                     </button>
 
-                    <div style="display: flex; gap: 6px;">
-                        <button onclick="tanaman.editData('${item.id}')" style="background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; cursor: pointer;">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button onclick="tanaman.deleteData('${item.id}')" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 4px 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; cursor: pointer;">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
+                    <div style="display: flex; gap: 14px; align-items: center;">
+                        <i class="fas fa-pencil-alt" onclick="tanaman.editData('${item.id}')" style="color: #E67E22; font-size: 14px; cursor: pointer;" title="Edit"></i>
+                        <i class="fas fa-trash-alt" onclick="tanaman.deleteData('${item.id}')" style="color: #E74C3C; font-size: 14px; cursor: pointer;" title="Hapus"></i>
                     </div>
+
                 </div>
 
             </div>
