@@ -246,6 +246,22 @@ var tanaman = (function() {
     }
 
     // ==========================================
+    // RENDER MARKUP DYNAMIC MODULE (SPA ROUTER COMPATIBILITY)
+    // ==========================================
+    function render() {
+        return `
+            <div id="page-tanaman-content" class="module-page" style="padding: 16px;">
+                <div id="titleFormTanaman" style="font-size: 16px; font-weight: 800; color: #1B5E20; margin-bottom: 12px;">
+                    ${t('module_title')}
+                </div>
+                
+                <!-- CONTAINER UTAMA UNTUK DAFTAR & FORM REKAP TANAMAN -->
+                <div id="recapTanamanList"></div>
+            </div>
+        `;
+    }
+
+    // ==========================================
     // HELPER KALKULASI HST DINAMIS (KALENDER MURNI MIDNIGHT NORMALIZATION)
     // ==========================================
     function parseLocalDate(dateStr) {
@@ -982,6 +998,7 @@ var tanaman = (function() {
     }
 
     return {
+        render: render,
         init: init,
         saveData: saveData,
         resetForm: resetForm,
