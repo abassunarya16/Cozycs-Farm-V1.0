@@ -1,20 +1,14 @@
 // ==========================================
-// COZYCS FARM - MODUL KEUANGAN (ENHANCED LOGIC)
+// COZYCS FARM - MODUL KEUANGAN (WITH AUTO-DRAFT & DASHBOARD LOG)
 // ==========================================
 
 var keuangan = (function() {
 
+    // KEY STORAGE
     var KEY_KEUANGAN = 'cozycs_keuangan';
     var KEY_SEEDED = 'cozycs_keuangan_init_done';
 
-    // STATE UNTUK FILTER & PAGINASI
-    var searchQuery = '';
-    var filterJenis = 'semua';
-    var filterStart = '';
-    var filterEnd = '';
-    var currentPage = 1;
-    var itemsPerPage = 20;
-
+    // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
         'id': {
             'module_title': 'Pencatatan Keuangan & Arus Kas',
@@ -53,9 +47,46 @@ var keuangan = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Transaksi keuangan berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus transaksi ini?',
-            'toast_deleted': 'Transaksi berhasil dihapus',
-            'ph_search': 'Cari transaksi...',
-            'btn_export': 'Export CSV'
+            'toast_deleted': 'Transaksi berhasil dihapus'
+        },
+        'en': {
+            'module_title': 'Financial Records & Cash Flow',
+            'stat_balance': 'CURRENT BALANCE',
+            'stat_income': 'TOTAL INCOME',
+            'stat_expense': 'TOTAL EXPENSE',
+            'stat_profit': 'EST. NET PROFIT',
+            'form_title_add': 'Record Financial Transaction',
+            'form_title_edit': 'Edit Financial Transaction',
+            'lbl_date': 'Transaction Date',
+            'lbl_type': 'Transaction Type',
+            'opt_income': 'Income',
+            'opt_expense': 'Expense',
+            'lbl_category': 'Category',
+            'opt_cat_melon_sales': 'Melon Sales',
+            'opt_cat_veggie_sales': 'Vegetable / Other Sales',
+            'opt_cat_nutrisi': 'Nutrients / Fertilizer Purchase',
+            'opt_cat_pestisida': 'Pesticide Purchase',
+            'opt_cat_alat': 'GH Tools & Spare Parts',
+            'opt_cat_operasional': 'Operational & Electricity',
+            'opt_cat_gaji': 'Salary / Labor',
+            'opt_cat_lainnya': 'Others',
+            'lbl_nominal': 'Amount (Rp)',
+            'ph_nominal': 'e.g., 1500000',
+            'lbl_gh': 'Related GH / Location',
+            'opt_all_gh': 'Entire Farm / General',
+            'lbl_petugas': 'Person in Charge',
+            'ph_petugas': 'e.g., Abas / Admin',
+            'default_petugas': 'Admin',
+            'lbl_desc': 'Description / Notes',
+            'ph_desc': 'Transaction details, invoice, buyer name...',
+            'btn_save': 'Save Transaction',
+            'btn_cancel': 'Cancel',
+            'recap_title': 'Transaction History',
+            'no_data': 'No financial transaction history found.',
+            'lbl_notes': 'Notes',
+            'toast_saved': 'Transaction saved successfully!',
+            'confirm_delete': 'Are you sure you want to delete this transaction?',
+            'toast_deleted': 'Transaction deleted successfully'
         }
     };
 
@@ -65,168 +96,297 @@ var keuangan = (function() {
     }
 
     function getKey() {
-        return (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.KEUANGAN) ? Storage.KEYS.KEUANGAN : KEY_KEUANGAN;
+        if (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.KEUANGAN) {
+            return Storage.KEYS.KEUANGAN;
+        }
+        return KEY_KEUANGAN;
     }
 
-    function getData(key) {
-        try {
-            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') return Storage.getAll(key) || [];
-            var raw = localStorage.getItem(key);
-            return raw ? JSON.parse(raw) : [];
-        } catch(e) { return []; }
+    function getVal(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
     }
 
-    function formatRupiah(val) {
-        var num = parseFloat(val) || 0;
-        var prefix = num < 0 ? '-' : '';
-        return prefix + 'Rp ' + Math.abs(num).toLocaleString('id-ID');
+    function setVal(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.value = val;
     }
 
     function populateGhDropdown() {
         var selectEl = document.getElementById('keuanganGh');
         if (!selectEl) return;
+
         var keyGh = (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.GREENHOUSE) ? Storage.KEYS.GREENHOUSE : 'cozycs_greenhouse';
         var dataGh = (typeof Storage !== 'undefined' && Storage.getAll) ? Storage.getAll(keyGh) : [];
+
         var html = '<option value="Seluruh Kebun">' + t('opt_all_gh') + '</option>';
-        dataGh.forEach(function(gh) { if (gh && gh.kode) html += '<option value="' + gh.kode + '">' + gh.kode + ' - ' + (gh.nama || 'GH') + '</option>'; });
+        if (Array.isArray(dataGh) && dataGh.length > 0) {
+            dataGh.forEach(function(gh) {
+                if (gh && gh.kode) {
+                    html += '<option value="' + gh.kode + '">' + gh.kode + ' - ' + (gh.nama || 'GH') + '</option>';
+                }
+            });
+        }
         selectEl.innerHTML = html;
     }
 
+    function checkSampleData() {
+        var isSeeded = localStorage.getItem(KEY_SEEDED);
+        if (!isSeeded) {
+            var dataExisting = (typeof Storage !== 'undefined' && Storage.getAll) ? Storage.getAll(getKey()) : [];
+            if (!dataExisting || dataExisting.length === 0) {
+                var initialData = [
+                    {
+                        id: 'FIN-' + Date.now(),
+                        tanggal: new Date().toISOString().split('T')[0],
+                        jenis: 'Pemasukan',
+                        kategori: 'Penjualan Melon',
+                        nominal: 2500000,
+                        gh: 'GH-01',
+                        petugas: 'Abas',
+                        desc: 'Penjualan panen Melon Intanon Grade A'
+                    }
+                ];
+                if (typeof Storage !== 'undefined' && Storage.saveAll) {
+                    Storage.saveAll(getKey(), initialData);
+                }
+            }
+            localStorage.setItem(KEY_SEEDED, 'true');
+        }
+    }
+
     function render() {
-        var todayStr = new Date().toISOString().split('T')[0];
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-wallet" style="color: #2E7D32;"></i> ${t('module_title')}</div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="keuanganStatCards"></div>
+                <!-- 1. DASHBOARD STATISTIK KEUANGAN -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="keuanganStatCards">
+                    <!-- Dynamic Stat Cards -->
+                </div>
 
+                <!-- 2. FORM INPUT TRANSAKSI -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
                     <div style="font-size: 14px; font-weight: 700; color: #2E7D32; margin-bottom: 12px;" id="formTitleKeuangan">${t('form_title_add')}</div>
                     <form id="formKeuangan">
                         <input type="hidden" id="keuanganId">
+
+                        <!-- Tanggal & Jenis -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label><input type="date" id="keuanganTanggal" value="${todayStr}" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></div>
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_type')}</label><select id="keuanganJenis" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"><option value="Pemasukan">${t('opt_income')}</option><option value="Pengeluaran">${t('opt_expense')}</option></select></div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
+                                <input type="date" id="keuanganTanggal" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_type')}</label>
+                                <select id="keuanganJenis" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                    <option value="Pemasukan">${t('opt_income')}</option>
+                                    <option value="Pengeluaran">${t('opt_expense')}</option>
+                                </select>
+                            </div>
                         </div>
+
+                        <!-- Kategori & Nominal -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_category')}</label><select id="keuanganKategori" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"><option value="Penjualan Melon">${t('opt_cat_melon_sales')}</option><option value="Penjualan Sayur / Lainnya">${t('opt_cat_veggie_sales')}</option><option value="Pembelian Nutrisi / Pupuk">${t('opt_cat_nutrisi')}</option><option value="Pembelian Pestisida / Obatan">${t('opt_cat_pestisida')}</option><option value="Peralatan & Sparepart GH">${t('opt_cat_alat')}</option><option value="Operasional & Listrik">${t('opt_cat_operasional')}</option><option value="Gaji / Tenaga Kerja">${t('opt_cat_gaji')}</option><option value="Lain-Lain">${t('opt_cat_lainnya')}</option></select></div>
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_nominal')}</label><input type="number" id="keuanganNominal" required placeholder="${t('ph_nominal')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_category')}</label>
+                                <select id="keuanganKategori" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                    <option value="Penjualan Melon">${t('opt_cat_melon_sales')}</option>
+                                    <option value="Penjualan Sayur / Lainnya">${t('opt_cat_veggie_sales')}</option>
+                                    <option value="Pembelian Nutrisi / Pupuk">${t('opt_cat_nutrisi')}</option>
+                                    <option value="Pembelian Pestisida / Obatan">${t('opt_cat_pestisida')}</option>
+                                    <option value="Peralatan & Sparepart GH">${t('opt_cat_alat')}</option>
+                                    <option value="Operasional & Listrik">${t('opt_cat_operasional')}</option>
+                                    <option value="Gaji / Tenaga Kerja">${t('opt_cat_gaji')}</option>
+                                    <option value="Lain-Lain">${t('opt_cat_lainnya')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_nominal')}</label>
+                                <input type="number" id="keuanganNominal" required placeholder="${t('ph_nominal')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                            </div>
                         </div>
+
+                        <!-- Lokasi GH & Penanggung Jawab -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label><select id="keuanganGh" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></select></div>
-                            <div><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_petugas')}</label><input type="text" id="keuanganPetugas" placeholder="${t('ph_petugas')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_gh')}</label>
+                                <select id="keuanganGh" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                    <option value="Seluruh Kebun">${t('opt_all_gh')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_petugas')}</label>
+                                <input type="text" id="keuanganPetugas" placeholder="${t('ph_petugas')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                            </div>
                         </div>
-                        <div style="margin-bottom: 12px;"><label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label><textarea id="keuanganDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px;"></textarea></div>
+
+                        <!-- Catatan / Deskripsi -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_desc')}</label>
+                            <textarea id="keuanganDesc" rows="2" placeholder="${t('ph_desc')}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);"></textarea>
+                        </div>
+
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1; background: #2E7D32; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600;"><i class="fas fa-save"></i> ${t('btn_save')}</button>
                             <button type="button" id="btnCancelKeuanganEdit" style="display: none; background: #e0e0e0; border: none; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #333;">${t('btn_cancel')}</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- FILTER BAR -->
-                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
-                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                        <input type="text" id="searchKeuangan" placeholder="${t('ph_search')}" oninput="keuangan.filter()" style="flex:1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
-                        <button onclick="keuangan.exportCSV()" style="background: #2E7D32; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px;">${t('btn_export')}</button>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="date" id="startKeuangan" onchange="keuangan.filter()" style="flex:1; padding: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
-                        <input type="date" id="endKeuangan" onchange="keuangan.filter()" style="flex:1; padding: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
-                        <select id="filterJenisKeuangan" onchange="keuangan.filter()" style="padding: 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;"><option value="semua">Semua</option><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
-                    </div>
-                </div>
-
+                <!-- 3. REKAP RIWAYAT TRANSAKSI -->
                 <div class="section-title"><i class="fas fa-history" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 <div id="containerKeuanganCards"></div>
             </div>
         `;
     }
 
-    function filter() {
-        searchQuery = document.getElementById('searchKeuangan').value.toLowerCase();
-        filterJenis = document.getElementById('filterJenisKeuangan').value;
-        filterStart = document.getElementById('startKeuangan').value;
-        filterEnd = document.getElementById('endKeuangan').value;
-        currentPage = 1;
-        loadTable();
-    }
-
-    function exportCSV() {
-        var data = getData(getKey());
-        var csv = "Tanggal,Jenis,Kategori,Nominal,GH,Petugas,Deskripsi\n";
-        data.forEach(function(item) {
-            csv += [item.tanggal, item.jenis, item.kategori, item.nominal, item.gh, item.petugas, item.desc].join(",") + "\n";
-        });
-        var blob = new Blob([csv], { type: 'text/csv' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Laporan_Keuangan_' + new Date().toISOString().split('T')[0] + '.csv';
-        a.click();
-    }
-
     function init() {
+        checkSampleData();
         populateGhDropdown();
         loadDashboard();
         loadTable();
 
-        document.getElementById('formKeuangan').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var id = getVal('keuanganId');
-            var nominal = parseFloat(getVal('keuanganNominal')); // Input sudah otomatis angka murni
-            
-            var payload = {
-                id: id || 'FIN-' + Date.now(),
-                tanggal: getVal('keuanganTanggal'),
-                jenis: getVal('keuanganJenis'),
-                kategori: getVal('keuanganKategori'),
-                nominal: nominal,
-                gh: getVal('keuanganGh'),
-                petugas: getVal('keuanganPetugas') || t('default_petugas'),
-                desc: getVal('keuanganDesc')
-            };
+        if (typeof restoreFormDraftGlobal === 'function') {
+            restoreFormDraftGlobal('formKeuangan');
+        }
 
-            var storageKey = getKey();
-            if (id) {
-                if (typeof Storage !== 'undefined' && Storage.update) Storage.update(storageKey, payload);
-            } else {
-                if (typeof Storage !== 'undefined' && Storage.add) Storage.add(storageKey, payload);
-            }
-            
-            document.getElementById('formKeuangan').reset();
+        if (!getVal('keuanganTanggal')) {
             setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
-            loadDashboard();
-            loadTable();
-        });
+        }
+
+        var form = document.getElementById('formKeuangan');
+        var btnCancel = document.getElementById('btnCancelKeuanganEdit');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var id = getVal('keuanganId');
+                var tanggal = getVal('keuanganTanggal') || new Date().toISOString().split('T')[0];
+                var jenis = getVal('keuanganJenis');
+                var kategori = getVal('keuanganKategori');
+                var nominal = parseFloat(getVal('keuanganNominal')) || 0;
+                var gh = getVal('keuanganGh');
+                var petugas = getVal('keuanganPetugas');
+                var desc = getVal('keuanganDesc');
+
+                var payload = {
+                    tanggal: tanggal,
+                    jenis: jenis || 'Pemasukan',
+                    kategori: kategori || 'Lain-Lain',
+                    nominal: nominal,
+                    gh: gh || 'Seluruh Kebun',
+                    petugas: petugas || t('default_petugas'),
+                    desc: desc
+                };
+
+                try {
+                    var storageKey = getKey();
+                    if (id) {
+                        payload.id = id;
+                        if (typeof Storage !== 'undefined' && Storage.update) {
+                            Storage.update(storageKey, payload);
+                        }
+                    } else {
+                        if (typeof Storage !== 'undefined' && Storage.add) {
+                            Storage.add(storageKey, payload);
+                        }
+                    }
+
+                    if (typeof Storage !== 'undefined' && Storage.add) {
+                        var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
+                        var now = new Date();
+                        var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                        var isInc = (jenis === 'Pemasukan' || jenis === 'Income');
+
+                        var formattedNominal = (nominal < 0 ? '-' : '') + 'Rp' + Math.abs(nominal).toLocaleString('id-ID');
+
+                        Storage.add(keyAktivitas, {
+                            judul: id ? 'Perbarui Transaksi Keuangan' : 'Pencatatan Keuangan',
+                            deskripsi: (jenis || 'Pemasukan') + ' ' + formattedNominal + ' (' + (kategori || 'Keuangan') + ')',
+                            tanggal: tanggal || now.toISOString().split('T')[0],
+                            jam: timeStr,
+                            kategori: 'Keuangan',
+                            icon: 'fas fa-wallet',
+                            color: isInc ? '#2E7D32' : '#C62828'
+                        });
+                    }
+
+                    if (typeof Helper !== 'undefined' && Helper.showToast) {
+                        Helper.showToast(t('toast_saved'), 'success');
+                    }
+                } catch(err) {
+                    console.error("Storage Error:", err);
+                }
+
+                form.reset();
+                setVal('keuanganId', '');
+                setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
+                var titleEl = document.getElementById('formTitleKeuangan');
+                if (titleEl) titleEl.innerText = t('form_title_add');
+                if (btnCancel) btnCancel.style.display = 'none';
+
+                loadDashboard();
+                loadTable();
+            });
+        }
+
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function() {
+                if (form) form.reset();
+                setVal('keuanganId', '');
+                setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
+                var titleEl = document.getElementById('formTitleKeuangan');
+                if (titleEl) titleEl.innerText = t('form_title_add');
+                btnCancel.style.display = 'none';
+            });
+        }
     }
 
     function loadDashboard() {
         var container = document.getElementById('keuanganStatCards');
         if (!container) return;
-        var data = getData(getKey());
-        var totalMasuk = 0, totalKeluar = 0;
+
+        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+        var totalMasuk = 0;
+        var totalKeluar = 0;
+
         data.forEach(function(item) {
-            var n = parseFloat(item.nominal) || 0;
-            if (item.jenis === 'Pemasukan') totalMasuk += n; else totalKeluar += n;
+            var nominal = parseFloat(item.nominal) || 0;
+            if (item.jenis === 'Pemasukan' || item.jenis === 'Income') {
+                totalMasuk += nominal;
+            } else {
+                totalKeluar += nominal;
+            }
         });
+
         var saldo = totalMasuk - totalKeluar;
+
+        var formatRp = function(val) {
+            var num = parseFloat(val) || 0;
+            if (num < 0) {
+                return '-Rp' + Math.abs(num).toLocaleString('id-ID');
+            }
+            return 'Rp' + num.toLocaleString('id-ID');
+        };
+
         container.innerHTML = `
-            <div style="background:#fff; padding:10px; border-radius:10px; border:1px solid #eee;">
-                <div style="font-size:9px; color:#888;">${t('stat_balance')}</div>
-                <div style="font-size:14px; font-weight:bold; color:${saldo>=0?'#2E7D32':'#C62828'}">${formatRupiah(saldo)}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: #888; font-weight: 600;">${t('stat_balance')}</div>
+                <div style="font-size: 15px; font-weight: bold; color: ${saldo >= 0 ? '#2E7D32' : '#C62828'};">${formatRp(saldo)}</div>
             </div>
-            <div style="background:#fff; padding:10px; border-radius:10px; border:1px solid #eee;">
-                <div style="font-size:9px; color:#2E7D32;">${t('stat_income')}</div>
-                <div style="font-size:14px; font-weight:bold; color:#2E7D32;">+${formatRupiah(totalMasuk)}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: #2E7D32; font-weight: 600;">${t('stat_income')}</div>
+                <div style="font-size: 15px; font-weight: bold; color: #2E7D32;">+${formatRp(totalMasuk)}</div>
             </div>
-            <div style="background:#fff; padding:10px; border-radius:10px; border:1px solid #eee;">
-                <div style="font-size:9px; color:#C62828;">${t('stat_expense')}</div>
-                <div style="font-size:14px; font-weight:bold; color:#C62828;">-${formatRupiah(totalKeluar)}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: #C62828; font-weight: 600;">${t('stat_expense')}</div>
+                <div style="font-size: 15px; font-weight: bold; color: #C62828;">-${formatRp(totalKeluar)}</div>
             </div>
-            <div style="background:#fff; padding:10px; border-radius:10px; border:1px solid #eee;">
-                <div style="font-size:9px; color:#0277BD;">${t('stat_profit')}</div>
-                <div style="font-size:14px; font-weight:bold; color:#0277BD;">${formatRupiah(saldo)}</div>
+            <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
+                <div style="font-size: 10px; color: #0277BD; font-weight: 600;">${t('stat_profit')}</div>
+                <div style="font-size: 15px; font-weight: bold; color: #0277BD;">${formatRp(saldo)}</div>
             </div>
         `;
     }
@@ -234,40 +394,120 @@ var keuangan = (function() {
     function loadTable() {
         var container = document.getElementById('containerKeuanganCards');
         if (!container) return;
-        var data = getData(getKey());
-        
-        // FILTERING
-        var filtered = data.filter(function(item) {
-            var matchSearch = (item.kategori + item.desc + item.petugas).toLowerCase().includes(searchQuery);
-            var matchJenis = (filterJenis === 'semua' || item.jenis === filterJenis);
-            var matchStart = (!filterStart || item.tanggal >= filterStart);
-            var matchEnd = (!filterEnd || item.tanggal <= filterEnd);
-            return matchSearch && matchJenis && matchStart && matchEnd;
+
+        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+
+        if (!Array.isArray(data) || data.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            return;
+        }
+
+        data.sort(function(a, b) {
+            var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
+            var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
+            return dateB - dateA;
         });
 
-        // SORTING & RENDER
-        filtered.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
-        
         var html = '';
-        filtered.forEach(function(item) {
-            var isMasuk = item.jenis === 'Pemasukan';
+        data.forEach(function(item) {
+            if (!item) return;
+
+            var isMasuk = item.jenis === 'Pemasukan' || item.jenis === 'Income';
+            var badgeBg = isMasuk ? '#E8F5E9' : '#FFEBEE';
+            var badgeColor = isMasuk ? '#2E7D32' : '#C62828';
+            var prefix = isMasuk ? '+' : '-';
+
             html += `
-                <div style="background:#fff; border:1px solid #eee; border-radius:12px; padding:12px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;">
-                        <span>${item.tanggal} | <b>${item.gh}</b></span>
-                        <b style="color:${isMasuk?'#2E7D32':'#C62828'}">${item.jenis}</b>
+                <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #f0f0f0); padding-bottom: 8px; margin-bottom: 10px;">
+                        <div>
+                            <strong style="font-size: 14px; color: var(--text-color, #222);">${item.tanggal || '-'}</strong>
+                            <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">${item.gh || 'Seluruh Kebun'}</span>
+                        </div>
+                        <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold;">${item.jenis}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><b style="font-size:13px;">${item.kategori}</b><br><small>${item.petugas}</small></div>
-                        <div style="font-weight:bold; color:${isMasuk?'#2E7D32':'#C62828'}">${isMasuk?'+':'-'}${formatRupiah(item.nominal)}</div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <strong style="font-size: 15px; color: var(--text-color, #222); display: block;">${item.kategori}</strong>
+                            <div style="font-size: 11px; color: #888; margin-top: 2px;">
+                                <i class="fas fa-user-check" style="color: #0288D1;"></i> ${item.petugas || t('default_petugas')}
+                            </div>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: ${badgeColor};">
+                            ${prefix}Rp${(item.nominal || 0).toLocaleString('id-ID')}
+                        </div>
+                    </div>
+
+                    ${item.desc ? `<div style="font-size: 12px; color: var(--text-color, #333); background: var(--inner-card-bg, #fdfdfd); padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">${t('lbl_notes')}: ${item.desc}</div>` : ''}
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color, #eee); padding-top: 8px; margin-top: 4px;">
+                        <span onclick="keuangan.editItem('${item.id}')" title="Edit" style="cursor: pointer; color: #F57F17; font-size: 14px; padding: 4px;"><i class="fas fa-pen"></i></span>
+                        <span onclick="keuangan.deleteItem('${item.id}')" title="Hapus" style="cursor: pointer; color: #C62828; font-size: 14px; padding: 4px;"><i class="fas fa-trash"></i></span>
                     </div>
                 </div>
             `;
         });
-        container.innerHTML = html || `<div style="text-align:center; padding:20px;">${t('no_data')}</div>`;
+
+        container.innerHTML = html;
     }
 
-    return { render: render, init: init, filter: filter, exportCSV: exportCSV, editItem: editItem, deleteItem: deleteItem };
+    function editItem(id) {
+        var storageKey = getKey();
+        var item = null;
+        try {
+            if (typeof Storage !== 'undefined' && Storage.getById) {
+                item = Storage.getById(storageKey, id);
+            }
+        } catch(e) {}
+
+        if (!item) return;
+
+        populateGhDropdown();
+
+        setVal('keuanganId', item.id || '');
+        setVal('keuanganTanggal', item.tanggal || '');
+        setVal('keuanganJenis', item.jenis || 'Pemasukan');
+        setVal('keuanganKategori', item.kategori || 'Penjualan Melon');
+        setVal('keuanganNominal', item.nominal || '');
+        setVal('keuanganGh', item.gh || 'Seluruh Kebun');
+        setVal('keuanganPetugas', item.petugas === t('default_petugas') ? '' : (item.petugas || ''));
+        setVal('keuanganDesc', item.desc || '');
+
+        var titleEl = document.getElementById('formTitleKeuangan');
+        if (titleEl) titleEl.innerText = t('form_title_edit');
+
+        var btnCancel = document.getElementById('btnCancelKeuanganEdit');
+        if (btnCancel) btnCancel.style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteItem(id) {
+        if (confirm(t('confirm_delete'))) {
+            try {
+                var storageKey = getKey();
+                if (typeof Storage !== 'undefined' && Storage.remove) {
+                    Storage.remove(storageKey, id);
+                }
+            } catch(e) {}
+            loadDashboard();
+            loadTable();
+            if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+                Helper.showToast(t('toast_deleted'), 'error');
+            }
+        }
+    }
+
+    return {
+        render: render,
+        init: init,
+        loadDashboard: loadDashboard,
+        loadTable: loadTable,
+        editItem: editItem,
+        deleteItem: deleteItem
+    };
+
 })();
 
 window.keuangan = keuangan;
