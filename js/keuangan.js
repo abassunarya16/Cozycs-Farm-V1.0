@@ -142,7 +142,6 @@ var keuangan = (function() {
         if (el) el.value = val;
     }
 
-    // HELPER FORMAT RUPIAH RAPI (MENGATASI BUG Rp-102.000 -> -Rp102.000)
     function formatRp(val) {
         var num = parseFloat(val) || 0;
         if (num < 0) {
@@ -151,7 +150,6 @@ var keuangan = (function() {
         return 'Rp' + num.toLocaleString('id-ID');
     }
 
-    // POPULASI DROPDOWN GREENHOUSE DINAMIS DARI STORAGE
     function populateGhDropdown() {
         var selectEl = document.getElementById('keuanganGh');
         if (!selectEl) return;
@@ -278,16 +276,16 @@ var keuangan = (function() {
 
                 <!-- 3. BAR KONTROL: SEARCH, FILTER DATE RANGE & EXPORT CSV -->
                 <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
-                    <!-- Row 1: Search, Filter Jenis, & Export Button -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
-                        <div style="flex: 2; min-width: 160px;">
+                    <!-- Row 1: Search & Filter Jenis -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <div style="flex: 2;">
                             <input type="text" id="keuanganSearchInput" 
                                    placeholder="${t('ph_search')}" 
                                    oninput="keuangan.handleSearch(this.value)"
                                    value="${searchQuery}"
                                    style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); font-size: 12px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                         </div>
-                        <div style="flex: 1; min-width: 120px;">
+                        <div style="flex: 1;">
                             <select id="keuanganFilterJenis" onchange="keuangan.handleFilterJenis(this.value)"
                                     style="width: 100%; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); font-size: 12px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: 600;">
                                 <option value="semua" ${filterJenis === 'semua' ? 'selected' : ''}>Semua Transaksi</option>
@@ -295,13 +293,10 @@ var keuangan = (function() {
                                 <option value="Pengeluaran" ${filterJenis === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran (-)</option>
                             </select>
                         </div>
-                        <button type="button" onclick="keuangan.exportCSV()" style="background: #2E7D32; color: #fff; border: none; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap;">
-                            <i class="fas fa-file-excel"></i> Export CSV
-                        </button>
                     </div>
 
-                    <!-- Row 2: Filter Rentang Tanggal (Date Range Filter) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center;">
+                    <!-- Row 2: Filter Rentang Tanggal -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                         <div>
                             <label style="font-size: 10px; font-weight: 700; color: #777; display: block; margin-bottom: 2px;">Dari Tanggal:</label>
                             <input type="date" id="keuanganFilterStart" value="${filterStart}" onchange="keuangan.handleFilterDate()" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; box-sizing: border-box; background: var(--card-bg, #fff);">
@@ -310,6 +305,13 @@ var keuangan = (function() {
                             <label style="font-size: 10px; font-weight: 700; color: #777; display: block; margin-bottom: 2px;">Sampai Tanggal:</label>
                             <input type="date" id="keuanganFilterEnd" value="${filterEnd}" onchange="keuangan.handleFilterDate()" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; box-sizing: border-box; background: var(--card-bg, #fff);">
                         </div>
+                    </div>
+
+                    <!-- Row 3: Export CSV di Sudut Kanan Bawah -->
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="button" onclick="keuangan.exportCSV()" style="background: #2E7D32; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-file-excel"></i> Export CSV
+                        </button>
                     </div>
                 </div>
 
@@ -376,7 +378,6 @@ var keuangan = (function() {
                         }
                     }
 
-                    // LOG AKTIVITAS DASBOR
                     if (typeof Storage !== 'undefined' && Storage.add) {
                         var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                         var now = new Date();
@@ -488,22 +489,18 @@ var keuangan = (function() {
             return;
         }
 
-        // 1. FILTERING DATA (PENCARIAN, JENIS & RENTANG TANGGAL)
         var filteredData = data.filter(function(item) {
             if (!item) return false;
 
-            // Filter Jenis Transaksi
             if (filterJenis !== 'semua') {
                 var isInc = (item.jenis === 'Pemasukan' || item.jenis === 'Income');
                 if (filterJenis === 'Pemasukan' && !isInc) return false;
                 if (filterJenis === 'Pengeluaran' && isInc) return false;
             }
 
-            // Filter Rentang Tanggal
             if (filterStart && item.tanggal < filterStart) return false;
             if (filterEnd && item.tanggal > filterEnd) return false;
 
-            // Filter Kata Kunci Pencarian
             if (searchQuery) {
                 var q = searchQuery.toLowerCase();
                 var text = (item.kategori || '') + ' ' + (item.desc || '') + ' ' + (item.petugas || '') + ' ' + (item.gh || '');
@@ -519,14 +516,12 @@ var keuangan = (function() {
             return;
         }
 
-        // 2. SORTING DARI TANGGAL TERBARU
         filteredData.sort(function(a, b) {
             var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
             var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
             return dateB - dateA;
         });
 
-        // 3. PAGINASI DATA
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -577,7 +572,6 @@ var keuangan = (function() {
 
         container.innerHTML = html;
 
-        // PAGINATION CONTROLS
         if (paginationEl) {
             if (totalPages > 1) {
                 paginationEl.innerHTML = `
@@ -599,7 +593,6 @@ var keuangan = (function() {
         }
     }
 
-    // HANDLER FILTER & SEARCH
     function handleSearch(val) {
         searchQuery = val || '';
         currentPage = 1;
@@ -624,7 +617,6 @@ var keuangan = (function() {
         loadTable();
     }
 
-    // FITUR EXPORT CSV (SESUAI DATA FILTER YANG TAMPIL)
     function exportCSV() {
         var data = getData(getKey());
         if (!Array.isArray(data) || data.length === 0) {
