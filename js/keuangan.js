@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL KEUANGAN (WITH AUTO-DRAFT & DASHBOARD LOG)
+// COZYCS FARM - MODUL KEUANGAN (WITH SEARCH, DATE RANGE FILTER, EXPORT CSV & DASHBOARD LOG)
 // ==========================================
 
 var keuangan = (function() {
@@ -7,6 +7,14 @@ var keuangan = (function() {
     // KEY STORAGE
     var KEY_KEUANGAN = 'cozycs_keuangan';
     var KEY_SEEDED = 'cozycs_keuangan_init_done';
+
+    // STATE UNTUK PENCARIAN, FILTER & PAGINASI
+    var searchQuery = '';
+    var filterJenis = 'semua';
+    var filterStart = '';
+    var filterEnd = '';
+    var currentPage = 1;
+    var itemsPerPage = 15;
 
     // KAMUS TERJEMAHAN DUAL BAHASA (ID & EN)
     var i18nDict = {
@@ -47,7 +55,11 @@ var keuangan = (function() {
             'lbl_notes': 'Catatan',
             'toast_saved': 'Transaksi keuangan berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus transaksi ini?',
-            'toast_deleted': 'Transaksi berhasil dihapus'
+            'toast_deleted': 'Transaksi berhasil dihapus',
+            'ph_search': 'Cari kategori, catatan, petugas...',
+            'btn_prev': 'Sebelumnya',
+            'btn_next': 'Selanjutnya',
+            'page_lbl': 'Halaman'
         },
         'en': {
             'module_title': 'Financial Records & Cash Flow',
@@ -86,7 +98,11 @@ var keuangan = (function() {
             'lbl_notes': 'Notes',
             'toast_saved': 'Transaction saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this transaction?',
-            'toast_deleted': 'Transaction deleted successfully'
+            'toast_deleted': 'Transaction deleted successfully',
+            'ph_search': 'Search category, notes, PIC...',
+            'btn_prev': 'Previous',
+            'btn_next': 'Next',
+            'page_lbl': 'Page'
         }
     };
 
@@ -102,6 +118,20 @@ var keuangan = (function() {
         return KEY_KEUANGAN;
     }
 
+    function getData(key) {
+        try {
+            if (typeof Storage !== 'undefined' && typeof Storage.getAll === 'function') {
+                var res = Storage.getAll(key);
+                if (Array.isArray(res)) return res;
+            }
+            var raw = localStorage.getItem(key);
+            if (raw) return JSON.parse(raw);
+        } catch(e) {
+            console.error('[Keuangan] Gagal mengambil data ' + key, e);
+        }
+        return [];
+    }
+
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -112,6 +142,16 @@ var keuangan = (function() {
         if (el) el.value = val;
     }
 
+    // HELPER FORMAT RUPIAH RAPI (MENGATASI BUG Rp-102.000 -> -Rp102.000)
+    function formatRp(val) {
+        var num = parseFloat(val) || 0;
+        if (num < 0) {
+            return '-Rp' + Math.abs(num).toLocaleString('id-ID');
+        }
+        return 'Rp' + num.toLocaleString('id-ID');
+    }
+
+    // POPULASI DROPDOWN GREENHOUSE DINAMIS DARI STORAGE
     function populateGhDropdown() {
         var selectEl = document.getElementById('keuanganGh');
         if (!selectEl) return;
@@ -133,7 +173,7 @@ var keuangan = (function() {
     function checkSampleData() {
         var isSeeded = localStorage.getItem(KEY_SEEDED);
         if (!isSeeded) {
-            var dataExisting = (typeof Storage !== 'undefined' && Storage.getAll) ? Storage.getAll(getKey()) : [];
+            var dataExisting = getData(getKey());
             if (!dataExisting || dataExisting.length === 0) {
                 var initialData = [
                     {
@@ -144,7 +184,7 @@ var keuangan = (function() {
                         nominal: 2500000,
                         gh: 'GH-01',
                         petugas: 'Abas',
-                        desc: 'Penjualan panen Melon Intanon Grade A'
+                        desc: 'Penjualan panen Melon Inthanon Grade A'
                     }
                 ];
                 if (typeof Storage !== 'undefined' && Storage.saveAll) {
@@ -156,6 +196,8 @@ var keuangan = (function() {
     }
 
     function render() {
+        var todayStr = new Date().toISOString().split('T')[0];
+
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-wallet" style="color: #2E7D32;"></i> ${t('module_title')}</div>
@@ -175,7 +217,7 @@ var keuangan = (function() {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_date')}</label>
-                                <input type="date" id="keuanganTanggal" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                                <input type="date" id="keuanganTanggal" value="${todayStr}" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                             </div>
                             <div>
                                 <label style="font-size: 12px; font-weight: 600; color: #555;">${t('lbl_type')}</label>
@@ -234,9 +276,49 @@ var keuangan = (function() {
                     </form>
                 </div>
 
-                <!-- 3. REKAP RIWAYAT TRANSAKSI -->
+                <!-- 3. BAR KONTROL: SEARCH, FILTER DATE RANGE & EXPORT CSV -->
+                <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 14px;">
+                    <!-- Row 1: Search, Filter Jenis, & Export Button -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
+                        <div style="flex: 2; min-width: 160px;">
+                            <input type="text" id="keuanganSearchInput" 
+                                   placeholder="${t('ph_search')}" 
+                                   oninput="keuangan.handleSearch(this.value)"
+                                   value="${searchQuery}"
+                                   style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); font-size: 12px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #333);">
+                        </div>
+                        <div style="flex: 1; min-width: 120px;">
+                            <select id="keuanganFilterJenis" onchange="keuangan.handleFilterJenis(this.value)"
+                                    style="width: 100%; padding: 9px 8px; border-radius: 8px; border: 1px solid var(--border-color, #ccc); font-size: 12px; box-sizing: border-box; background: var(--card-bg, #fff); color: var(--text-color, #333); font-weight: 600;">
+                                <option value="semua" ${filterJenis === 'semua' ? 'selected' : ''}>Semua Transaksi</option>
+                                <option value="Pemasukan" ${filterJenis === 'Pemasukan' ? 'selected' : ''}>Pemasukan (+)</option>
+                                <option value="Pengeluaran" ${filterJenis === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran (-)</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="keuangan.exportCSV()" style="background: #2E7D32; color: #fff; border: none; padding: 9px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap;">
+                            <i class="fas fa-file-excel"></i> Export CSV
+                        </button>
+                    </div>
+
+                    <!-- Row 2: Filter Rentang Tanggal (Date Range Filter) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: center;">
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #777; display: block; margin-bottom: 2px;">Dari Tanggal:</label>
+                            <input type="date" id="keuanganFilterStart" value="${filterStart}" onchange="keuangan.handleFilterDate()" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; box-sizing: border-box; background: var(--card-bg, #fff);">
+                        </div>
+                        <div>
+                            <label style="font-size: 10px; font-weight: 700; color: #777; display: block; margin-bottom: 2px;">Sampai Tanggal:</label>
+                            <input type="date" id="keuanganFilterEnd" value="${filterEnd}" onchange="keuangan.handleFilterDate()" style="width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--border-color, #ccc); font-size: 11px; box-sizing: border-box; background: var(--card-bg, #fff);">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. REKAP RIWAYAT TRANSAKSI -->
                 <div class="section-title"><i class="fas fa-history" style="color: #2E7D32;"></i> ${t('recap_title')}</div>
                 <div id="containerKeuanganCards"></div>
+
+                <!-- 5. KONTROL PAGINASI -->
+                <div id="keuanganPaginationControls" style="margin-top: 14px;"></div>
             </div>
         `;
     }
@@ -294,17 +376,16 @@ var keuangan = (function() {
                         }
                     }
 
+                    // LOG AKTIVITAS DASBOR
                     if (typeof Storage !== 'undefined' && Storage.add) {
                         var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
                         var now = new Date();
                         var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                         var isInc = (jenis === 'Pemasukan' || jenis === 'Income');
 
-                        var formattedNominal = (nominal < 0 ? '-' : '') + 'Rp' + Math.abs(nominal).toLocaleString('id-ID');
-
                         Storage.add(keyAktivitas, {
                             judul: id ? 'Perbarui Transaksi Keuangan' : 'Pencatatan Keuangan',
-                            deskripsi: (jenis || 'Pemasukan') + ' ' + formattedNominal + ' (' + (kategori || 'Keuangan') + ')',
+                            deskripsi: (jenis || 'Pemasukan') + ' ' + formatRp(nominal) + ' (' + (kategori || 'Keuangan') + ')',
                             tanggal: tanggal || now.toISOString().split('T')[0],
                             jam: timeStr,
                             kategori: 'Keuangan',
@@ -320,13 +401,7 @@ var keuangan = (function() {
                     console.error("Storage Error:", err);
                 }
 
-                form.reset();
-                setVal('keuanganId', '');
-                setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
-                var titleEl = document.getElementById('formTitleKeuangan');
-                if (titleEl) titleEl.innerText = t('form_title_add');
-                if (btnCancel) btnCancel.style.display = 'none';
-
+                resetForm();
                 loadDashboard();
                 loadTable();
             });
@@ -334,42 +409,51 @@ var keuangan = (function() {
 
         if (btnCancel) {
             btnCancel.addEventListener('click', function() {
-                if (form) form.reset();
-                setVal('keuanganId', '');
-                setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
-                var titleEl = document.getElementById('formTitleKeuangan');
-                if (titleEl) titleEl.innerText = t('form_title_add');
-                btnCancel.style.display = 'none';
+                resetForm();
             });
         }
+    }
+
+    function resetForm() {
+        var form = document.getElementById('formKeuangan');
+        if (form) form.reset();
+
+        setVal('keuanganId', '');
+        setVal('keuanganTanggal', new Date().toISOString().split('T')[0]);
+        setVal('keuanganJenis', 'Pemasukan');
+        setVal('keuanganKategori', 'Penjualan Melon');
+        setVal('keuanganGh', 'Seluruh Kebun');
+        setVal('keuanganPetugas', '');
+        setVal('keuanganDesc', '');
+
+        var titleEl = document.getElementById('formTitleKeuangan');
+        if (titleEl) titleEl.innerText = t('form_title_add');
+
+        var btnCancel = document.getElementById('btnCancelKeuanganEdit');
+        if (btnCancel) btnCancel.style.display = 'none';
     }
 
     function loadDashboard() {
         var container = document.getElementById('keuanganStatCards');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+        var data = getData(getKey());
         var totalMasuk = 0;
         var totalKeluar = 0;
 
-        data.forEach(function(item) {
-            var nominal = parseFloat(item.nominal) || 0;
-            if (item.jenis === 'Pemasukan' || item.jenis === 'Income') {
-                totalMasuk += nominal;
-            } else {
-                totalKeluar += nominal;
-            }
-        });
+        if (Array.isArray(data)) {
+            data.forEach(function(item) {
+                if (!item) return;
+                var nominal = parseFloat(item.nominal) || 0;
+                if (item.jenis === 'Pemasukan' || item.jenis === 'Income') {
+                    totalMasuk += nominal;
+                } else {
+                    totalKeluar += nominal;
+                }
+            });
+        }
 
         var saldo = totalMasuk - totalKeluar;
-
-        var formatRp = function(val) {
-            var num = parseFloat(val) || 0;
-            if (num < 0) {
-                return '-Rp' + Math.abs(num).toLocaleString('id-ID');
-            }
-            return 'Rp' + num.toLocaleString('id-ID');
-        };
 
         container.innerHTML = `
             <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
@@ -393,23 +477,65 @@ var keuangan = (function() {
 
     function loadTable() {
         var container = document.getElementById('containerKeuanganCards');
+        var paginationEl = document.getElementById('keuanganPaginationControls');
         if (!container) return;
 
-        var data = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKey()) || []) : [];
+        var data = getData(getKey());
 
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            if (paginationEl) paginationEl.innerHTML = '';
             return;
         }
 
-        data.sort(function(a, b) {
+        // 1. FILTERING DATA (PENCARIAN, JENIS & RENTANG TANGGAL)
+        var filteredData = data.filter(function(item) {
+            if (!item) return false;
+
+            // Filter Jenis Transaksi
+            if (filterJenis !== 'semua') {
+                var isInc = (item.jenis === 'Pemasukan' || item.jenis === 'Income');
+                if (filterJenis === 'Pemasukan' && !isInc) return false;
+                if (filterJenis === 'Pengeluaran' && isInc) return false;
+            }
+
+            // Filter Rentang Tanggal
+            if (filterStart && item.tanggal < filterStart) return false;
+            if (filterEnd && item.tanggal > filterEnd) return false;
+
+            // Filter Kata Kunci Pencarian
+            if (searchQuery) {
+                var q = searchQuery.toLowerCase();
+                var text = (item.kategori || '') + ' ' + (item.desc || '') + ' ' + (item.petugas || '') + ' ' + (item.gh || '');
+                return text.toLowerCase().includes(q);
+            }
+
+            return true;
+        });
+
+        if (filteredData.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); font-size: 12px;">Tidak ada transaksi yang cocok dengan filter.</div>`;
+            if (paginationEl) paginationEl.innerHTML = '';
+            return;
+        }
+
+        // 2. SORTING DARI TANGGAL TERBARU
+        filteredData.sort(function(a, b) {
             var dateA = a && a.tanggal ? new Date(a.tanggal) : new Date(0);
             var dateB = b && b.tanggal ? new Date(b.tanggal) : new Date(0);
             return dateB - dateA;
         });
 
+        // 3. PAGINASI DATA
+        var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        var startIdx = (currentPage - 1) * itemsPerPage;
+        var paginatedData = filteredData.slice(startIdx, startIdx + itemsPerPage);
+
         var html = '';
-        data.forEach(function(item) {
+        paginatedData.forEach(function(item) {
             if (!item) return;
 
             var isMasuk = item.jenis === 'Pemasukan' || item.jenis === 'Income';
@@ -450,6 +576,93 @@ var keuangan = (function() {
         });
 
         container.innerHTML = html;
+
+        // PAGINATION CONTROLS
+        if (paginationEl) {
+            if (totalPages > 1) {
+                paginationEl.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fff; border-radius: 12px; border: 1px solid #E0E0E0; font-size: 11px;">
+                        <button onclick="keuangan.changePage(-1)" ${currentPage === 1 ? 'disabled style="opacity:0.5; cursor:default;"' : ''} style="background: #2E7D32; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            <i class="fas fa-chevron-left"></i> ${t('btn_prev')}
+                        </button>
+                        <span style="font-weight: 700; color: #444;">
+                            ${t('page_lbl')} <strong>${currentPage}</strong> / ${totalPages} (${filteredData.length} Data)
+                        </span>
+                        <button onclick="keuangan.changePage(1)" ${currentPage === totalPages ? 'disabled style="opacity:0.5; cursor:default;"' : ''} style="background: #2E7D32; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            ${t('btn_next')} <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                paginationEl.innerHTML = '';
+            }
+        }
+    }
+
+    // HANDLER FILTER & SEARCH
+    function handleSearch(val) {
+        searchQuery = val || '';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleFilterJenis(val) {
+        filterJenis = val || 'semua';
+        currentPage = 1;
+        loadTable();
+    }
+
+    function handleFilterDate() {
+        filterStart = getVal('keuanganFilterStart');
+        filterEnd = getVal('keuanganFilterEnd');
+        currentPage = 1;
+        loadTable();
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        loadTable();
+    }
+
+    // FITUR EXPORT CSV (SESUAI DATA FILTER YANG TAMPIL)
+    function exportCSV() {
+        var data = getData(getKey());
+        if (!Array.isArray(data) || data.length === 0) {
+            alert('Tidak ada data keuangan untuk di-export!');
+            return;
+        }
+
+        var filteredData = data.filter(function(item) {
+            if (!item) return false;
+            if (filterJenis !== 'semua') {
+                var isInc = (item.jenis === 'Pemasukan' || item.jenis === 'Income');
+                if (filterJenis === 'Pemasukan' && !isInc) return false;
+                if (filterJenis === 'Pengeluaran' && isInc) return false;
+            }
+            if (filterStart && item.tanggal < filterStart) return false;
+            if (filterEnd && item.tanggal > filterEnd) return false;
+            if (searchQuery) {
+                var q = searchQuery.toLowerCase();
+                var text = (item.kategori || '') + ' ' + (item.desc || '') + ' ' + (item.petugas || '') + ' ' + (item.gh || '');
+                return text.toLowerCase().includes(q);
+            }
+            return true;
+        });
+
+        var csv = 'Tanggal,Jenis,Kategori,Nominal,Greenhouse,PIC,Keterangan\n';
+        filteredData.forEach(function(item) {
+            var descClean = (item.desc || '').replace(/"/g, '""');
+            csv += `"${item.tanggal || ''}","${item.jenis || ''}","${item.kategori || ''}",${item.nominal || 0},"${item.gh || ''}","${item.petugas || ''}","${descClean}"\n`;
+        });
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Laporan_Keuangan_' + new Date().toISOString().split('T')[0] + '.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     function editItem(id) {
@@ -505,7 +718,12 @@ var keuangan = (function() {
         loadDashboard: loadDashboard,
         loadTable: loadTable,
         editItem: editItem,
-        deleteItem: deleteItem
+        deleteItem: deleteItem,
+        handleSearch: handleSearch,
+        handleFilterJenis: handleFilterJenis,
+        handleFilterDate: handleFilterDate,
+        changePage: changePage,
+        exportCSV: exportCSV
     };
 
 })();
