@@ -33,6 +33,7 @@ var keuangan = (function() {
             'lbl_category': 'Kategori Transaksi',
             'opt_cat_melon_sales': 'Penjualan Melon',
             'opt_cat_veggie_sales': 'Penjualan Sayur / Lainnya',
+            'opt_cat_modal': 'Modal / Setoran Owner',
             'opt_cat_nutrisi': 'Pembelian Nutrisi / Pupuk',
             'opt_cat_pestisida': 'Pembelian Pestisida / Obatan',
             'opt_cat_alat': 'Peralatan & Sparepart GH',
@@ -76,6 +77,7 @@ var keuangan = (function() {
             'lbl_category': 'Category',
             'opt_cat_melon_sales': 'Melon Sales',
             'opt_cat_veggie_sales': 'Vegetable / Other Sales',
+            'opt_cat_modal': 'Capital / Owner Injection',
             'opt_cat_nutrisi': 'Nutrients / Fertilizer Purchase',
             'opt_cat_pestisida': 'Pesticide Purchase',
             'opt_cat_alat': 'GH Tools & Spare Parts',
@@ -233,6 +235,7 @@ var keuangan = (function() {
                                 <select id="keuanganKategori" style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 13px; margin-top: 4px; background: var(--card-bg, #fff); color: var(--text-color, #333);">
                                     <option value="Penjualan Melon">${t('opt_cat_melon_sales')}</option>
                                     <option value="Penjualan Sayur / Lainnya">${t('opt_cat_veggie_sales')}</option>
+                                    <option value="Modal / Setoran Owner">${t('opt_cat_modal')}</option>
                                     <option value="Pembelian Nutrisi / Pupuk">${t('opt_cat_nutrisi')}</option>
                                     <option value="Pembelian Pestisida / Obatan">${t('opt_cat_pestisida')}</option>
                                     <option value="Peralatan & Sparepart GH">${t('opt_cat_alat')}</option>
@@ -447,6 +450,7 @@ var keuangan = (function() {
 
         var data = getData(getKey());
         var totalMasuk = 0;
+        var totalMasukModal = 0;
         var totalKeluar = 0;
 
         if (Array.isArray(data)) {
@@ -455,13 +459,23 @@ var keuangan = (function() {
                 var nominal = parseFloat(item.nominal) || 0;
                 if (item.jenis === 'Pemasukan' || item.jenis === 'Income') {
                     totalMasuk += nominal;
+                    // Modal/setoran owner BUKAN hasil usaha, jadi dipisah dari
+                    // perhitungan laba supaya tidak bikin Estimasi Laba Bersih
+                    // kelihatan lebih tinggi dari yang sebenarnya.
+                    if (item.kategori === 'Modal / Setoran Owner') {
+                        totalMasukModal += nominal;
+                    }
                 } else {
                     totalKeluar += nominal;
                 }
             });
         }
 
+        // Saldo Saat Ini = uang kas riil yang ada (termasuk modal yang disetor)
         var saldo = totalMasuk - totalKeluar;
+        // Estimasi Laba Bersih = murni hasil usaha (pemasukan operasional
+        // dikurangi pengeluaran), TANPA modal/setoran owner
+        var labaBersih = (totalMasuk - totalMasukModal) - totalKeluar;
 
         container.innerHTML = `
             <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
@@ -478,7 +492,7 @@ var keuangan = (function() {
             </div>
             <div style="background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color, #e8e8e8);">
                 <div style="font-size: 10px; color: #0277BD; font-weight: 600;">${t('stat_profit')}</div>
-                <div style="font-size: 15px; font-weight: bold; color: #0277BD;">${formatRp(saldo)}</div>
+                <div style="font-size: 15px; font-weight: bold; color: ${labaBersih >= 0 ? '#0277BD' : '#C62828'};">${formatRp(labaBersih)}</div>
             </div>
         `;
     }
