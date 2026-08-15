@@ -168,10 +168,37 @@ var panen = (function() {
         selectEl.innerHTML = optionsHtml;
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    function renderMusimIndicator() {
+        var el = document.getElementById('panenMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat panen difilter untuk: ${musimAktif.nama} (${rentang})
+            </div>
+        `;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-shopping-basket" style="color: #2E7D32;"></i> ${t('module_title')}</div>
+                <div id="panenMusimIndicator"></div>
                 
                 <!-- Form Input / Edit Data Panen -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
@@ -286,6 +313,7 @@ var panen = (function() {
 
     function init() {
         populateGhDropdown();
+        renderMusimIndicator();
         loadTable();
 
         // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
@@ -394,6 +422,12 @@ var panen = (function() {
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast(t('toast_saved'), 'success');
                     }
+
+                    // --- LIVE-SYNC KE DASHBOARD & MODUL LAIN ---
+                    // Disamakan dengan pola gudang.js/spray.js/keuangan.js, supaya
+                    // dashboard & bilah filter musim langsung tahu ada data baru
+                    // tanpa perlu pindah tab dulu.
+                    window.dispatchEvent(new Event('cozycs_data_changed'));
                 } catch(err) {
                     console.error("Storage Error:", err);
                 }
@@ -447,8 +481,16 @@ var panen = (function() {
             return dateB - dateA;
         });
 
-        // 2. Filter data berdasarkan kata kunci pencarian
-        var filteredData = data.filter(function(item) {
+        // 2. Filter musim aktif dari bilah global (kalau ada)
+        var dataSetelahMusim = data;
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            dataSetelahMusim = data.filter(function(item) {
+                return item && musimFilter.cocokDenganMusimAktif(item.tanggal, item.gh);
+            });
+        }
+
+        // 3. Filter data berdasarkan kata kunci pencarian
+        var filteredData = dataSetelahMusim.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
             var gh = (item.gh || '').toLowerCase();
@@ -469,7 +511,7 @@ var panen = (function() {
             return;
         }
 
-        // 3. Paginasi: potong array data sesuai halaman aktif
+        // 4. Paginasi: potong array data sesuai halaman aktif
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -478,7 +520,7 @@ var panen = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. Render HTML Kartu
+        // 5. Render HTML Kartu
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
@@ -559,7 +601,7 @@ var panen = (function() {
 
         container.innerHTML = html;
 
-        // 5. Render Tombol Paginasi
+        // 6. Render Tombol Paginasi
         if (pageEl) {
             if (totalPages > 1) {
                 pageEl.innerHTML = `
@@ -624,6 +666,7 @@ var panen = (function() {
                 }
             } catch(e) {}
             loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
