@@ -443,6 +443,115 @@ var gudang = (function() {
     }
 
     // ==========================================
+    // MIGRASI RETROAKTIF: SINKRONKAN BARANG LAMA KE KEUANGAN
+    // ==========================================
+    // Dipakai SATU KALI untuk barang yang sudah diinput SEBELUM auto-sync
+    // keuangan ini dipasang. Ambil jumlah stok AWAL (bukan sisa stok sekarang,
+    // supaya barang yang sudah terpotong pemakaiannya tetap dicatat sesuai
+    // nilai pembelian aslinya) dari riwayat mutasi "Stok Awal / Pembelian".
+    // Aman dijalankan berkali-kali: barang yang sudah pernah disinkronkan
+    // (ditandai lewat sourceBarangId di Keuangan) otomatis dilewati, jadi
+    // tidak akan tercatat dobel.
+    function migrasiDataLamaKeKeuangan() {
+        var semuaBarang = getValidBarangList();
+        if (semuaBarang.length === 0) {
+            alert('Tidak ada data barang di gudang untuk disinkronkan.');
+            return;
+        }
+
+        var konfirmasi = confirm(
+            'Ini akan memeriksa semua barang gudang yang BELUM tercatat sebagai ' +
+            'pengeluaran di Keuangan, lalu menambahkannya berdasarkan stok awal ' +
+            'saat pertama kali dibeli (bukan sisa stok sekarang).\n\n' +
+            'Proses ini aman dijalankan berkali-kali (tidak akan dobel).\n\n' +
+            'Lanjutkan sinkronisasi?'
+        );
+        if (!konfirmasi) return;
+
+        var dataMutasi = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyMutasi()) || []) : [];
+        var dataKeuangan = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyKeuangan()) || []) : [];
+
+        // Kumpulkan ID barang yang SUDAH pernah tersinkron ke Keuangan
+        var sudahTersinkron = {};
+        dataKeuangan.forEach(function(k) {
+            if (k && k.sourceBarangId) {
+                sudahTersinkron[k.sourceBarangId] = true;
+            }
+        });
+
+        var jumlahDisinkron = 0;
+        var totalNominalDisinkron = 0;
+        var dilewatiTanpaHarga = 0;
+
+        semuaBarang.forEach(function(item) {
+            if (!item || !item.id) return;
+            if (sudahTersinkron[item.id]) return; // Sudah pernah disinkron, lewati
+
+            var harga = parseFloat(item.harga) || 0;
+            if (harga <= 0) {
+                dilewatiTanpaHarga++;
+                return; // Tidak ada harga tercatat, tidak bisa dihitung nilainya
+            }
+
+            // Cari mutasi "Stok Awal / Pembelian" milik barang ini untuk dapat
+            // jumlah stok ASLI saat pertama masuk (bukan sisa stok sekarang).
+            var mutasiAwal = dataMutasi.find(function(m) {
+                return m && m.barangId === item.id && (m.alasan === t('log_reason_initial') || String(m.alasan || '').includes('Stok Awal'));
+            });
+
+            var jumlahAsli = mutasiAwal ? roundNumber(mutasiAwal.jumlah) : roundNumber(item.stok);
+            if (jumlahAsli <= 0) return;
+
+            var nominal = roundNumber(jumlahAsli * harga);
+            if (nominal <= 0) return;
+
+            var payload = {
+                tanggal: item.tglBeli || new Date().toISOString().split('T')[0],
+                jenis: 'Pengeluaran',
+                kategori: mapKategoriKeKeuangan(item.kategori),
+                nominal: nominal,
+                gh: 'Seluruh Kebun',
+                petugas: 'Admin',
+                desc: 'Pembelian ' + item.nama + ' (' + jumlahAsli + ' ' + (item.satuan || '') + ') via Gudang [Migrasi Data Lama]',
+                sourceModule: 'gudang-migrasi',
+                sourceBarangId: item.id
+            };
+
+            if (typeof Storage !== 'undefined' && Storage.add) {
+                Storage.add(getKeyKeuangan(), payload);
+            }
+
+            jumlahDisinkron++;
+            totalNominalDisinkron += nominal;
+        });
+
+        if (jumlahDisinkron === 0) {
+            var pesanKosong = 'Tidak ada barang baru yang perlu disinkronkan.';
+            if (dilewatiTanpaHarga > 0) {
+                pesanKosong += ' (' + dilewatiTanpaHarga + ' barang dilewati karena harga satuan belum diisi.)';
+            }
+            alert(pesanKosong);
+            return;
+        }
+
+        var formatRupiahRingkas = function(val) {
+            return 'Rp' + Math.round(val).toLocaleString('id-ID');
+        };
+
+        var pesanHasil = jumlahDisinkron + ' barang berhasil disinkronkan ke Keuangan sebagai pengeluaran, total ' + formatRupiahRingkas(totalNominalDisinkron) + '.';
+        if (dilewatiTanpaHarga > 0) {
+            pesanHasil += '\n\n' + dilewatiTanpaHarga + ' barang dilewati karena harga satuan belum diisi — isi dulu harganya lalu jalankan sinkronisasi ini lagi kalau perlu.';
+        }
+
+        if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
+            Helper.showToast(jumlahDisinkron + ' barang berhasil disinkronkan ke Keuangan!', 'success');
+        }
+        alert(pesanHasil);
+
+        window.dispatchEvent(new Event('cozycs_data_changed'));
+    }
+
+    // ==========================================
     // RENDER TAMPILAN UTAMA MODUL
     // ==========================================
     function render() {
@@ -452,9 +561,14 @@ var gudang = (function() {
                     <div class="section-title" style="margin-bottom: 0;">
                         <i class="fas fa-boxes" style="color: #2E7D32;"></i> ${t('module_title')}
                     </div>
-                    <button type="button" onclick="gudang.resetDataGudang()" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                        <i class="fas fa-power-off"></i> Reset Data
-                    </button>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" onclick="gudang.migrasiDataLamaKeKeuangan()" style="background: #E3F2FD; color: #0277BD; border: 1px solid #BBDEFB; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Sinkronkan barang lama yang belum tercatat di Keuangan">
+                            <i class="fas fa-sync-alt"></i> Sync ke Keuangan
+                        </button>
+                        <button type="button" onclick="gudang.resetDataGudang()" style="background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-power-off"></i> Reset Data
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 1. DASHBOARD STATISTIK UTAMA (MODERN CARDS) -->
@@ -1168,7 +1282,8 @@ var gudang = (function() {
         toggleSelectItem: toggleSelectItem,
         toggleSelectAll: toggleSelectAll,
         deleteSelectedItems: deleteSelectedItems,
-        resetDataGudang: resetDataGudang
+        resetDataGudang: resetDataGudang,
+        migrasiDataLamaKeKeuangan: migrasiDataLamaKeKeuangan
     };
 
 })();
