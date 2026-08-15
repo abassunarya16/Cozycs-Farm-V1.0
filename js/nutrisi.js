@@ -376,6 +376,7 @@ var nutrisi = (function() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-tint" style="color: #0277BD;"></i> ${t('module_title')}</div>
+                <div id="nutrisiMusimIndicator"></div>
                 
                 <!-- WIDGET RINGKASAN STOK PEKATAN GUDANG -->
                 <div id="wrapperPekatanWidget"></div>
@@ -534,8 +535,35 @@ var nutrisi = (function() {
         `;
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    function renderMusimIndicator() {
+        var el = document.getElementById('nutrisiMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat nutrisi difilter untuk: ${musimAktif.nama} (${rentang}). Ringkasan stok pekatan di atas tetap kondisi terkini.
+            </div>
+        `;
+    }
+
     function init() {
         populateGhDropdown();
+        renderMusimIndicator();
         loadPekatanWidget();
         loadTable();
 
@@ -722,7 +750,14 @@ var nutrisi = (function() {
             return dateB - dateA;
         });
 
-        var filteredData = data.filter(function(item) {
+        var dataSetelahMusim = data;
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            dataSetelahMusim = data.filter(function(item) {
+                return item && musimFilter.cocokDenganMusimAktif(item.date, item.gh);
+            });
+        }
+
+        var filteredData = dataSetelahMusim.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
             var gh = (item.gh || '').toLowerCase();
