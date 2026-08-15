@@ -442,6 +442,39 @@ var gudang = (function() {
         Storage.add(getKeyKeuangan(), payload);
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    // Beda dari Keuangan: stok gudang itu snapshot KONDISI SAAT INI (bukan
+    // riwayat), jadi Kartu Statistik & Katalog Stok TIDAK ikut difilter per
+    // musim -- barang yang sama dipakai lintas musim, kalau difilter malah
+    // bikin stok yang lagi dipakai hilang dari tampilan. Yang difilter cuma
+    // Riwayat Mutasi Stok, karena itu benar-benar catatan kejadian (tanggal +
+    // GH) yang relevan dianalisa per musim.
+    function renderMusimIndicator() {
+        var el = document.getElementById('gudangMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; line-height: 1.4;">
+                <i class="fas fa-calendar-week"></i>
+                <span>Riwayat Mutasi Stok difilter untuk: ${musimAktif.nama} (${rentang}). Kartu statistik & Katalog Stok tetap menampilkan kondisi terkini (tidak difilter musim).</span>
+            </div>
+        `;
+    }
+
     // Cari jumlah stok ASLI saat barang ini pertama kali masuk gudang, dari
     // riwayat mutasi "Stok Awal / Pembelian". Dipakai supaya perhitungan nilai
     // pembelian selalu berdasarkan jumlah beli awal, bukan sisa stok sekarang
@@ -647,6 +680,8 @@ var gudang = (function() {
                     </div>
                 </div>
 
+                <div id="gudangMusimIndicator"></div>
+
                 <!-- 1. DASHBOARD STATISTIK UTAMA (MODERN CARDS) -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;" id="gudangStatCards">
                     <!-- Dynamic Stat Cards -->
@@ -807,6 +842,7 @@ var gudang = (function() {
     }
 
     function init() {
+        renderMusimIndicator();
         loadDashboard();
         loadTable();
         loadMutasiLog();
@@ -1177,6 +1213,14 @@ var gudang = (function() {
         if (!container) return;
 
         var logs = (typeof Storage !== 'undefined' && Storage.getAll) ? (Storage.getAll(getKeyMutasi()) || []) : [];
+
+        // Saring riwayat mutasi berdasarkan musim yang sedang aktif dipilih
+        // di bilah global (kalau ada). "Semua Musim" -> tidak difilter.
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            logs = logs.filter(function(m) {
+                return m && musimFilter.cocokDenganMusimAktif(m.tanggal, m.gh);
+            });
+        }
 
         if (logs.length === 0) {
             container.innerHTML = `<div style="text-align: center; color: #777; padding: 12px; background: var(--card-bg, #fff); border-radius: 8px; font-size: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data_mutation')}</div>`;
