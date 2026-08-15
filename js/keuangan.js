@@ -37,6 +37,7 @@ var keuangan = (function() {
             'opt_cat_nutrisi': 'Pembelian Nutrisi / Pupuk',
             'opt_cat_pestisida': 'Pembelian Pestisida / Obatan',
             'opt_cat_alat': 'Peralatan & Sparepart GH',
+            'opt_cat_cadangan_gh': 'Dana Cadangan Perawatan GH',
             'opt_cat_operasional': 'Operasional & Listrik',
             'opt_cat_gaji': 'Gaji / Tenaga Kerja',
             'opt_cat_lainnya': 'Lain-Lain',
@@ -81,6 +82,7 @@ var keuangan = (function() {
             'opt_cat_nutrisi': 'Nutrients / Fertilizer Purchase',
             'opt_cat_pestisida': 'Pesticide Purchase',
             'opt_cat_alat': 'GH Tools & Spare Parts',
+            'opt_cat_cadangan_gh': 'GH Maintenance Reserve Fund',
             'opt_cat_operasional': 'Operational & Electricity',
             'opt_cat_gaji': 'Salary / Labor',
             'opt_cat_lainnya': 'Others',
@@ -239,6 +241,7 @@ var keuangan = (function() {
                                     <option value="Pembelian Nutrisi / Pupuk">${t('opt_cat_nutrisi')}</option>
                                     <option value="Pembelian Pestisida / Obatan">${t('opt_cat_pestisida')}</option>
                                     <option value="Peralatan & Sparepart GH">${t('opt_cat_alat')}</option>
+                                    <option value="Dana Cadangan Perawatan GH">${t('opt_cat_cadangan_gh')}</option>
                                     <option value="Operasional & Listrik">${t('opt_cat_operasional')}</option>
                                     <option value="Gaji / Tenaga Kerja">${t('opt_cat_gaji')}</option>
                                     <option value="Lain-Lain">${t('opt_cat_lainnya')}</option>
