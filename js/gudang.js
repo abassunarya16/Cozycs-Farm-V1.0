@@ -1,6 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL PUSAT INVENTARIS & GUDANG
-// (WITH BULK DELETE, DATA RESET, VALIDATED STATS & MODERN DASHBOARD)
+// (WITH BULK DELETE, DATA RESET, VALIDATED STATS, MODERN DASHBOARD & AUTO-SYNC KEUANGAN)
 // ==========================================
 
 var gudang = (function() {
@@ -176,6 +176,11 @@ var gudang = (function() {
         return 'cozycs_gudang_mutasi';
     }
 
+    // KEY STORAGE KEUANGAN (harus sama dengan yang dipakai modul keuangan.js)
+    function getKeyKeuangan() {
+        return (typeof Storage !== 'undefined' && Storage.KEYS && Storage.KEYS.KEUANGAN) ? Storage.KEYS.KEUANGAN : 'cozycs_keuangan';
+    }
+
     function getVal(id) {
         var el = document.getElementById(id);
         return el ? el.value : '';
@@ -311,6 +316,11 @@ var gudang = (function() {
             tanggal: new Date().toISOString().split('T')[0]
         });
 
+        // CATATAN: Pemakaian stok (konsumsi) TIDAK memicu transaksi keuangan baru.
+        // Uangnya sudah tercatat sebagai pengeluaran saat barang ini dibeli/masuk
+        // ke gudang (lihat syncToKeuangan()). Kalau konsumsi ikut dicatat lagi ke
+        // keuangan, biayanya akan terhitung dobel.
+
         loadDashboard();
         loadTable();
         loadMutasiLog();
@@ -388,6 +398,48 @@ var gudang = (function() {
         payload.id = 'MUT-' + Date.now();
         list.unshift(payload);
         Storage.saveAll(getKeyMutasi(), list);
+    }
+
+    // ==========================================
+    // AUTO-SYNC KE MODUL KEUANGAN (HANYA SAAT BARANG BARU DIBELI/MASUK)
+    // ==========================================
+    // Dipanggil hanya ketika: (1) barang baru ditambahkan (bukan edit), dan
+    // (2) harga satuan > 0. Nilai pembelian = stok awal x harga satuan,
+    // dicatat sebagai satu baris transaksi "Pengeluaran" di modul Keuangan,
+    // supaya kas usaha otomatis ikut berkurang tanpa perlu input manual dobel.
+    function mapKategoriKeKeuangan(kategoriGudang) {
+        switch (kategoriGudang) {
+            case 'Nutrisi':
+                return 'Pembelian Nutrisi / Pupuk';
+            case 'Pestisida':
+                return 'Pembelian Pestisida / Obatan';
+            case 'Peralatan':
+            case 'Sparepart':
+                return 'Peralatan & Sparepart GH';
+            default:
+                return 'Lain-Lain';
+        }
+    }
+
+    function syncToKeuangan(barangItem, stokAwal, hargaSatuan) {
+        var nominal = roundNumber(stokAwal) * (parseFloat(hargaSatuan) || 0);
+        if (nominal <= 0) return; // Tidak ada biaya tercatat (harga kosong/0), jangan buat transaksi kosong
+
+        if (typeof Storage === 'undefined' || !Storage.add) return;
+
+        var payload = {
+            tanggal: barangItem.tglBeli || new Date().toISOString().split('T')[0],
+            jenis: 'Pengeluaran',
+            kategori: mapKategoriKeKeuangan(barangItem.kategori),
+            nominal: roundNumber(nominal),
+            gh: 'Seluruh Kebun',
+            petugas: 'Admin',
+            desc: 'Pembelian ' + barangItem.nama + ' (' + roundNumber(stokAwal) + ' ' + (barangItem.satuan || '') + ') via Gudang',
+            sourceModule: 'gudang',
+            sourceBarangId: barangItem.id || ''
+        };
+
+        Storage.add(getKeyKeuangan(), payload);
     }
 
     // ==========================================
@@ -620,6 +672,10 @@ var gudang = (function() {
                     if (typeof Storage !== 'undefined' && Storage.update) {
                         Storage.update(key, payload);
                     }
+                    // Catatan: EDIT barang (misal cuma ganti lokasi/stok min) TIDAK
+                    // memicu transaksi keuangan baru, supaya tidak dobel catat.
+                    // Kalau memang ada pembelian ulang/restock, disarankan pakai
+                    // "Tambah Master Barang Gudang" baru, bukan edit yang sudah ada.
                 } else {
                     var added = (typeof Storage !== 'undefined' && Storage.add) ? Storage.add(key, payload) : payload;
                     catatMutasi({
@@ -633,6 +689,9 @@ var gudang = (function() {
                         petugas: 'Admin',
                         tanggal: tglBeli || new Date().toISOString().split('T')[0]
                     });
+
+                    // --- AUTO-SYNC KE KEUANGAN: catat pengeluaran pembelian barang ---
+                    syncToKeuangan(added, stok, harga);
                 }
 
                 if (typeof Storage !== 'undefined' && Storage.add) {
@@ -652,7 +711,11 @@ var gudang = (function() {
                 }
 
                 if (typeof Helper !== 'undefined' && Helper.showToast) {
-                    Helper.showToast(t('toast_saved'), 'success');
+                    var pesanToast = t('toast_saved');
+                    if (!id && harga > 0) {
+                        pesanToast += ' Pengeluaran otomatis tercatat di Keuangan.';
+                    }
+                    Helper.showToast(pesanToast, 'success');
                 }
 
                 form.reset();
