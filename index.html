@@ -296,6 +296,9 @@ body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
         </div>
     </header>
 
+    <!-- BILAH FILTER MUSIM GLOBAL STICKY -->
+    <div id="barFilterMusimGlobal" style="position: sticky; top: 45px; z-index: 999;"></div>
+
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
@@ -308,6 +311,7 @@ body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
         <div class="sidebar-body">
             <div class="sidebar-group-title" data-i18n="group_main">Utama</div>
             <button class="sidebar-item" data-page="dashboard"><i class="fas fa-home" style="color: #2E7D32;"></i> <span data-i18n="nav_dashboard">Dasbor</span></button>
+            <button class="sidebar-item" data-page="musim"><i class="fas fa-calendar-week" style="color: #2E7D32;"></i> <span data-i18n="nav_musim">Master Musim Tanam</span></button>
             
             <div class="sidebar-group-title" data-i18n="group_facilities">Fasilitas</div>
             <button class="sidebar-item" data-page="greenhouse"><i class="fas fa-warehouse" style="color: #2E7D32;"></i> <span data-i18n="nav_greenhouse">Greenhouse</span></button>
@@ -349,6 +353,8 @@ body.dark-theme #customModalCard button[style*="background: #D32F2F"] {
 <!-- ======================================== -->
 <script src="js/helper.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/musim.js"></script>
+<script src="js/musimFilter.js"></script>
 <script src="js/chart.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/greenhouse.js"></script>
@@ -385,6 +391,7 @@ var globalDict = {
         'group_monitoring': 'Monitoring & Perawatan',
         'group_business': 'Hasil & Bisnis',
         'nav_dashboard': 'Dasbor',
+        'nav_musim': 'Master Musim Tanam',
         'nav_greenhouse': 'Greenhouse',
         'nav_warehouse': 'Stok Gudang',
         'nav_plant_db': 'Database Tanaman',
@@ -411,6 +418,7 @@ var globalDict = {
         'group_monitoring': 'Monitoring & Care',
         'group_business': 'Results & Business',
         'nav_dashboard': 'Dashboard',
+        'nav_musim': 'Crop Seasons',
         'nav_greenhouse': 'Greenhouse',
         'nav_warehouse': 'Warehouse Stock',
         'nav_plant_db': 'Plant Database',
@@ -547,6 +555,12 @@ document.addEventListener('DOMContentLoaded', function() {
         Storage.init();
     }
 
+    // INITIALIZE GLOBAL MUSIM FILTER BAR
+    var barContainer = document.getElementById('barFilterMusimGlobal');
+    if (barContainer && typeof musimFilter !== 'undefined') {
+        barContainer.innerHTML = musimFilter.renderBarHTML();
+    }
+
     var sidebarTitle = document.getElementById('sidebarTitle');
     if (sidebarTitle) {
         var appVer = (typeof Helper !== 'undefined' && Helper.VERSION) ? Helper.VERSION : (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0');
@@ -555,6 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     pages = {
         'dashboard': dashboard,
+        'musim': musim,
         'greenhouse': greenhouse,
         'tanaman': tanaman,
         'nutrisi': nutrisi,
