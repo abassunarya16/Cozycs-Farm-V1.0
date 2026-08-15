@@ -1,5 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL KEUANGAN (WITH SEARCH, DATE RANGE FILTER, EXPORT CSV & DASHBOARD LOG)
+// COZYCS FARM - MODUL KEUANGAN (WITH SEARCH, DATE RANGE FILTER, EXPORT CSV, DASHBOARD LOG & LIVE-SYNC)
 // ==========================================
 
 var keuangan = (function() {
@@ -398,6 +398,13 @@ var keuangan = (function() {
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast(t('toast_saved'), 'success');
                     }
+
+                    // --- LIVE-SYNC KE DASHBOARD & MODUL LAIN ---
+                    // Tanpa ini, Executive Summary Widget di dashboard.js baru
+                    // ter-refresh saat pindah tab/app (via listener focus), bukan
+                    // seketika setelah transaksi disimpan. Disamakan dengan pola
+                    // yang sudah dipakai gudang.js & spray.js.
+                    window.dispatchEvent(new Event('cozycs_data_changed'));
                 } catch(err) {
                     console.error("Storage Error:", err);
                 }
@@ -698,6 +705,13 @@ var keuangan = (function() {
             } catch(e) {}
             loadDashboard();
             loadTable();
+
+            // --- LIVE-SYNC KE DASHBOARD & MODUL LAIN ---
+            // Sama seperti saat simpan: dashboard perlu tahu seketika kalau ada
+            // transaksi yang dihapus, supaya Executive Summary tidak menampilkan
+            // saldo yang sudah basi.
+            window.dispatchEvent(new Event('cozycs_data_changed'));
+
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
