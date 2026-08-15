@@ -203,6 +203,7 @@ var keuangan = (function() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-wallet" style="color: #2E7D32;"></i> ${t('module_title')}</div>
+                <div id="keuanganMusimIndicator"></div>
 
                 <!-- 1. DASHBOARD STATISTIK KEUANGAN -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="keuanganStatCards">
@@ -331,9 +332,40 @@ var keuangan = (function() {
         `;
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    // Menampilkan badge kecil kalau ada musim yang sedang difilter di bilah
+    // global (#barFilterMusimGlobal), supaya jelas kalau angka Saldo/
+    // Pemasukan/Pengeluaran yang tampil BUKAN keseluruhan riwayat, tapi
+    // sudah disaring ke satu musim tertentu.
+    function renderMusimIndicator() {
+        var el = document.getElementById('keuanganMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Data difilter untuk: ${musimAktif.nama} (${rentang})
+            </div>
+        `;
+    }
+
     function init() {
         checkSampleData();
         populateGhDropdown();
+        renderMusimIndicator();
         loadDashboard();
         loadTable();
 
@@ -452,6 +484,15 @@ var keuangan = (function() {
         if (!container) return;
 
         var data = getData(getKey());
+
+        // Saring berdasarkan musim yang sedang aktif dipilih di bilah global
+        // (kalau ada). Kalau "Semua Musim", cocokDenganMusimAktif selalu true.
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            data = data.filter(function(item) {
+                return item && musimFilter.cocokDenganMusimAktif(item.tanggal, item.gh);
+            });
+        }
+
         var totalMasuk = 0;
         var totalMasukModal = 0;
         var totalKeluar = 0;
@@ -524,6 +565,11 @@ var keuangan = (function() {
 
             if (filterStart && item.tanggal < filterStart) return false;
             if (filterEnd && item.tanggal > filterEnd) return false;
+
+            // Filter musim aktif dari bilah global (kalau ada dipilih)
+            if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+                if (!musimFilter.cocokDenganMusimAktif(item.tanggal, item.gh)) return false;
+            }
 
             if (searchQuery) {
                 var q = searchQuery.toLowerCase();
@@ -657,6 +703,9 @@ var keuangan = (function() {
             }
             if (filterStart && item.tanggal < filterStart) return false;
             if (filterEnd && item.tanggal > filterEnd) return false;
+            if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+                if (!musimFilter.cocokDenganMusimAktif(item.tanggal, item.gh)) return false;
+            }
             if (searchQuery) {
                 var q = searchQuery.toLowerCase();
                 var text = (item.kategori || '') + ' ' + (item.desc || '') + ' ' + (item.petugas || '') + ' ' + (item.gh || '');
