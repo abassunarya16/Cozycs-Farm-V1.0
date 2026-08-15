@@ -124,21 +124,30 @@ var spray = (function() {
     // ==========================================
     // LOGIKA CEK ATURAN PENCAMPURAN PESTISIDA (DGW RULES)
     // ==========================================
+    //
+    // Kategori & prioritas pelarutan (semakin kecil "order" = dilarutkan lebih dulu):
+    //  - Kategori 2: Suspensi / Padatan (WP, WDG, DF)      -> order 1 (dilarutkan pertama)
+    //  - Kategori 1: Larut Air (AS, SL, SP, SC, WSC, SG)   -> order 2 (dilarutkan kedua)
+    //  - Kategori 3: Emulsi / Minyak (EC, EW)              -> order 3 (dilarutkan terakhir)
+    //
+    // Catatan: kode 1 huruf seperti "E" / "F" sengaja TIDAK dipakai sebagai
+    // penanda formulasi karena rawan salah deteksi (bisa cocok dengan huruf
+    // acak di nama produk). Hanya kode formulasi resmi 2+ huruf yang dipakai.
     function detectFormulationCategory(productName) {
         if (!productName || typeof productName !== 'string') return null;
         var str = productName.toUpperCase();
 
         // Kategori 1: Larut Air
         if (/\b(AS|SL|SP|SC|WSC|SG)\b/.test(str)) {
-            return { cat: 1, type: 'Larut Air (AS/SL/SP/SC/WSC/SG)' };
+            return { cat: 1, order: 2, type: 'Larut Air (AS/SL/SP/SC/WSC/SG)' };
         }
-        // Kategori 2: Suspensi / Tidak Larut Air
-        if (/\b(WP|F|WDG|DF)\b/.test(str)) {
-            return { cat: 2, type: 'Suspensi (WP/F/WDG/DF)' };
+        // Kategori 2: Suspensi / Tidak Larut Air (padatan/tepung)
+        if (/\b(WP|WDG|DF)\b/.test(str)) {
+            return { cat: 2, order: 1, type: 'Suspensi/Tepung (WP/WDG/DF)' };
         }
         // Kategori 3: Emulsi / Minyak
-        if (/\b(EC|E|EW)\b/.test(str)) {
-            return { cat: 3, type: 'Emulsi (EC/E/EW)' };
+        if (/\b(EC|EW)\b/.test(str)) {
+            return { cat: 3, order: 3, type: 'Emulsi (EC/EW)' };
         }
         return null;
     }
@@ -184,11 +193,16 @@ var spray = (function() {
             return;
         }
 
-        // Boleh Dicampur
+        // Boleh Dicampur -> tentukan urutan pelarutan berdasarkan prioritas
+        // kategori yang SESUNGGUHNYA terdeteksi (bukan asumsi field bubuk/cairan),
+        // supaya label selalu sesuai formulasi aslinya walau posisinya tertukar.
+        var first = formA.order <= formB.order ? formA : formB;
+        var second = formA.order <= formB.order ? formB : formA;
+
         alertEl.style.background = '#E8F5E9';
         alertEl.style.border = '1px solid #66BB6A';
         alertEl.style.color = '#2E7D32';
-        alertEl.innerHTML = '<strong>BOLEH DICAMPUR.</strong> Urutan pelarutan: Larutkan bahan tepung/suspensi (' + formA.type + ') terlebih dahulu sampai rata, baru masukkan bahan emulsi/cairan (' + formB.type + ').';
+        alertEl.innerHTML = '<strong>BOLEH DICAMPUR.</strong> Urutan pelarutan: Larutkan ' + first.type + ' terlebih dahulu sampai rata, baru masukkan ' + second.type + '.';
     }
 
     function populateGhDropdown() {
