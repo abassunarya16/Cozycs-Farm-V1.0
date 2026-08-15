@@ -240,6 +240,7 @@ var spray = (function() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-spray-can" style="color: #6A1B9A;"></i> ${t('module_title')}</div>
+                <div id="sprayMusimIndicator"></div>
                 
                 <!-- Form Input / Edit Data Spray -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
@@ -355,8 +356,35 @@ var spray = (function() {
         `;
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    function renderMusimIndicator() {
+        var el = document.getElementById('sprayMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat spray difilter untuk: ${musimAktif.nama} (${rentang})
+            </div>
+        `;
+    }
+
     function init() {
         populateGhDropdown();
+        renderMusimIndicator();
         loadTable();
 
         if (typeof restoreFormDraftGlobal === 'function') {
@@ -543,7 +571,14 @@ var spray = (function() {
             return new Date(b.date || 0) - new Date(a.date || 0);
         });
 
-        var filteredData = data.filter(function(item) {
+        var dataSetelahMusim = data;
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            dataSetelahMusim = data.filter(function(item) {
+                return item && musimFilter.cocokDenganMusimAktif(item.date, item.gh);
+            });
+        }
+
+        var filteredData = dataSetelahMusim.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
             var gh = (item.gh || '').toLowerCase();
