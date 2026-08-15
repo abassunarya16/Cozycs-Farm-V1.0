@@ -440,8 +440,16 @@ var spray = (function() {
                         var nextPayload = Object.assign({}, payload, {
                             id: 'SPRAY-NEXT-' + Date.now(),
                             date: nextSprayDateStr,
-                            desc: '[Otomatis H+5] Rencana Spray Rutin Berikutnya'
+                            desc: '[Otomatis H+5] Rencana Spray Rutin Berikutnya',
+                            isAutoNext: true
                         });
+
+                        // Simpan juga ke storage spray supaya reminder H+5 ini
+                        // ikut tampil di Rekap Riwayat & Jadwal Spray (tidak hanya
+                        // tersimpan "diam-diam" di cozycs_schedules).
+                        if (typeof Storage !== 'undefined' && Storage.add) {
+                            Storage.add(key, nextPayload);
+                        }
                         syncToSchedules(nextPayload);
                     }
 
@@ -580,6 +588,7 @@ var spray = (function() {
                             <strong style="font-size: 14px; color: var(--text-color, #222);">${item.date || '-'}</strong>
                             <span style="background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px;">GH: ${valGh}</span>
                             <span style="background: #F3E5F5; color: #6A1B9A; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;">${item.timeSlot || ''}</span>
+                            ${item.isAutoNext ? '<span style="background: #FFF3E0; color: #E65100; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 4px;"><i class="fas fa-clock"></i> Otomatis H+5</span>' : ''}
                         </div>
                     </div>
 
