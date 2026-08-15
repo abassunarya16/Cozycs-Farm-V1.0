@@ -442,6 +442,82 @@ var gudang = (function() {
         Storage.add(getKeyKeuangan(), payload);
     }
 
+    // Cari jumlah stok ASLI saat barang ini pertama kali masuk gudang, dari
+    // riwayat mutasi "Stok Awal / Pembelian". Dipakai supaya perhitungan nilai
+    // pembelian selalu berdasarkan jumlah beli awal, bukan sisa stok sekarang
+    // yang mungkin sudah terpotong pemakaian.
+    function getJumlahAwalBarang(itemId) {
+        if (typeof Storage === 'undefined' || !Storage.getAll) return null;
+        var dataMutasi = Storage.getAll(getKeyMutasi()) || [];
+        var mutasiAwal = dataMutasi.find(function(m) {
+            return m && m.barangId === itemId && (m.alasan === t('log_reason_initial') || String(m.alasan || '').includes('Stok Awal'));
+        });
+        return mutasiAwal ? roundNumber(mutasiAwal.jumlah) : null;
+    }
+
+    // ==========================================
+    // KOREKSI OTOMATIS KE KEUANGAN SAAT BARANG DIEDIT
+    // ==========================================
+    // Dipanggil setiap kali barang yang SUDAH ADA diedit dan harga satuannya
+    // berubah. Ini mencegah kasus "biaya hantu": entri pengeluaran lama di
+    // Keuangan yang nyangkut padahal harga di Gudang sudah diubah/dihapus
+    // (misal karena barang itu ternyata hasil racikan internal, bukan
+    // pembelian baru, jadi harusnya tidak dihitung sebagai biaya).
+    function koreksiKeuanganSaatEditBarang(payload, itemId, hargaBaru) {
+        if (typeof Storage === 'undefined' || !Storage.getAll) return null;
+
+        var dataKeuangan = Storage.getAll(getKeyKeuangan()) || [];
+        var entriTerkait = dataKeuangan.filter(function(k) {
+            return k && k.sourceBarangId === itemId;
+        });
+
+        // KASUS 1: Harga diubah jadi 0/kosong -> barang ini dianggap BUKAN
+        // pembelian baru (misal hasil racikan dari stok lain). Entri
+        // pengeluaran lama yang terkait ikut dihapus supaya tidak nyangkut
+        // sebagai biaya yang sebenarnya tidak terjadi.
+        if (hargaBaru <= 0) {
+            if (entriTerkait.length > 0 && Storage.remove) {
+                entriTerkait.forEach(function(entry) {
+                    Storage.remove(getKeyKeuangan(), entry.id);
+                });
+                return { aksi: 'dihapus', jumlahEntri: entriTerkait.length };
+            }
+            return null;
+        }
+
+        // KASUS 2: Harga > 0 -> hitung ulang nominal berdasarkan jumlah beli
+        // awal (bukan sisa stok sekarang).
+        var jumlahAwal = getJumlahAwalBarang(itemId);
+        if (jumlahAwal === null || jumlahAwal <= 0) jumlahAwal = roundNumber(payload.stok);
+        if (jumlahAwal <= 0) return null;
+
+        var nominalBaru = roundNumber(jumlahAwal * hargaBaru);
+        if (nominalBaru <= 0) return null;
+
+        if (entriTerkait.length > 0) {
+            // Update entri pertama yang ditemukan, dan bersihkan kalau ada
+            // duplikat entri lama untuk barang yang sama.
+            var utama = entriTerkait[0];
+            utama.nominal = nominalBaru;
+            utama.kategori = mapKategoriKeKeuangan(payload.kategori);
+            utama.desc = 'Pembelian ' + payload.nama + ' (' + jumlahAwal + ' ' + (payload.satuan || '') + ') via Gudang [Disesuaikan]';
+            if (Storage.update) Storage.update(getKeyKeuangan(), utama);
+
+            if (entriTerkait.length > 1 && Storage.remove) {
+                entriTerkait.slice(1).forEach(function(dup) {
+                    Storage.remove(getKeyKeuangan(), dup.id);
+                });
+            }
+            return { aksi: 'diperbarui', nominal: nominalBaru };
+        }
+
+        // Belum ada entri Keuangan sama sekali untuk barang ini (misal barang
+        // lama sebelum auto-sync dipasang, dan belum pernah dimigrasi) ->
+        // buatkan entri baru sekarang.
+        syncToKeuangan(Object.assign({}, payload, { id: itemId }), jumlahAwal, hargaBaru);
+        return { aksi: 'dibuat', nominal: nominalBaru };
+    }
+
     // ==========================================
     // MIGRASI RETROAKTIF: SINKRONKAN BARANG LAMA KE KEUANGAN
     // ==========================================
@@ -781,15 +857,19 @@ var gudang = (function() {
                 };
 
                 var key = getKeyBarang();
+                var hasilKoreksiKeuangan = null;
+
                 if (id) {
                     payload.id = id;
                     if (typeof Storage !== 'undefined' && Storage.update) {
                         Storage.update(key, payload);
                     }
-                    // Catatan: EDIT barang (misal cuma ganti lokasi/stok min) TIDAK
-                    // memicu transaksi keuangan baru, supaya tidak dobel catat.
-                    // Kalau memang ada pembelian ulang/restock, disarankan pakai
-                    // "Tambah Master Barang Gudang" baru, bukan edit yang sudah ada.
+
+                    // --- KOREKSI OTOMATIS KE KEUANGAN SAAT HARGA BARANG DIEDIT ---
+                    // (edit lokasi/stok min saja tidak mengubah apa-apa di
+                    // Keuangan karena nominalnya dihitung dari harga & jumlah
+                    // awal, bukan field lain)
+                    hasilKoreksiKeuangan = koreksiKeuanganSaatEditBarang(payload, id, harga);
                 } else {
                     var added = (typeof Storage !== 'undefined' && Storage.add) ? Storage.add(key, payload) : payload;
                     catatMutasi({
@@ -828,6 +908,14 @@ var gudang = (function() {
                     var pesanToast = t('toast_saved');
                     if (!id && harga > 0) {
                         pesanToast += ' Pengeluaran otomatis tercatat di Keuangan.';
+                    } else if (id && hasilKoreksiKeuangan) {
+                        if (hasilKoreksiKeuangan.aksi === 'dihapus') {
+                            pesanToast += ' Entri pengeluaran terkait di Keuangan ikut dihapus (harga 0).';
+                        } else if (hasilKoreksiKeuangan.aksi === 'diperbarui') {
+                            pesanToast += ' Nominal pengeluaran di Keuangan ikut disesuaikan.';
+                        } else if (hasilKoreksiKeuangan.aksi === 'dibuat') {
+                            pesanToast += ' Pengeluaran baru tercatat di Keuangan.';
+                        }
                     }
                     Helper.showToast(pesanToast, 'success');
                 }
