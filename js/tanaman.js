@@ -238,11 +238,17 @@ var tanaman = (function() {
     }
 
     // ==========================================
-    // HELPER MENGAMBIL DATA HASIL FILTER PENCARIAN
+    // HELPER MENGAMBIL DATA HASIL FILTER PENCARIAN & MUSIM GLOBAL
     // ==========================================
     function getFilteredData() {
         var storageKey = getKey();
-        var data = getData(storageKey);
+        var rawData = getData(storageKey);
+
+        // INTEGRASI FILTER MUSIM GLOBAL
+        var data = (typeof musimFilter !== 'undefined' && musimFilter.applyFilter)
+            ? musimFilter.applyFilter(rawData, 'tanggal', 'gh')
+            : rawData;
+
         if (!searchQuery) return data;
         var kw = searchQuery.toLowerCase();
         return data.filter(function(item) {
@@ -1317,5 +1323,12 @@ var tanaman = (function() {
     };
 
 })();
+
+// EVENT LISTENER GLOBAL MUSIM RE-RENDER
+window.addEventListener('cozycs_musim_filter_changed', function() {
+    if (typeof tanaman !== 'undefined' && tanaman.loadTable) {
+        tanaman.loadTable();
+    }
+});
 
 window.tanaman = tanaman;
