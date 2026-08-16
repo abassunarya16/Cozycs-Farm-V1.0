@@ -222,7 +222,7 @@ var laporan = (function() {
                 </div>
 
                 <!-- INDIKATOR FILTER MUSIM AKTIF -->
-                <div id="hamaMusimIndicator"></div>
+                <div id="laporanMusimIndicator"></div>
 
                 ${cardsHtml}
             </div>
