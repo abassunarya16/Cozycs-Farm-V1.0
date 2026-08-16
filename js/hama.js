@@ -170,10 +170,37 @@ var hama = (function() {
         selectEl.innerHTML = optionsHtml;
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
+    function renderMusimIndicator() {
+        var el = document.getElementById('hamaMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
+        el.innerHTML = `
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat temuan hama difilter untuk: ${musimAktif.nama} (${rentang})
+            </div>
+        `;
+    }
+
     function render() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-bug" style="color: #D32F2F;"></i> ${t('module_title')}</div>
+                <div id="hamaMusimIndicator"></div>
                 
                 <!-- Form Input Data Hama & Penyakit -->
                 <div style="background: var(--card-bg, #fff); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8); margin-bottom: 20px;">
@@ -288,6 +315,7 @@ var hama = (function() {
 
     function init() {
         populateGhDropdown();
+        renderMusimIndicator();
         loadTable();
 
         // 1. KEMBALIKAN DRAF TERAKHIR DARI LOCALSTORAGE
@@ -360,6 +388,13 @@ var hama = (function() {
                     if (typeof Helper !== 'undefined' && Helper.showToast) {
                         Helper.showToast(t('toast_saved'), 'success');
                     }
+
+                    // --- LIVE-SYNC KE DASHBOARD & MODUL LAIN ---
+                    // Modul ini sebelumnya tidak pernah dispatch event ini
+                    // (sama seperti panen.js sebelum diperbaiki), sehingga
+                    // dashboard & bilah filter musim tidak langsung tahu ada
+                    // temuan baru. Disamakan dengan pola modul lain.
+                    window.dispatchEvent(new Event('cozycs_data_changed'));
                 } catch(err) {
                     console.error("Storage Error:", err);
                 }
@@ -412,7 +447,15 @@ var hama = (function() {
             return dateB - dateA;
         });
 
-        var filteredData = data.filter(function(item) {
+        // Filter musim aktif dari bilah global (kalau ada)
+        var dataSetelahMusim = data;
+        if (typeof musimFilter !== 'undefined' && musimFilter.cocokDenganMusimAktif) {
+            dataSetelahMusim = data.filter(function(item) {
+                return item && musimFilter.cocokDenganMusimAktif(item.tanggal, item.gh);
+            });
+        }
+
+        var filteredData = dataSetelahMusim.filter(function(item) {
             if (!searchQuery) return true;
             var kw = searchQuery.toLowerCase();
             var gh = (item.gh || '').toLowerCase();
@@ -580,6 +623,7 @@ var hama = (function() {
                 }
             } catch(e) {}
             loadTable();
+            window.dispatchEvent(new Event('cozycs_data_changed'));
             if (typeof Helper !== 'undefined' && typeof Helper.showToast === 'function') {
                 Helper.showToast(t('toast_deleted'), 'error');
             }
