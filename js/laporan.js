@@ -1,6 +1,6 @@
 // ==========================================
-// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (WITH MUSIM FILTER INTEGRATION)
-// PATCH: Integrasi filter musim global untuk jumlah data, ekspor CSV, dan cetak PDF
+// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (UNIFIED MUSIM FILTER UI)
+// PATCH: Fix indikator musim selaras 100% dengan tampilan modul Spray/Jadwal (Foto 1)
 // ==========================================
 
 var laporan = (function() {
@@ -31,7 +31,7 @@ var laporan = (function() {
             'desc_jadwal': 'Rekap agenda tugas operasional harian, prioritas, dan status.',
             'mod_keuangan': 'Keuangan & Cashflow',
             'desc_keuangan': 'Laporan pemasukan, pengeluaran, serta estimasi laba bersih kebun.',
-            'musim_active_prefix': '📌 Menampilkan & mengunduh data musim:'
+            'musim_active_prefix': 'Data laporan difilter untuk:'
         },
         'en': {
             'module_title': 'Reports & Data Download Center',
@@ -57,7 +57,7 @@ var laporan = (function() {
             'desc_jadwal': 'Summary of daily operational agenda, priorities, and status.',
             'mod_keuangan': 'Finance & Cash Flow',
             'desc_keuangan': 'Income, expense reports, and farm net profit estimation.',
-            'musim_active_prefix': '📌 Showing & exporting data for season:'
+            'musim_active_prefix': 'Report data filtered for:'
         }
     };
 
@@ -125,7 +125,7 @@ var laporan = (function() {
         });
     }
 
-    // HELPER INDIKATOR MUSIM
+    // HELPER INDIKATOR MUSIM (PRESISI SAMA DENGAN FOTO 1)
     function renderMusimIndicator() {
         var el = document.getElementById('laporanMusimIndicator');
         if (!el) return;
@@ -142,12 +142,13 @@ var laporan = (function() {
         }
 
         var namaMusim = activeMusim.nama || activeMusim.name || '-';
+        var tglMulai = activeMusim.tglMulai || activeMusim.startDate || '-';
+        var tglSelesai = activeMusim.tglSelesai || activeMusim.endDate || 'berjalan';
+
         el.innerHTML = `
-            <div style="background: #E8F5E9; border: 1px solid #A5D6A7; color: #2E7D32; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                    <i class="fas fa-filter" style="margin-right: 6px;"></i> ${t('musim_active_prefix')} <strong>${namaMusim}</strong>
-                </div>
-                <span style="font-size: 11px; opacity: 0.85; background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 12px;">Filter Musim Aktif</span>
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 10px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="far fa-calendar-alt" style="color: #00695C; font-size: 14px;"></i>
+                <span>${t('musim_active_prefix')} <strong>${namaMusim} (${tglMulai} ➔ ${tglSelesai})</strong></span>
             </div>
         `;
     }
@@ -225,7 +226,7 @@ var laporan = (function() {
                     ${t('module_subtitle')}
                 </div>
 
-                <!-- INDIKATOR FILTER MUSIM -->
+                <!-- INDIKATOR FILTER MUSIM PRESISI FOTO 1 -->
                 <div id="laporanMusimIndicator"></div>
 
                 ${cardsHtml}
