@@ -126,7 +126,7 @@ var laporan = (function() {
     // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
     // ==========================================
     function renderMusimIndicator() {
-        var el = document.getElementById('hamaMusimIndicator');
+        var el = document.getElementById('laporanMusimIndicator');
         if (!el) return;
 
         if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
@@ -143,7 +143,7 @@ var laporan = (function() {
         var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
         el.innerHTML = `
             <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-                <i class="fas fa-calendar-week"></i> Riwayat temuan hama difilter untuk: ${musimAktif.nama} (${rentang})
+                <i class="fas fa-calendar-week"></i> Riwayat temuan laporan difilter untuk: ${musimAktif.nama} (${rentang})
             </div>
         `;
     }
