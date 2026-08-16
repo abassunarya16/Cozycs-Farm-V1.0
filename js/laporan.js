@@ -1,5 +1,6 @@
 // ==========================================
-// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (WITH DASHBOARD LOG & CROSS-BROWSER FIX)
+// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (WITH MUSIM FILTER INTEGRATION)
+// PATCH: Integrasi filter musim global untuk jumlah data, ekspor CSV, dan cetak PDF
 // ==========================================
 
 var laporan = (function() {
@@ -14,6 +15,7 @@ var laporan = (function() {
             'lbl_total_records': 'Total Data',
             'unit_records': 'Data',
             'no_data_export': 'Tidak ada data untuk diunduh pada modul ini.',
+            'no_data_musim_export': 'Tidak ada data untuk diunduh pada musim yang dipilih.',
             'toast_exported': 'Berhasil mengunduh laporan CSV untuk modul ',
             'mod_greenhouse': 'Master Greenhouse',
             'desc_greenhouse': 'Data spesifikasi fasilitas, luas area, tandon, dan status operasional GH.',
@@ -28,7 +30,8 @@ var laporan = (function() {
             'mod_jadwal': 'Jadwal & Agenda',
             'desc_jadwal': 'Rekap agenda tugas operasional harian, prioritas, dan status.',
             'mod_keuangan': 'Keuangan & Cashflow',
-            'desc_keuangan': 'Laporan pemasukan, pengeluaran, serta estimasi laba bersih kebun.'
+            'desc_keuangan': 'Laporan pemasukan, pengeluaran, serta estimasi laba bersih kebun.',
+            'musim_active_prefix': '📌 Menampilkan & mengunduh data musim:'
         },
         'en': {
             'module_title': 'Reports & Data Download Center',
@@ -38,6 +41,7 @@ var laporan = (function() {
             'lbl_total_records': 'Total Records',
             'unit_records': 'Items',
             'no_data_export': 'No data available to export for this module.',
+            'no_data_musim_export': 'No data available to export for the selected season.',
             'toast_exported': 'Successfully downloaded CSV report for ',
             'mod_greenhouse': 'Greenhouse Master',
             'desc_greenhouse': 'Data on facility specs, area size, tanks, and GH operational status.',
@@ -52,7 +56,8 @@ var laporan = (function() {
             'mod_jadwal': 'Schedule & Agenda',
             'desc_jadwal': 'Summary of daily operational agenda, priorities, and status.',
             'mod_keuangan': 'Finance & Cash Flow',
-            'desc_keuangan': 'Income, expense reports, and farm net profit estimation.'
+            'desc_keuangan': 'Income, expense reports, and farm net profit estimation.',
+            'musim_active_prefix': '📌 Showing & exporting data for season:'
         }
     };
 
@@ -90,7 +95,64 @@ var laporan = (function() {
         }
     }
 
-    // HELPER CATAT LOG AKTIVITAS DAHBOARD
+    // HELPER PENYARINGAN DATA MODUL DENGAN FILTER MUSIM AKTIF
+    function getFilteredModuleData(modName) {
+        var rawData = getModuleData(modName);
+
+        // Master GH tidak difilter per musim agar informasi fasilitas tetap utuh
+        if (modName === 'greenhouse') {
+            return rawData;
+        }
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.cocokDenganMusimAktif) {
+            return rawData;
+        }
+
+        var activeMusim = musimFilter.getActiveMusim ? musimFilter.getActiveMusim() : null;
+        if (!activeMusim) return rawData;
+
+        return rawData.filter(function(item) {
+            if (!item) return false;
+
+            var tanggal = item.tanggal || item.date || item.tglTanam || item.tglCek || item.tglPanen || item.tglInspeksi || '';
+            var gh = item.gh || item.greenhouse || item.kodeGh || item.lokasi || '';
+
+            if (gh === 'Seluruh Kebun') {
+                return musimFilter.cocokDenganMusimAktif(tanggal, null) || musimFilter.cocokDenganMusimAktif(tanggal, gh);
+            }
+
+            return musimFilter.cocokDenganMusimAktif(tanggal, gh);
+        });
+    }
+
+    // HELPER INDIKATOR MUSIM
+    function renderMusimIndicator() {
+        var el = document.getElementById('laporanMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var activeMusim = musimFilter.getActiveMusim();
+        if (!activeMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var namaMusim = activeMusim.nama || activeMusim.name || '-';
+        el.innerHTML = `
+            <div style="background: #E8F5E9; border: 1px solid #A5D6A7; color: #2E7D32; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <i class="fas fa-filter" style="margin-right: 6px;"></i> ${t('musim_active_prefix')} <strong>${namaMusim}</strong>
+                </div>
+                <span style="font-size: 11px; opacity: 0.85; background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 12px;">Filter Musim Aktif</span>
+            </div>
+        `;
+    }
+
+    // HELPER CATAT LOG AKTIVITAS DASBOR
     function catatAktivitasDasbor(judul, deskripsi) {
         if (typeof Storage !== 'undefined' && Storage.add) {
             var keyAktivitas = (Storage.KEYS && Storage.KEYS.AKTIVITAS) ? Storage.KEYS.AKTIVITAS : 'cozycs_aktivitas';
@@ -122,7 +184,7 @@ var laporan = (function() {
 
         var cardsHtml = '';
         modules.forEach(function(m) {
-            var dataCount = getModuleData(m.id).length;
+            var dataCount = getFilteredModuleData(m.id).length;
 
             cardsHtml += `
                 <div style="background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e8e8e8); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
@@ -159,24 +221,31 @@ var laporan = (function() {
                 <div class="section-title" style="font-size: 15px; font-weight: 800; color: #2E7D32; margin-bottom: 4px;">
                     <i class="fas fa-file-download" style="color: #2E7D32;"></i> ${t('module_title')}
                 </div>
-                <div style="font-size: 12px; color: #888; margin-bottom: 16px;">
+                <div style="font-size: 12px; color: #888; margin-bottom: 14px;">
                     ${t('module_subtitle')}
                 </div>
+
+                <!-- INDIKATOR FILTER MUSIM -->
+                <div id="laporanMusimIndicator"></div>
 
                 ${cardsHtml}
             </div>
         `;
     }
 
-    // FUNGSI EKSPOR KE CSV (EXCEL FRIENDLY)
+    // FUNGSI EKSPOR KE CSV (TERFILTER MUSIM AKTIF)
     function exportCSV(modName) {
-        var data = getModuleData(modName);
+        var data = getFilteredModuleData(modName);
 
         if (!data || data.length === 0) {
+            var msg = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim && musimFilter.getActiveMusim()) 
+                ? t('no_data_musim_export') 
+                : t('no_data_export');
+
             if (typeof Helper !== 'undefined' && Helper.showToast) {
-                Helper.showToast(t('no_data_export'), 'error');
+                Helper.showToast(msg, 'error');
             } else {
-                alert(t('no_data_export'));
+                alert(msg);
             }
             return;
         }
@@ -205,7 +274,10 @@ var laporan = (function() {
         var url = URL.createObjectURL(blob);
         var link = document.createElement('a');
 
-        var filename = 'CozycsFarm_' + modName.toUpperCase() + '_' + new Date().toISOString().split('T')[0] + '.csv';
+        var activeMusim = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
+        var musimSuffix = activeMusim ? ('_' + (activeMusim.nama || 'Musim').replace(/\s+/g, '_')) : '';
+
+        var filename = 'CozycsFarm_' + modName.toUpperCase() + musimSuffix + '_' + new Date().toISOString().split('T')[0] + '.csv';
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
         document.body.appendChild(link);
@@ -213,25 +285,33 @@ var laporan = (function() {
         document.body.removeChild(link);
 
         // Catat Log ke Dasbor
-        catatAktivitasDasbor('Unduh Laporan CSV', 'Modul ' + modName.toUpperCase() + ' (' + data.length + ' ' + t('unit_records') + ')');
+        var logMusimDesc = activeMusim ? (' [' + (activeMusim.nama || 'Musim Aktif') + ']') : '';
+        catatAktivitasDasbor('Unduh Laporan CSV', 'Modul ' + modName.toUpperCase() + logMusimDesc + ' (' + data.length + ' ' + t('unit_records') + ')');
 
         if (typeof Helper !== 'undefined' && Helper.showToast) {
             Helper.showToast(t('toast_exported') + modName, 'success');
         }
     }
 
-    // FUNGSI CETAK LAPORAN (PRINT WINDOW)
+    // FUNGSI CETAK LAPORAN (PRINT WINDOW TERFILTER MUSIM AKTIF)
     function printModule(modName) {
-        var data = getModuleData(modName);
+        var data = getFilteredModuleData(modName);
 
         if (!data || data.length === 0) {
+            var msg = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim && musimFilter.getActiveMusim()) 
+                ? t('no_data_musim_export') 
+                : t('no_data_export');
+
             if (typeof Helper !== 'undefined' && Helper.showToast) {
-                Helper.showToast(t('no_data_export'), 'error');
+                Helper.showToast(msg, 'error');
             } else {
-                alert(t('no_data_export'));
+                alert(msg);
             }
             return;
         }
+
+        var activeMusim = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
+        var musimHeaderStr = activeMusim ? (' | Filter Musim: ' + (activeMusim.nama || '-')) : '';
 
         var headers = Object.keys(data[0]);
 
@@ -260,14 +340,15 @@ var laporan = (function() {
         printWindow.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin-top:15px;}</style>');
         printWindow.document.write('</head><body>');
         printWindow.document.write('<h2>COZYCS FARM - LAPORAN OPERASIONAL</h2>');
-        printWindow.document.write('<h4>Modul: ' + modName.toUpperCase() + ' | Tanggal Cetak: ' + new Date().toLocaleDateString('id-ID') + '</h4>');
+        printWindow.document.write('<h4>Modul: ' + modName.toUpperCase() + musimHeaderStr + ' | Tanggal Cetak: ' + new Date().toLocaleDateString('id-ID') + '</h4>');
         printWindow.document.write('<table>' + tableHeaderHtml + tableBodyHtml + '</table>');
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.focus();
 
         // Catat Log ke Dasbor
-        catatAktivitasDasbor('Cetak Laporan PDF', 'Modul ' + modName.toUpperCase() + ' (' + data.length + ' ' + t('unit_records') + ')');
+        var logMusimDesc = activeMusim ? (' [' + (activeMusim.nama || 'Musim Aktif') + ']') : '';
+        catatAktivitasDasbor('Cetak Laporan PDF', 'Modul ' + modName.toUpperCase() + logMusimDesc + ' (' + data.length + ' ' + t('unit_records') + ')');
 
         setTimeout(function() {
             printWindow.print();
@@ -275,7 +356,16 @@ var laporan = (function() {
     }
 
     function init() {
-        // Module Initialization
+        renderMusimIndicator();
+
+        // Re-render saat ada perubahan filter musim global
+        window.addEventListener('cozycs_musim_changed', function() {
+            var container = document.getElementById('mainContent');
+            if (container && typeof laporan !== 'undefined' && window.currentPage === 'laporan') {
+                container.innerHTML = laporan.render();
+                laporan.init();
+            }
+        });
     }
 
     return {
