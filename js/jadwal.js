@@ -1,5 +1,6 @@
 // ==========================================
 // COZYCS FARM - MODUL JADWAL & AGENDA OPERASIONAL (WITH MULTI-FILTER & AUTOMATIC DATE SORT)
+// PATCH: Integrasi musimFilter (Stat Cards + Daftar Tugas)
 // ==========================================
 
 var jadwal = (function() {
@@ -57,6 +58,7 @@ var jadwal = (function() {
             'btn_cancel': 'Batal',
             'recap_title': 'Daftar Jadwal & Tugas Kebun',
             'no_data': 'Belum ada jadwal kegiatan tersimpan.',
+            'no_data_musim': 'Tidak ada jadwal pada musim yang dipilih.',
             'lbl_notes': 'Catatan',
             'toast_saved': 'Jadwal berhasil disimpan!',
             'confirm_delete': 'Apakah kamu yakin ingin menghapus jadwal ini?',
@@ -72,7 +74,8 @@ var jadwal = (function() {
             'btn_prev': '⬅️ Sebelum',
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
-            'total_lbl': 'Total Data'
+            'total_lbl': 'Total Data',
+            'musim_active_prefix': '📌 Menampilkan data musim:'
         },
         'en': {
             'module_title': 'Operational Schedule & Agenda',
@@ -117,6 +120,7 @@ var jadwal = (function() {
             'btn_cancel': 'Cancel',
             'recap_title': 'Farm Schedule & Task List',
             'no_data': 'No activity schedule saved yet.',
+            'no_data_musim': 'No schedule found for the selected season.',
             'lbl_notes': 'Notes',
             'toast_saved': 'Schedule saved successfully!',
             'confirm_delete': 'Are you sure you want to delete this schedule?',
@@ -132,7 +136,8 @@ var jadwal = (function() {
             'btn_prev': '⬅️ Prev',
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
-            'total_lbl': 'Total Items'
+            'total_lbl': 'Total Items',
+            'musim_active_prefix': '📌 Showing data for season:'
         }
     };
 
@@ -216,6 +221,49 @@ var jadwal = (function() {
         if (el) el.value = val;
     }
 
+    // ================= NEW: FILTER MUSIM HELPER =================
+    // Jadwal "Seluruh Kebun" (umum) tetap dianggap cocok dengan musim manapun yang aktif
+    // pada tanggal terkait, karena tidak terikat GH spesifik.
+    function cocokMusim(item) {
+        if (typeof musimFilter === 'undefined' || !musimFilter.cocokDenganMusimAktif) return true;
+        var tanggal = item.tanggal || item.date || '';
+        var gh = item.gh || item.greenhouse || 'Seluruh Kebun';
+        if (gh === 'Seluruh Kebun') {
+            return musimFilter.cocokDenganMusimAktif(tanggal, null) || musimFilter.cocokDenganMusimAktif(tanggal, gh);
+        }
+        return musimFilter.cocokDenganMusimAktif(tanggal, gh);
+    }
+
+    function getFilteredByMusim() {
+        var data = getAllSchedules();
+        if (typeof musimFilter === 'undefined' || !musimFilter.cocokDenganMusimAktif) return data;
+        return data.filter(cocokMusim);
+    }
+
+    function renderMusimIndicator() {
+        var el = document.getElementById('jadwalMusimIndicator');
+        if (!el) return;
+
+        if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var activeMusim = musimFilter.getActiveMusim();
+        if (!activeMusim) {
+            el.innerHTML = '';
+            return;
+        }
+
+        var namaMusim = activeMusim.nama || activeMusim.name || '-';
+        el.innerHTML = `
+            <div style="background: #E8F5E9; border: 1px solid #A5D6A7; color: #2E7D32; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 14px;">
+                ${t('musim_active_prefix')} ${namaMusim}
+            </div>
+        `;
+    }
+    // ================= END NEW =================
+
     // POPULATE DROPDOWN GREENHOUSE UNTUK FORM MAUPUN FILTER
     function populateGhOptions() {
         var selectForm = document.getElementById('jadwalGh');
@@ -254,6 +302,9 @@ var jadwal = (function() {
         return `
             <div class="dashboard-container">
                 <div class="section-title"><i class="fas fa-calendar-alt" style="color: #2E7D32;"></i> ${t('module_title')}</div>
+
+                <!-- INDIKATOR MUSIM AKTIF -->
+                <div id="jadwalMusimIndicator"></div>
 
                 <!-- 1. DASHBOARD STATISTIK UTAMA -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;" id="jadwalStatCards"></div>
@@ -385,12 +436,20 @@ var jadwal = (function() {
 
     function init() {
         populateGhOptions();
+        renderMusimIndicator();
         loadDashboard();
         loadTable();
 
         if (typeof restoreFormDraftGlobal === 'function') {
             restoreFormDraftGlobal('formJadwal');
         }
+
+        // Refresh otomatis saat filter musim global berubah
+        window.addEventListener('cozycs_musim_changed', function() {
+            renderMusimIndicator();
+            loadDashboard();
+            loadTable();
+        });
 
         var form = document.getElementById('formJadwal');
         var btnCancel = document.getElementById('btnCancelJadwalEdit');
@@ -469,7 +528,8 @@ var jadwal = (function() {
         var container = document.getElementById('jadwalStatCards');
         if (!container) return;
 
-        var data = getAllSchedules();
+        // PATCH: stat cards sekarang ikut difilter musim aktif
+        var data = getFilteredByMusim();
         var total = data.length;
         var pendingCount = 0;
         var urgentCount = 0;
@@ -511,15 +571,17 @@ var jadwal = (function() {
         var pageEl = document.getElementById('paginationJadwalControls');
         if (!container) return;
 
-        var data = getAllSchedules();
+        // PATCH: mulai dari data yang sudah difilter musim aktif
+        var data = getFilteredByMusim();
 
         if (!Array.isArray(data) || data.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            var emptyMsg = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim && musimFilter.getActiveMusim()) ? t('no_data_musim') : t('no_data');
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${emptyMsg}</div>`;
             if (pageEl) pageEl.innerHTML = '';
             return;
         }
 
-        // 1. FILTERING DATA
+        // 1. FILTERING DATA (GH, Status, Pencarian teks)
         var filteredData = data.filter(function(item) {
             if (!item) return false;
 
@@ -556,7 +618,8 @@ var jadwal = (function() {
         });
 
         if (filteredData.length === 0) {
-            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${t('no_data')}</div>`;
+            var emptyMsg2 = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim && musimFilter.getActiveMusim()) ? t('no_data_musim') : t('no_data');
+            container.innerHTML = `<div style="text-align: center; color: #777; padding: 20px; background: var(--card-bg, #fff); border-radius: 12px; border: 1px solid var(--border-color, #e8e8e8);">${emptyMsg2}</div>`;
             if (pageEl) pageEl.innerHTML = '';
             return;
         }
