@@ -1,6 +1,5 @@
 // ==========================================
-// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA (UNIFIED MUSIM FILTER UI)
-// PATCH: Fix indikator musim selaras 100% dengan tampilan modul Spray/Jadwal (Foto 1)
+// COZYCS FARM - MODUL LAPORAN & EKSPOR DATA
 // ==========================================
 
 var laporan = (function() {
@@ -30,8 +29,7 @@ var laporan = (function() {
             'mod_jadwal': 'Jadwal & Agenda',
             'desc_jadwal': 'Rekap agenda tugas operasional harian, prioritas, dan status.',
             'mod_keuangan': 'Keuangan & Cashflow',
-            'desc_keuangan': 'Laporan pemasukan, pengeluaran, serta estimasi laba bersih kebun.',
-            'musim_active_prefix': 'Data laporan difilter untuk:'
+            'desc_keuangan': 'Laporan pemasukan, pengeluaran, serta estimasi laba bersih kebun.'
         },
         'en': {
             'module_title': 'Reports & Data Download Center',
@@ -56,8 +54,7 @@ var laporan = (function() {
             'mod_jadwal': 'Schedule & Agenda',
             'desc_jadwal': 'Summary of daily operational agenda, priorities, and status.',
             'mod_keuangan': 'Finance & Cash Flow',
-            'desc_keuangan': 'Income, expense reports, and farm net profit estimation.',
-            'musim_active_prefix': 'Report data filtered for:'
+            'desc_keuangan': 'Income, expense reports, and farm net profit estimation.'
         }
     };
 
@@ -108,8 +105,8 @@ var laporan = (function() {
             return rawData;
         }
 
-        var activeMusim = musimFilter.getActiveMusim ? musimFilter.getActiveMusim() : null;
-        if (!activeMusim) return rawData;
+        var musimAktif = musimFilter.getActiveMusim ? musimFilter.getActiveMusim() : null;
+        if (!musimAktif) return rawData;
 
         return rawData.filter(function(item) {
             if (!item) return false;
@@ -125,9 +122,11 @@ var laporan = (function() {
         });
     }
 
-    // HELPER INDIKATOR MUSIM (PRESISI SAMA DENGAN FOTO 1)
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
     function renderMusimIndicator() {
-        var el = document.getElementById('laporanMusimIndicator');
+        var el = document.getElementById('hamaMusimIndicator');
         if (!el) return;
 
         if (typeof musimFilter === 'undefined' || !musimFilter.getActiveMusim) {
@@ -135,20 +134,16 @@ var laporan = (function() {
             return;
         }
 
-        var activeMusim = musimFilter.getActiveMusim();
-        if (!activeMusim) {
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
             el.innerHTML = '';
             return;
         }
 
-        var namaMusim = activeMusim.nama || activeMusim.name || '-';
-        var tglMulai = activeMusim.tglMulai || activeMusim.startDate || '-';
-        var tglSelesai = activeMusim.tglSelesai || activeMusim.endDate || 'berjalan';
-
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
         el.innerHTML = `
-            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 10px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i class="far fa-calendar-alt" style="color: #00695C; font-size: 14px;"></i>
-                <span>${t('musim_active_prefix')} <strong>${namaMusim} (${tglMulai} ➔ ${tglSelesai})</strong></span>
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat temuan hama difilter untuk: ${musimAktif.nama} (${rentang})
             </div>
         `;
     }
@@ -226,8 +221,8 @@ var laporan = (function() {
                     ${t('module_subtitle')}
                 </div>
 
-                <!-- INDIKATOR FILTER MUSIM PRESISI FOTO 1 -->
-                <div id="laporanMusimIndicator"></div>
+                <!-- INDIKATOR FILTER MUSIM AKTIF -->
+                <div id="hamaMusimIndicator"></div>
 
                 ${cardsHtml}
             </div>
@@ -275,8 +270,8 @@ var laporan = (function() {
         var url = URL.createObjectURL(blob);
         var link = document.createElement('a');
 
-        var activeMusim = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
-        var musimSuffix = activeMusim ? ('_' + (activeMusim.nama || 'Musim').replace(/\s+/g, '_')) : '';
+        var musimAktif = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
+        var musimSuffix = musimAktif ? ('_' + (musimAktif.nama || 'Musim').replace(/\s+/g, '_')) : '';
 
         var filename = 'CozycsFarm_' + modName.toUpperCase() + musimSuffix + '_' + new Date().toISOString().split('T')[0] + '.csv';
         link.setAttribute('href', url);
@@ -286,7 +281,7 @@ var laporan = (function() {
         document.body.removeChild(link);
 
         // Catat Log ke Dasbor
-        var logMusimDesc = activeMusim ? (' [' + (activeMusim.nama || 'Musim Aktif') + ']') : '';
+        var logMusimDesc = musimAktif ? (' [' + (musimAktif.nama || 'Musim Aktif') + ']') : '';
         catatAktivitasDasbor('Unduh Laporan CSV', 'Modul ' + modName.toUpperCase() + logMusimDesc + ' (' + data.length + ' ' + t('unit_records') + ')');
 
         if (typeof Helper !== 'undefined' && Helper.showToast) {
@@ -311,8 +306,8 @@ var laporan = (function() {
             return;
         }
 
-        var activeMusim = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
-        var musimHeaderStr = activeMusim ? (' | Filter Musim: ' + (activeMusim.nama || '-')) : '';
+        var musimAktif = (typeof musimFilter !== 'undefined' && musimFilter.getActiveMusim) ? musimFilter.getActiveMusim() : null;
+        var musimHeaderStr = musimAktif ? (' | Filter Musim: ' + (musimAktif.nama || '-')) : '';
 
         var headers = Object.keys(data[0]);
 
@@ -348,7 +343,7 @@ var laporan = (function() {
         printWindow.focus();
 
         // Catat Log ke Dasbor
-        var logMusimDesc = activeMusim ? (' [' + (activeMusim.nama || 'Musim Aktif') + ']') : '';
+        var logMusimDesc = musimAktif ? (' [' + (musimAktif.nama || 'Musim Aktif') + ']') : '';
         catatAktivitasDasbor('Cetak Laporan PDF', 'Modul ' + modName.toUpperCase() + logMusimDesc + ' (' + data.length + ' ' + t('unit_records') + ')');
 
         setTimeout(function() {
