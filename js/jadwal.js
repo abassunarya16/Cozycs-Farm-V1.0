@@ -75,7 +75,7 @@ var jadwal = (function() {
             'btn_next': 'Selanjutnya ➡️',
             'page_lbl': 'Halaman',
             'total_lbl': 'Total Data',
-            'musim_active_prefix': '📌 Menampilkan data musim:'
+            'musim_active_prefix': 'Daftar jadwal difilter untuk:'
         },
         'en': {
             'module_title': 'Operational Schedule & Agenda',
@@ -137,7 +137,7 @@ var jadwal = (function() {
             'btn_next': 'Next ➡️',
             'page_lbl': 'Page',
             'total_lbl': 'Total Items',
-            'musim_active_prefix': '📌 Showing data for season:'
+            'musim_active_prefix': 'Schedule list filtered for:'
         }
     };
 
@@ -221,9 +221,6 @@ var jadwal = (function() {
         if (el) el.value = val;
     }
 
-    // ================= NEW: FILTER MUSIM HELPER =================
-    // Jadwal "Seluruh Kebun" (umum) tetap dianggap cocok dengan musim manapun yang aktif
-    // pada tanggal terkait, karena tidak terikat GH spesifik.
     function cocokMusim(item) {
         if (typeof musimFilter === 'undefined' || !musimFilter.cocokDenganMusimAktif) return true;
         var tanggal = item.tanggal || item.date || '';
@@ -240,6 +237,9 @@ var jadwal = (function() {
         return data.filter(cocokMusim);
     }
 
+    // ==========================================
+    // INDIKATOR MUSIM AKTIF (DARI BILAH FILTER GLOBAL)
+    // ==========================================
     function renderMusimIndicator() {
         var el = document.getElementById('jadwalMusimIndicator');
         if (!el) return;
@@ -249,22 +249,20 @@ var jadwal = (function() {
             return;
         }
 
-        var activeMusim = musimFilter.getActiveMusim();
-        if (!activeMusim) {
+        var musimAktif = musimFilter.getActiveMusim();
+        if (!musimAktif) {
             el.innerHTML = '';
             return;
         }
 
-        var namaMusim = activeMusim.nama || activeMusim.name || '-';
+        var rentang = (musimAktif.tanggalMulai || '-') + ' &rarr; ' + (musimAktif.tanggalSelesai || 'berjalan');
         el.innerHTML = `
-            <div style="background: #E8F5E9; border: 1px solid #A5D6A7; color: #2E7D32; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-bottom: 14px;">
-                ${t('musim_active_prefix')} ${namaMusim}
+            <div style="background: #E0F2F1; border: 1px solid #B2DFDB; color: #00695C; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-calendar-week"></i> Riwayat temuan jadwal difilter untuk: ${musimAktif.nama} (${rentang})
             </div>
         `;
     }
-    // ================= END NEW =================
 
-    // POPULATE DROPDOWN GREENHOUSE UNTUK FORM MAUPUN FILTER
     function populateGhOptions() {
         var selectForm = document.getElementById('jadwalGh');
         var selectFilter = document.getElementById('selectFilterJadwalGh');
@@ -528,7 +526,6 @@ var jadwal = (function() {
         var container = document.getElementById('jadwalStatCards');
         if (!container) return;
 
-        // PATCH: stat cards sekarang ikut difilter musim aktif
         var data = getFilteredByMusim();
         var total = data.length;
         var pendingCount = 0;
@@ -571,7 +568,6 @@ var jadwal = (function() {
         var pageEl = document.getElementById('paginationJadwalControls');
         if (!container) return;
 
-        // PATCH: mulai dari data yang sudah difilter musim aktif
         var data = getFilteredByMusim();
 
         if (!Array.isArray(data) || data.length === 0) {
@@ -581,24 +577,20 @@ var jadwal = (function() {
             return;
         }
 
-        // 1. FILTERING DATA (GH, Status, Pencarian teks)
         var filteredData = data.filter(function(item) {
             if (!item) return false;
 
-            // Filter berdasarkan Greenhouse
             if (filterGh !== 'ALL') {
                 var itemGh = item.gh || item.greenhouse || 'Seluruh Kebun';
                 if (itemGh !== filterGh) return false;
             }
 
-            // Filter berdasarkan Status
             if (filterStatus !== 'ALL') {
                 var isDone = (item.status === 'Selesai' || item.status === 'Completed' || item.completed === true);
                 if (filterStatus === 'Selesai' && !isDone) return false;
                 if (filterStatus === 'Pending' && isDone) return false;
             }
 
-            // Filter pencarian teks
             if (searchQuery) {
                 var kw = searchQuery.toLowerCase();
                 var gh = (item.gh || '').toLowerCase();
@@ -624,7 +616,6 @@ var jadwal = (function() {
             return;
         }
 
-        // 2. PENGURUTAN BERDASARKAN TANGGAL EKSEKUSI (BUKAN WAKTU INPUT)
         filteredData.sort(function(a, b) {
             var dateA = a && (a.tanggal || a.date) ? parseLocalDate(a.tanggal || a.date) : new Date(0);
             var dateB = b && (b.tanggal || b.date) ? parseLocalDate(b.tanggal || b.date) : new Date(0);
@@ -633,13 +624,12 @@ var jadwal = (function() {
             var timeB = dateB ? dateB.getTime() : 0;
 
             if (sortOrder === 'asc') {
-                return timeA - timeB; // Terlama ke Terbaru
+                return timeA - timeB;
             } else {
-                return timeB - timeA; // Terbaru ke Terlama (Default: Tgl 10 diatas, Tgl 9 dibawah)
+                return timeB - timeA;
             }
         });
 
-        // 3. PAGINASI
         var totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -648,7 +638,6 @@ var jadwal = (function() {
         var endIndex = startIndex + itemsPerPage;
         var pageData = filteredData.slice(startIndex, endIndex);
 
-        // 4. RENDER KARTU JADWAL
         var html = '';
         pageData.forEach(function(item) {
             if (!item) return;
